@@ -59,25 +59,30 @@ class Data():
 
 
        # gui related class attributes
-        self.plots_created = False
+
+       self.plots_created = False # flag variable so plots are only created once
+       self.plot_titles = "" # flag variable so titles are only added the first time data is logged
+
+       # these attributes are used so cage is only updated when start/update button is hit
+       self.active_x_voltage_requested = 0
+       self.active_y_voltage_requested = 0
+       self.active_z_voltage_requested = 0
 
        # logging runs class attributes
-        self.log_filename = ""
-        self.time = []
-        self.x_req = []
-        self.y_req = []
-        self.z_req = []
-        self.x_out = []
-        self.y_out = []
-        self.z_out = []
-        self.x_mag_field_actual = []
-        self.y_mag_field_actual = []
-        self.z_mag_field_actual = []
-        self.x_mag_field_requested = []
-        self.y_mag_field_requested = []
-        self.z_mag_field_requested = []
-
-         
+       self.log_filename = ""
+       self.time = []
+       self.x_req = []
+       self.y_req = []
+       self.z_req = []
+       self.x_out = []
+       self.y_out = []
+       self.z_out = []
+       self.x_mag_field_actual = []
+       self.y_mag_field_actual = []
+       self.z_mag_field_actual = []
+       self.x_mag_field_requested = []
+       self.y_mag_field_requested = []
+       self.z_mag_field_requested = []
 
 class CageApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -148,45 +153,66 @@ class CageApp(tk.Tk):
         main_page.mag_status_entry.configure(state="readonly")
 
     def start_field(self, cont):
+
         main_page = self.frames[MainPage]
+
         static_or_dynamic = main_page.static_or_dynamic.get()
         field_or_voltage = main_page.field_or_voltage.get()
 
         if static_or_dynamic == "static":
             if field_or_voltage == "voltage":
                 print("attempting to send specified voltages...")
-                x_voltage = main_page.x_voltage.get()
-                y_voltage = main_page.y_voltage.get()
-                z_voltage = main_page.z_voltage.get()
-                instruments.send_voltage(x_voltage, y_voltage, z_voltage)
+
+                if main_page.x_voltage.get() == "": main_page.x_voltage.set(0)
+                if main_page.y_voltage.get() == "": main_page.y_voltage.set(0)
+                if main_page.z_voltage.get() == "": main_page.z_voltage.set(0)
+
+                data.active_x_voltage_requested = float(main_page.x_voltage.get())
+                data.active_y_voltage_requested = float(main_page.y_voltage.get())
+                data.active_z_voltage_requested = float(main_page.z_voltage.get())
+                instruments.send_voltage(data.active_x_voltage_requested,
+                                         data.active_y_voltage_requested,
+                                         data.active_z_voltage_requested)
 
             if field_or_voltage == "field":
                 print("attempting to send specified magnetic field...")
                 x_field = main_page.x_field.get()
                 y_field = main_page.y_field.get()
                 z_field = main_page.z_field.get()
-                send_field(x_field, y_field, Z_field)
+                send_field(x_field, y_field, z_field)
 
         if static_or_dynamic == "dynamic":
             print("Dynamic field not supported yet")
 
-        if not hasattr(instruments, "cage_power"):
+        if not hasattr(instruments, "connections_checked"):
             print("Check connections before starting")
         else:
             if main_page.start_button["text"] == 'Start Field':
+                instruments.log_data = "ON"
+                print("found Start Field text on start button")
+
+                main_page.power_supplies_plot.cla()
+                main_page.mag_field_plot.cla()
+
+                data.plot_titles = "None"
+                main_page.update_plot_info()
+
+                (data.time, data.x_out, data.y_out, data.z_out, data.x_req, data.y_req, data.z_req,
+                data.x_mag_field_actual, data.y_mag_field_actual, data.z_mag_field_actual,
+                data.x_mag_field_requested, data.y_mag_field_requested, data.z_mag_field_requested) = [], [], [], [], [], [], [], [], [], [], [], [], []
+
                 data.start_time = datetime.datetime.now()
                 log_data() # start recording data if logging hasn't already started
+
                 main_page.start_button.config(text="Update Field Values")
                 main_page.stop_button.config(state=tk.NORMAL)
-
 
     def stop_field(self, cont):
         main_page = self.frames[MainPage]
         print("attempting to stop field...")
         instruments.send_voltage(0, 0, 0)
-        instruments.cage_power = "OFF" # this will make logging data stop
+        instruments.log_data = "OFF" # this will make logging data stop
         data.log_filename = "" # if cage is started again in current session, new log file will be created
-        data.log_filename = ""
         data.time = []
         data.x_req = []
         data.y_req = []
@@ -200,8 +226,9 @@ class CageApp(tk.Tk):
         data.x_mag_field_requested = []
         data.y_mag_field_requested = []
         data.z_mag_field_requested = []
-        data.plots_created = False # allow plots to be created next run through
+
         main_page.start_button.configure(text="Start Field") # Change "update" text to be start again
+        main_page.stop_button.configure(state="disabled")
 
 class MainPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -314,41 +341,41 @@ class MainPage(tk.Frame):
 
         self.field_or_voltage = tk.StringVar()
         field_text = "Enter Magnetic Field \n(Max {} microteslas)".format(max_field_value)
-        self.select_field = tk.Radiobutton(self.static_buttons_frame, text=field_text, variable=self.field_or_voltage, value="field")
+        self.select_field = tk.Radiobutton(self.static_buttons_frame, text=field_text, variable=self.field_or_voltage, value="field", command=self.update_typable_entries)
         self.select_field.grid(row=1, column=0, columnspan=2, sticky='nsew')
 
         voltage_text = "Enter Voltage \n(Max {} volts)".format(max_voltage_value)
-        self.select_voltage = tk.Radiobutton(self.static_buttons_frame, text=voltage_text, variable=self.field_or_voltage, value="voltage")
+        self.select_voltage = tk.Radiobutton(self.static_buttons_frame, text=voltage_text, variable=self.field_or_voltage, value="voltage", command=self.update_typable_entries)
         self.select_voltage.grid(row=1, column=2, columnspan=2, sticky='nsew')
 
         self.x_field_label = tk.Label(self.static_buttons_frame, text="x:", font=LARGE_FONT).grid(row=2, column=0, sticky='ns')
         self.x_field = tk.StringVar()
-        self.x_field_entry = tk.Entry(self.static_buttons_frame, validate='key', validatecommand=vcmd_field, textvariable=self.x_field, width=10)
+        self.x_field_entry = tk.Entry(self.static_buttons_frame, state=tk.DISABLED, validate='key', validatecommand=vcmd_field, textvariable=self.x_field, width=10)
         self.x_field_entry.grid(row=2, column=1)
 
         self.x_voltage_label = tk.Label(self.static_buttons_frame, text="x:", font=LARGE_FONT).grid(row=2, column=2)
         self.x_voltage = tk.StringVar()
-        self.x_voltage_entry = tk.Entry(self.static_buttons_frame, validate='key', validatecommand=vcmd_voltage, textvariable=self.x_voltage, width=10)
+        self.x_voltage_entry = tk.Entry(self.static_buttons_frame, state=tk.DISABLED, validate='key', validatecommand=vcmd_voltage, textvariable=self.x_voltage, width=10)
         self.x_voltage_entry.grid(row=2, column=3)
 
         self.y_field_label = tk.Label(self.static_buttons_frame, text="y:", font=LARGE_FONT).grid(row=3, column=0)
         self.y_field = tk.StringVar()
-        self.y_field_entry = tk.Entry(self.static_buttons_frame, validate='key', validatecommand=vcmd_field, textvariable=self.y_field, width=10)
+        self.y_field_entry = tk.Entry(self.static_buttons_frame, state=tk.DISABLED, validate='key', validatecommand=vcmd_field, textvariable=self.y_field, width=10)
         self.y_field_entry.grid(row=3, column=1)
 
         self.y_voltage_label = tk.Label(self.static_buttons_frame, text="y:", font=LARGE_FONT).grid(row=3, column=2)
         self.y_voltage = tk.StringVar()
-        self.y_voltage_entry = tk.Entry(self.static_buttons_frame, validate='key', validatecommand=vcmd_voltage, textvariable=self.y_voltage, width=10)
+        self.y_voltage_entry = tk.Entry(self.static_buttons_frame, state=tk.DISABLED, validate='key', validatecommand=vcmd_voltage, textvariable=self.y_voltage, width=10)
         self.y_voltage_entry.grid(row=3, column=3)
 
         self.z_field_label = tk.Label(self.static_buttons_frame, text="z:", font=LARGE_FONT).grid(row=4, column=0)
         self.z_field = tk.StringVar()
-        self.z_field_entry = tk.Entry(self.static_buttons_frame, validate='key', validatecommand=vcmd_field, textvariable=self.z_field, width=10)
+        self.z_field_entry = tk.Entry(self.static_buttons_frame, state=tk.DISABLED, validate='key', validatecommand=vcmd_field, textvariable=self.z_field, width=10)
         self.z_field_entry.grid(row=4, column=1)
 
         self.z_voltage_label = tk.Label(self.static_buttons_frame, text="z:", font=LARGE_FONT).grid(row=4, column=2)
         self.z_voltage = tk.StringVar()
-        self.z_voltage_entry = tk.Entry(self.static_buttons_frame, validate='key', validatecommand=vcmd_voltage, textvariable=self.z_voltage, width=10)
+        self.z_voltage_entry = tk.Entry(self.static_buttons_frame, state=tk.DISABLED, validate='key', validatecommand=vcmd_voltage, textvariable=self.z_voltage, width=10)
         self.z_voltage_entry.grid(row=4, column=3)
 
     def fill_dynamic_buttons_frame(self):
@@ -372,7 +399,27 @@ class MainPage(tk.Frame):
 
     def fill_plot_frame(self):
 
-        time = data.time
+        if data.plots_created == False:
+            # Create figure and initialize plots
+            self.fig, (self.power_supplies_plot, self.mag_field_plot) = plt.subplots(nrows=2, facecolor='grey')
+            self.power_supplies_plot = plt.subplot(211) # Power supplies plot
+            self.mag_field_plot = plt.subplot(212) # Magnetic field plot
+
+        self.update_plot_info() # split out for easy recreation when making new plots after hitting stop field
+
+        if data.plots_created == False:
+
+            # Add to frame
+            self.canvas = FigureCanvasTkAgg(self.fig, self.plots_frame)
+            self.canvas.show()
+            self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        data.plots_created = True
+        self.canvas.draw()
+
+    def update_plot_info(self):
+
+        self.time = data.time
 
         x_mag_field_actual = []
         y_mag_field_actual = []
@@ -382,8 +429,11 @@ class MainPage(tk.Frame):
         y_mag_field_requested = []
         z_mag_field_requested = []
 
-        # if a list doesn't have all inputs, they're all assumed to be zero; time will never be missing values
-        max_entries = len(time)
+        # if a list doesn't have all inputs, they're all assumed to be zero
+        max_entries = len(self.time)
+        if max_entries == 0:
+            max_entries = 1
+        if len(self.time) != max_entries: self.time = [0] * max_entries
         if len(data.x_out) != max_entries: data.x_out = [0]*max_entries
         if len(data.y_out) != max_entries: data.y_out = [0]*max_entries
         if len(data.z_out) != max_entries: data.z_out = [0]*max_entries
@@ -397,89 +447,89 @@ class MainPage(tk.Frame):
         if len(data.y_mag_field_requested) != max_entries: y_mag_field_requested = [0]*max_entries
         if len(data.z_mag_field_requested) != max_entries: z_mag_field_requested = [0]*max_entries
 
-        # get max and min values for power_supplies_plot and mag_field_plot
-        power_supplies_master_list = data.x_out + data.y_out + data.z_out + data.x_req + data.y_req + data.z_req
+        # get max and min values for power_supplies_plot and mag_field_plot (min/max values used for plot axes)
+        power_supplies_master_list = (data.x_out + data.y_out + data.z_out + data.x_req + data.y_req + data.z_req)
 
-        # get axes min and max values
-        try:
-            min_time = min(data.time)
-        except Exception as err:
-            print("could not get a min time for plot one yet | {}".format(err))
-            min_time = 0
-        try:
-            max_time = max(data.time)
-        except Exception as err:
-            print("could not get a max time for plot one yet | {}".format(err))
-            max_time = 1
-        try:
-            max_y_plot_one = max(power_supplies_master_list)
-        except Exception as err:
-            print("could not get a max y for plot one yet | {}".format(err))
-            max_y_plot_one = 1
-        try:
-            min_y_plot_one = min(power_supplies_master_list)
-        except Exception as err:
-            print("could not get a min y for plot one yet | {}".format(err))
-            min_y_plot_one = 0
-        mag_field_master_list = x_mag_field_actual + y_mag_field_actual + z_mag_field_actual + x_mag_field_requested + y_mag_field_requested + z_mag_field_requested
-        try:
-            max_y_plot_two = max(mag_field_master_list)
-        except Exception as err:
-            print("could not get a max y for plot two yet | {}".format(err))
-            max_y_plot_two = 1
-        try:
-            min_y_plot_two = min(mag_field_master_list)
-        except Exception as err:
-            print("could not get a min y for plot two yet | {}".format(err))
-            min_y_plot_two = 0
+        max_y_plot_one = 1.2*max(power_supplies_master_list)
+        if max_y_plot_one < 1: max_y_plot_one = 1
 
-        # Power supplies plot
-        if data.plots_created == False:
-            self.fig, (self.power_supplies_plot, self.mag_field_plot) = plt.subplots(nrows=2, facecolor='grey')
+        min_y_plot_one = min(power_supplies_master_list)
 
-        if data.plots_created == False:
-            self.power_supplies_plot = plt.subplot(211)
+        mag_field_master_list = (x_mag_field_actual + y_mag_field_actual + z_mag_field_actual +
+                                x_mag_field_requested + y_mag_field_requested + z_mag_field_requested)
 
-        self.power_supplies_plot.plot(time, data.x_out, 'r',
-                                 time, data.y_out, 'g',
-                                 time, data.z_out, 'b',
-                                 time, data.x_req, 'r--',
-                                 time, data.y_req, 'g--',
-                                 time, data.z_req, 'b--')
+        max_y_plot_two = 1.2*max(mag_field_master_list)
+        if max_y_plot_two < 1: max_y_plot_two = 1
 
-        plt.ylim(min_y_plot_one, max_y_plot_one)
+        min_y_plot_two = min(mag_field_master_list)
 
-        # Magnetic field plot
-        if data.plots_created == False:
-            self.mag_field_plot = plt.subplot(212)
+        self.power_supplies_plot.plot(self.time, data.x_out, 'r', label='x_ps_output')
+        self.power_supplies_plot.plot(self.time, data.x_req, 'r--', label='x_ps_requested')
+        self.power_supplies_plot.plot(self.time, data.y_out, 'g', label='y_ps_output')
+        self.power_supplies_plot.plot(self.time, data.y_req, 'g--', label='y_ps_requested')
+        self.power_supplies_plot.plot(self.time, data.z_out, 'b', label='z_ps_output')
+        self.power_supplies_plot.plot(self.time, data.z_req, 'b--', label='z_ps_requested')
 
-        self.mag_field_plot.plot(time, x_mag_field_actual, 'r',
-                             time, y_mag_field_actual, 'g',
-                             time, z_mag_field_actual, 'b',
-                             time, x_mag_field_requested, 'r--',
-                             time, y_mag_field_requested, 'g--',
-                             time, z_mag_field_requested, 'b--')
+        self.plot_1_axes = self.power_supplies_plot.axes
+        self.plot_1_axes.set_ylim(min_y_plot_one, max_y_plot_one)
 
-        plt.ylim([min_y_plot_two, max_y_plot_two])
+        self.mag_field_plot.plot(self.time, x_mag_field_actual, 'r', label='x_mag_field_actual')
+        self.mag_field_plot.plot(self.time, x_mag_field_requested, 'r--', label='x_mag_field_requested')
+        self.mag_field_plot.plot(self.time, y_mag_field_actual, 'g', label='y_mag_field_actual')
+        self.mag_field_plot.plot(self.time, y_mag_field_requested, 'g--', label='y_mag_field_requested')
+        self.mag_field_plot.plot(self.time, z_mag_field_actual, 'b', label='z_mag_field_actual')
+        self.mag_field_plot.plot(self.time, z_mag_field_requested, 'b--', label='z_mag_field_requested')
 
+        self.plot_2_axes = self.mag_field_plot.axes
+        self.plot_2_axes.set_ylim(min_y_plot_two, max_y_plot_two)
 
-        if data.plots_created == False:
-            self.power_supplies_plot.get_shared_x_axes().join(self.power_supplies_plot, self.mag_field_plot)
-            self.power_supplies_plot.set_xticklabels([])
+        self.power_supplies_plot.get_shared_x_axes().join(self.power_supplies_plot, self.mag_field_plot)
+        self.power_supplies_plot.set_xticklabels([])
+        self.power_supplies_plot.set_facecolor("grey")
+        self.mag_field_plot.set_facecolor("grey")
 
-            self.power_supplies_plot.set_facecolor("grey")
-            self.mag_field_plot.set_facecolor("grey")
+        if data.plot_titles == "None": # only need to do this once for the plots
+            self.power_supplies_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.00),
+                                            ncol=3, fancybox=True, prop={'size': 7})
+            self.power_supplies_plot.set_title("Voltage vs. Time")
+            self.power_supplies_plot.set_ylabel("Voltage (V)")
 
-            # Add to frame
-            self.canvas = FigureCanvasTkAgg(self.fig, self.plots_frame)
-            #self.canvas = tk.Canvas(self)
-            self.canvas.show()
-            self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+            self.mag_field_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0),
+                                       ncol=3, fancybox=True, prop={'size': 7})
+            self.mag_field_plot.set_title("Magnetic Field vs. Time")
+            self.mag_field_plot.set_ylabel("Magnetic Field (microteslas)")
 
-        data.plots_created = True
-        self.canvas.draw()
+            data.plot_titles = "Exist"
 
+    def update_typable_entries(self):
 
+        # only let user type values in selected option
+        field_or_voltage = self.field_or_voltage.get()
+        if field_or_voltage == "voltage":
+            self.x_voltage_entry.configure(state=tk.NORMAL)
+            self.y_voltage_entry.configure(state=tk.NORMAL)
+            self.z_voltage_entry.configure(state=tk.NORMAL)
+
+            self.x_field_entry.delete(0, 'end')
+            self.y_field_entry.delete(0, 'end')
+            self.z_field_entry.delete(0, 'end')
+
+            self.x_field_entry.configure(state=tk.DISABLED)
+            self.y_field_entry.configure(state=tk.DISABLED)
+            self.z_field_entry.configure(state=tk.DISABLED)
+
+        if field_or_voltage == "field":
+            self.x_field_entry.configure(state=tk.NORMAL)
+            self.y_field_entry.configure(state=tk.NORMAL)
+            self.z_field_entry.configure(state=tk.NORMAL)
+
+            self.x_voltage_entry.delete(0, 'end')
+            self.y_voltage_entry.delete(0, 'end')
+            self.z_voltage_entry.delete(0, 'end')
+
+            self.x_voltage_entry.configure(state=tk.DISABLED)
+            self.y_voltage_entry.configure(state=tk.DISABLED)
+            self.z_voltage_entry.configure(state=tk.DISABLED)
     
     # check that constant value entry can be interpreted as a float
     def validate_field(self, action, index, value_if_allowed,
@@ -532,10 +582,12 @@ class HelpPage(tk.Frame):
 
 def log_data():
     main_page = app.frames[MainPage]
-    if instruments.cage_power == "ON":
+
+    if instruments.log_data == "ON":
         today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         if data.log_filename == "":
             data.log_filename = today+"_HelmholtzCageSessionData.csv"
+            print("creating log file: {}".format(data.log_filename))
             with open(data.log_filename, 'a') as file:
                 writer = csv.writer(file, delimiter=',')
                 writer.writerow(['time','x_req', 'y_req', 'z_req', 'x_out', 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
@@ -543,18 +595,27 @@ def log_data():
             threading.Timer(update_log_time, log_data).start()
             writer = csv.writer(file, delimiter=',')
             time = int((datetime.datetime.now() - data.start_time).total_seconds())
+            print("logging data at {}".format(str(time)))
             #x_req, y_req, z_req = instruments.get_requested_voltage()
-            x_req, y_req, z_req = main_page.x_voltage.get(), main_page.y_voltage.get(), main_page.z_voltage.get()
             x_out, y_out, z_out = instruments.get_output_voltage()
             x_mag = 1 #***
             y_mag = 2
             z_mag = 3
-            writer.writerow([time,x_req,y_req,z_req,x_out,y_out,z_out,x_mag,y_mag,z_mag])
+            writer.writerow([time,
+                             data.active_x_voltage_requested,
+                             data.active_y_voltage_requested,
+                             data.active_z_voltage_requested,
+                             x_out,
+                             y_out,
+                             z_out,
+                             x_mag,
+                             y_mag,
+                             z_mag])
 
             data.time.append(time)
-            data.x_req.append(x_req)
-            data.y_req.append(y_req)
-            data.z_req.append(z_req)
+            data.x_req.append(data.active_x_voltage_requested)
+            data.y_req.append(data.active_y_voltage_requested)
+            data.z_req.append(data.active_z_voltage_requested)
             data.x_out.append(x_out)
             data.y_out.append(y_out)
             data.z_out.append(z_out)

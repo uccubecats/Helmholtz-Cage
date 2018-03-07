@@ -18,7 +18,8 @@ class Instruments():
     def make_connections(self): # ***
         # figure out how to see which power supply is which
         self.x, self.y, self.z, self.mag = 4*["No connection"]
-        self.cage_power = "ON"
+        self.log_data = "ON"
+        self.connections_checked = True
         try:
             connected_devices = rm.list_resources()
         except Exception as err:
@@ -127,7 +128,8 @@ class NameThis():
 
 if __name__ == "__main__":
     instruments = Instruments()
-    instruments.make_connections()
+    #instruments.make_connections()
     #print(instruments.x.write("VSET 70 MV"))
     #print(instruments.x.query("ERR?"))
     #print(power_supply.query("VSET?"))
+    rm.list_resources()
