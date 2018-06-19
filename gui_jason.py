@@ -20,7 +20,15 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 
 # OTHER CODE IMPORTS
-from connections import *
+try:
+    from connections import *
+except:
+    print("!-----------------------------------------------------------------------!")
+    print("Could not import the NI-VISA library. Please Visit:")
+    print("http://pyvisa.readthedocs.io/en/stable/getting_nivisa.html#getting-nivisa")
+    print("!-----------------------------------------------------------------------!")
+    raise
+    exit()
 
 # ------------------------------------------------------------------------------
 # CONSTANTS
