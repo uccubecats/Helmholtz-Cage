@@ -1,13 +1,28 @@
+<img src="http://static1.squarespace.com/static/56be17432b8dde53317647fc/t/571585e022482effba713a46/1492284284473/?format=1500w">
+
 # Helmholtz-Cage
 
-Likely need to use these:
+## Documentation
+> See the NOTES.md file
+
+## Description
+> Add Here
+
+## Installation
+> Add Here, including dependencies
+---
+>Everything below should not be in the README, they should be in requirements.txt and you should verify which you need and dont need, try using a virtual environment throught the `venv` module.
+## Likely need to use these:
+```
 pyserial==3.4
 serial==0.0.41
 PyVISA==1.8
 numpy==1.12.0
 matplotlib==2.0.0
+```
 
-Not sure / shouldn't need these:
+## Not sure / shouldn't need these:
+```
 appdirs==1.4.3
 belfrywidgets==1.0.3
 cx-Freeze==5.1.1
@@ -35,3 +50,4 @@ requests-file==1.4.1
 requests-ftp==0.3.1
 six==1.10.0
 sympy==1.1.1
+```
