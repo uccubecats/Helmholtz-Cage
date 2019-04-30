@@ -4,6 +4,8 @@
 
 # ------------------------------------------------------------------------------
 # PYTHON IMPORTS
+import time
+from threading import Thread
 import visa
 import re
 import numpy as np
@@ -104,6 +106,33 @@ def convert_fields_to_voltages(x_field, y_field, z_field, data_object):
 
 # ------------------------------------------------------------------------------
 # CLASSES
+class ReadLine:
+    """
+    pyserial object wrapper for reading line
+    source: https://github.com/pyserial/pyserial/issues/216
+    """
+    def __init__(self, s):
+        self.buf = bytearray()
+        self.s = s
+
+    def readline(self):
+        i = self.buf.find(b"\n")
+        if i >= 0:
+            r = self.buf[:i + 1]
+            self.buf = self.buf[i + 1:]
+            return r
+        while True:
+            i = max(1, min(2048, self.s.in_waiting))
+            data = self.s.read(i)
+            i = data.find(b"\n")
+            if i >= 0:
+                r = self.buf + data[:i + 1]
+                self.buf[0:] = data[i + 1:]
+                return r
+            else:
+                self.buf.extend(data)
+
+
 class Instruments:
 
     def __init__(self):
@@ -158,7 +187,15 @@ class Instruments:
 
         # connect the magnetometer using com5
         try:
-            self.mag = serial.Serial('COM5', 9600, timeout=0.1)
+            self.mag = serial.Serial('COM5', baudrate=9600, timeout=0.1,
+                                     xonxoff=0, rtscts=0,
+                                     interCharTimeout=None)
+            #self.mag = ReadLine(self.mag2)
+            # test data can be read from connection
+            field_string = self.mag.readline().decode("utf-8")
+
+            #Thread(target=self.read_magnetometer(), args=(self.mag,)).start()
+
         except Exception as err:
             print("No connection established to magnetometer | {}".format(err))
             self.mag = "No connection"
@@ -193,54 +230,98 @@ class Instruments:
         pass
         # print("field stopped)
 
+    def read_magnetometer(self):
+
+        buffer_string = ''
+        while True:
+            thing = self.mag.read(self.mag.read(1024)).decode("utf-8")
+            print("thing is: {}".format(thing))
+            buffer_string = buffer_string + thing
+            if '\n' in buffer_string:
+                pass
+            else:
+                buffer_string += self.mag.read(1024).decode("utf-8")
+                lines = buffer_string.split('\n')  # Guaranteed to have at least 2 entries
+                self.mag.last_received = lines[-2]
+                # If the Arduino sends lots of empty lines, you'll lose the
+                # last filled line, so you could make the above statement conditional
+                # like so: if lines[-2]: last_received = lines[-2]
+                buffer_string = lines[-1]
+
     def get_magnetometer_field(self):
         valid_characters = ["0", "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", ".", "-"]
-        field_string = self.mag.readline().decode("utf-8")
-        print("reading {} from magnetometer".format(field_string))
-        x_string, y_string, z_string = "", "", ""
-        currently_reading = None
-        for character in field_string:
 
-            # if currently reading for a float, add character if its valid
-            if (currently_reading == "X") and (character in valid_characters):
-                x_string += character
-            if (currently_reading == "Y") and (character in valid_characters):
-                y_string += character
-            if (currently_reading == "Z") and (character in valid_characters):
-                z_string += character
-
-            # see if its time to change what is being read
-            if character == "X":
-                currently_reading = "X"
-            elif character == "Y":
-                currently_reading = "Y"
-            elif character == "Z":
-                currently_reading = "Z"
-
-        # convert the string chunks to floats
-        try:
-            x_field = float(x_string)
-        except Exception as err:
-            x_field = None
-            print("Could not determine x field from string {} | {}"
-                  .format(x_string, err))
+        '''
+        The below 5 lines need to remain as is, here's what's happening:
+        
+        the input buffer is all the lines of data written out from magnetometer, 
+        this grows really fast
+        
+        It is reset, but this could happen in the middle of a line
+        
+        time.sleep allows the input buffer to populate with multiple 
+        '''
 
         try:
-            y_field = float(y_string)
-        except Exception as err:
-            y_field = None
-            print("Could not determine y field from string {} | {}"
-                  .format(y_string, err))
+            self.mag.reset_input_buffer()
 
-        try:
-            z_field = float(z_string)
-        except Exception as err:
-            z_field = None
-            print("Could not determine z field from string {} | {}"
-                  .format(z_string, err))
+            time.sleep(0.001)
+            field_string = self.mag.readline().decode("utf-8")
 
-        return x_field, y_field, z_field
+            print("reading {} from magnetometer".format(field_string))
+
+            x_string, y_string, z_string = "", "", ""
+            currently_reading = None
+
+            with open("temp_mag_field_raw.txt", "a") as f:
+                f.write(field_string + "\n")
+                print("read in field data")
+
+            for character in field_string:
+
+                # if currently reading for a float, add character if its valid
+                if (currently_reading == "X") and (character in valid_characters):
+                    x_string += character
+                if (currently_reading == "Y") and (character in valid_characters):
+                    y_string += character
+                if (currently_reading == "Z") and (character in valid_characters):
+                    z_string += character
+
+                # see if its time to change what is being read
+                if character == "X":
+                    currently_reading = "X"
+                elif character == "Y":
+                    currently_reading = "Y"
+                elif character == "Z":
+                    currently_reading = "Z"
+
+            # convert the string chunks to floats
+            try:
+                x_field = float(x_string)
+            except Exception as err:
+                x_field = None
+                print("Could not determine x field from string {} | {}"
+                      .format(x_string, err))
+
+            try:
+                y_field = float(y_string)
+            except Exception as err:
+                y_field = None
+                print("Could not determine y field from string {} | {}"
+                      .format(y_string, err))
+
+            try:
+                z_field = float(z_string)
+            except Exception as err:
+                z_field = None
+                print("Could not determine z field from string {} | {}"
+                      .format(z_string, err))
+
+            return x_field, y_field, z_field
+        except AttributeError:
+            return 999, 999, 999  # so that it is not confused with 0.0
+            # can not reset magnetometer input buffer if not connected
 
     def get_requested_voltage(self):
         try:

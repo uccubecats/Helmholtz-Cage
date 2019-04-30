@@ -29,7 +29,7 @@ logging.basicConfig(filename='helmholtz-gui.log', level=logging.DEBUG)
 # ------------------------------------------------------------------------------
 # CONSTANTS
 max_field_value = 20
-max_voltage_value = 5
+max_voltage_value = 20
 update_plot_time = 1  # seconds
 update_log_time = 5  # seconds
 update_calibrate_time = 5  # seconds
@@ -73,7 +73,10 @@ def log_session_data():
             # x_req, y_req, z_req = instruments.get_requested_voltage()
 
             x_out, y_out, z_out = instruments.get_output_voltage()
+            # TODO: add below line back in
             x_mag, y_mag, z_mag = instruments.get_magnetometer_field()
+            #x_mag, y_mag, z_mag = 100, 100, 100
+
             if not x_mag:
                 try:
                     x_mag = data.x_mag_field_actual[-1]
@@ -211,6 +214,7 @@ def log_calibration_data():
                         "magnetic field".format(data.calibration_log_filename))
             # allows for a new calibration file to be created again? TODO: test
             data.calibration_log_filename = ""
+            data.stop_calibration = True
             logger.info("data.calibrating_now: {} | data.stop_calibration: {}"
                         .format(data.calibrating_now, data.stop_calibration))
             logger.info("in log calibration: data.stop_calibration is {}"
@@ -595,8 +599,12 @@ class MainPage(tk.Frame):
                                 pady=5, sticky='nsew')
 
         self.field_or_voltage = tk.StringVar()
-        field_text = "Enter Magnetic Field \n(Max {} microteslas)"\
+
+        # TODO: update field text to find max field for max voltage
+        field_text = "Enter Magnetic Field \n(Max {} Gauss)"\
                      .format(max_field_value)
+        field_text = "Enter Magnetic Field \n (Gauss)" \
+            .format(max_field_value)
         self.select_field = \
             tk.Radiobutton(self.static_buttons_frame,
                            text=field_text, variable=self.field_or_voltage,
@@ -1007,7 +1015,7 @@ class MainPage(tk.Frame):
         self.power_supplies_plot.set_ylabel("Voltage (V)")
 
         self.mag_field_plot.set_title("Magnetic Field vs. Time")
-        self.mag_field_plot.set_ylabel("Magnetic Field (microteslas)")
+        self.mag_field_plot.set_ylabel("Magnetic Field (Gauss)")
 
         # create plot titles (only needs to be ran once)
         if data.plot_titles == "None": # only need to do this once for the plots
@@ -1266,7 +1274,7 @@ class MainPage(tk.Frame):
             logger.info("Check connections before starting")
         else:
             # connections are checked, start calibration if allowed
-            if  not data.calibrating_now:
+            if not data.calibrating_now:
                 # clear plots if information is on them
                 main_page.power_supplies_plot.cla()
                 main_page.mag_field_plot.cla()
@@ -1337,7 +1345,7 @@ class MainPage(tk.Frame):
                 data.current_value = 0
                 logger.info("stopping calibration")
                 self.calibrate_cage_update_buttons()
-                logger.info("should not need this)")
+                logger.info("should not need this")
 
             if not data.stop_calibration:
                 if not data.calibrating_now:
