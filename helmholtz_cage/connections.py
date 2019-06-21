@@ -2,6 +2,8 @@
 # Last modified: 180114
 # *** denotes unfinished section
 
+#TODO: this may be broken, need to run through it and check.
+
 # ------------------------------------------------------------------------------
 # PYTHON IMPORTS
 import time

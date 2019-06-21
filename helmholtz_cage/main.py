@@ -1,46 +1,53 @@
-# Written by Jason Roll, contact: rolljn@mail.uc.edu, 513-939-9800
-# Last modified: 180923
-# Don't try to edit this in idle. Use pycharm or other smart python interface
-# ------------------------------------------------------------------------------
-# PYTHON IMPORTS
-import tkinter as tk
-import os
-import glob
-from os import listdir
-from os.path import isfile, join
-from tkinter import filedialog
-import threading
+#!/usr/bin/env python
+
+"""
+Main GUI script for the UC Helmholtz Cage
+
+Copyright 2018-2019 UC CubeCats
+All rights reserved. See LICENSE file at:
+https://github.com/uccubecats/Helmholtz-Cage/LICENSE
+Additional copyright may be held by others, as reflected in the commit history.
+
+Originally written by Jason Roll (rolljn@mail.uc.edu)
+"""
+
+
 import datetime
 import csv
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import glob
+import logging
+import os
+from os import listdir
+from os.path import isfile, join
+import threading
+from tkinter import filedialog
+import tkinter as tk
 
-# OTHER CODE IMPORTS
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+
 from connections import *
 
-# set up logging
-import logging
-logging.getLogger("visa").setLevel(logging.WARNING)
-logger = logging.getLogger("gui_jason.py")
 
+# Setup logging
+logging.getLogger("visa").setLevel(logging.WARNING)
+logger = logging.getLogger("main.py")
 logging.basicConfig(filename='helmholtz-gui.log', level=logging.DEBUG)
 
-
-# ------------------------------------------------------------------------------
-# CONSTANTS
+# System constants
 max_field_value = 20
 max_voltage_value = 20
-update_plot_time = 1  # seconds
-update_log_time = 5  # seconds
-update_calibrate_time = 5  # seconds
+update_plot_time = 1  # secs
+update_log_time = 5  # secs
+update_calibrate_time = 5  # secs
 LARGE_FONT = ("Verdana", 12)
 MEDIUM_FONT = ("Verdana", 9)
 
-# ------------------------------------------------------------------------------
-# FUNCTIONS
-
 
 def log_session_data():
+    """
+    Create a session log file.
+    """
     main_page = app.frames[MainPage]
     print("instruments.log_data is {}".format(instruments.log_data))
 
@@ -118,9 +125,10 @@ def log_session_data():
 
             main_page.fill_plot_frame()
 
-
 def log_calibration_data():
-    # this is used when creating a calibration file from a loaded template file
+    """
+    Creates a calibration file from a loaded template file.
+    """
     main_page = app.frames[MainPage]
 
     if instruments.log_data == "ON":
@@ -151,27 +159,24 @@ def log_calibration_data():
             time = int((datetime.datetime.now() - data.start_time)
                        .total_seconds())
 
-            # check if it is time to get new values from template yet
+            # Check if it is time to get new values from template yet
             logger.info("time calibrating is: {}".format(time))
             logger.info("data.current_value is {}".format(data.current_value))
             logger.info("update_calibrate_time * data.current_value is: {}".
                         format(data.current_value * update_calibrate_time))
-
+                        
+            # Get current calibration voltages for whichever increment
             if time >= (data.current_value*update_calibrate_time):
-
                 try:
-                    # get current calibration voltages for whichever increment
                     data.cur_cal_x = float(data.template_voltages_x
                                            [data.current_value])
                     data.cur_cal_y = float(data.template_voltages_y
                                            [data.current_value])
                     data.cur_cal_z = float(data.template_voltages_z
                                            [data.current_value])
-
                 except Exception as err:
                     logger.info("Could not get x,y,z voltages to send, likely "
                                 "finished calibrating | {}".format(err))
-
                     data.cur_cal_x, data.cur_cal_y, data.cur_cal_z = 0, 0, 0
                 instruments.send_voltage(data.cur_cal_x, data.cur_cal_y,
                                          data.cur_cal_z)
@@ -188,12 +193,12 @@ def log_calibration_data():
             y_mag = 2
             z_mag = 3
 
-            # update values saved to calibration file
+            # Update values saved to calibration file
             writer.writerow([time, data.cur_cal_x, data.cur_cal_y,
                              data.cur_cal_z, x_out, y_out, z_out,
                              x_mag, y_mag, z_mag])
 
-            # update lists that will be plotted
+            # Update lists that will be plotted
             data.time.append(time)
             data.x_req.append(data.cur_cal_x)
             data.y_req.append(data.cur_cal_y)
@@ -202,17 +207,17 @@ def log_calibration_data():
             data.y_out.append(y_out)
             data.z_out.append(z_out)
 
-        # update plot if calibration is still going on
+        # Update plot if calibration is still going on
         if not data.stop_calibration:
             main_page.fill_plot_frame()
 
-        # stop calibration if all template voltages have been used
+        # Stop calibration if all template voltages have been used
         if data.current_value == len(data.template_voltages_x):
             instruments.log_data = "OFF"
             logger.info("calibration file {} created - load it in before "
                         "doing a dynamic test or requesting based on "
                         "magnetic field".format(data.calibration_log_filename))
-            # allows for a new calibration file to be created again? TODO: test
+            # Allows for a new calibration file to be created again? TODO: test
             data.calibration_log_filename = ""
             data.stop_calibration = True
             logger.info("data.calibrating_now: {} | data.stop_calibration: {}"
@@ -223,53 +228,44 @@ def log_calibration_data():
             logger.info("stopping calibration")
             main_page.calibrate_cage_update_buttons()
 
-# ------------------------------------------------------------------------------
-# CLASSES
 
-
-# where opened file data will be stored
 class Data:
-
+    """
+    An object class for storing data from an opened file.
+    """
+    
     def __init__(self):
 
-        # --- plot related data ---
-        # flag variable so plots are only created once
-        self.plots_created = False
-        # flag variable so titles are only added the first time data is logged
-        self.plot_titles = ""
+        # Plot data
+        self.plots_created = False # flag variable so plots are only created once
+        self.plot_titles = "" # flag variable so titles are only added the first time data is logged
 
-        # --- button clicking related data ---
-        # prevent buttons from being used when the cage is in a certain mode
+        # Button data
         self.cage_on = False
         self.cage_calibrating = False
         self.cage_in_dynamic = False
 
-        # --- template related data ---
+        # Template data
         self.template_file = "none found"
-        # voltages loaded in from template file to send to cage to calibrate
         self.template_voltages_x = []
         self.template_voltages_y = []
         self.template_voltages_z = []
 
-        # --- calibration related data ---
-        # used when creation a new calibration file from template file
+        # Calibration data (used when creation a new calibration file from template file)
         self.calibrating_now = False
         self.stop_calibration = False
         self.calibration_log_filename = ""
         self.calibration_file = "none found"
-        # not needed for anything but good to keep track of
-        self.calibration_time = []
-        # the voltages that were used to get a magnetic field
-        self.calibration_voltages_x = []
+        self.calibration_time = []# not needed for anything but good to keep track of
+        self.calibration_voltages_x = [] # Voltages used to get a magnetic field
         self.calibration_voltages_y = []
         self.calibration_voltages_z = []
-        # the magnetic fields that were obtained by the (x,y,z) voltages
-        self.calibration_mag_field_x = []
+        self.calibration_mag_field_x = [] # Magnetic fields obtained by the (x,y,z) voltages
         self.calibration_mag_field_y = []
         self.calibration_mag_field_z = []
         self.current_value = 0
 
-        # --- logging data ---
+        # Logging data
         self.session_log_filename = ""
         self.start_time = None
         self.time = []
@@ -291,22 +287,27 @@ class Data:
 
 
 class CageApp(tk.Tk):
+    """
+    An object class for main Helmholtz Cage application.
+    """
+    
     def __init__(self, *args, **kwargs):
-        # initialize frame
+        
+        # Initialize frame
         tk.Tk.__init__(self, *args, **kwargs)
 
-        # title info
+        # Add title info
         self.title = "Helmholtz Cage"
         tk.Tk.wm_title(self, self.title)
         # tk.Tk.iconbitmap(self, default="icon.ico") #*** add ico file for cage
 
-        # make frame expand to window
+        # Expand frame to window
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        # frames are laid ontop of each other, startPage shown first
+        # Frames are laid ontop of each other, startPage shown first
         self.frames = {}
         for Frame in (MainPage, HelpPage):
             frame = Frame(container, self)
@@ -316,24 +317,31 @@ class CageApp(tk.Tk):
             frame.rowconfigure(0, weight=1)
         self.show_frame(MainPage)
 
-    # call this to switch frames
     def show_frame(self, cont):
+        """
+        Function to switch frames.
+        """
         frame = self.frames[cont]
         frame.tkraise()
 
 
 class MainPage(tk.Frame):
+    """
+    An object class for main frame of the Helmholtz Cage application.
+    """
+    
     def __init__(self, parent, controller):
+        
         tk.Frame.__init__(self, parent)
 
-        # the controller allows MainPage to access things from CageApp class
+        # Controller allows MainPage to access things from CageApp class
         self.controller = controller
 
-        # main container to hold all subframes
+        # Create container for all the subframes on the GUI
         container = tk.Frame(self, bg="black")
         container.grid(sticky="nsew")
 
-        # subframes for MainPage
+        # Create subframes for main frame
         self.title_frame = tk.Frame(container, bg="gray", height=50,
                                     highlightbackground="black",
                                     highlightthickness=2)
@@ -359,7 +367,7 @@ class MainPage(tk.Frame):
                                     highlightbackground="black",
                                     highlightthickness=4)
 
-        # position of subframes
+        # Position subframes
         self.title_frame.grid(row=0, sticky="ew")
         self.connections_frame.grid(row=1, sticky="nsew")
         self.calibrate_frame.grid(row=2, sticky="nsew")
@@ -369,11 +377,11 @@ class MainPage(tk.Frame):
         self.help_frame.grid(row=6, sticky="nsew")
         self.plots_frame.grid(row=0, column=1, sticky="nsew", rowspan=7)
 
-        # set weight for expansion
+        # Set weight for expansion
         [container.rowconfigure(r, weight=1) for r in range(1, 5)]
         container.columnconfigure(1, weight=1)
 
-        # Initialize class attributes to follow stupid PEP8 guidelines..
+        # Initialize class attributes
         self.connections_label = None
         self.unit_label = None
         self.status_label = None
@@ -406,41 +414,35 @@ class MainPage(tk.Frame):
         self.field_or_voltage = None
         self.select_field = None
         self.select_voltage = None
-
         self.x_field_label = None
         self.x_field = None
         self.x_field_entry = None
         self.x_voltage_label = None
         self.x_voltage = None
         self.x_voltage_entry = None
-
         self.y_field_label = None
         self.y_field = None
         self.y_field_entry = None
         self.y_voltage_label = None
         self.y_voltage = None
         self.y_voltage_entry = None
-
         self.z_field_label = None
         self.z_field = None
         self.z_field_entry = None
         self.z_voltage_label = None
         self.z_voltage = None
         self.z_voltage_entry = None
-
         self.select_dynamic = None
         self.open_dynamic_csv_button = None
-
         self.start_button = None
         self.stop_button = None
-
         self.fig = None
         self.power_supplies_plot = None
         self.mag_field_plot = None
         self.power_supplies_plot = None
         self.canvas = None
 
-        # Fill frames functions (organizational purposes)
+        # Fill in the subframes (function calls)
         self.fill_title_frame()
         self.fill_calibrate_frame()
         self.fill_connections_frame()
@@ -450,66 +452,79 @@ class MainPage(tk.Frame):
         self.fill_help_frame()
         self.fill_plot_frame()
 
-        # --- frame widget creation / organization in all "fill" attributes ---
     def fill_title_frame(self):
-
+        """
+        Fill in the title subframe.
+        """
         self.label_title = tk.Label(self.title_frame, text="Helmholtz Cage",
                                     font=LARGE_FONT)
         self.label_title.grid(row=0, column=0)
 
     def fill_connections_frame(self):
-
+        """
+        Fill in connections subframe.
+        """
+        
+        # Title bars
         self.connections_label = tk.Label(self.connections_frame,
                                           text="Connections", font=LARGE_FONT)
         self.connections_label.grid(row=0, column=0, columnspan=2,
                                     pady=5, sticky='nsew')
-
+                                    
         self.unit_label = tk.Label(self.connections_frame,
                                    text="Unit", font=LARGE_FONT)
         self.unit_label.grid(row=1, column=0)
-
+        
         self.status_label = tk.Label(self.connections_frame,
                                      text="Status", font=LARGE_FONT)
         self.status_label.grid(row=1, column=1)
-
+        
+        # X-Axis power supply
         self.x_ps_status = tk.StringVar()
         self.x_ps_label = tk.Label(self.connections_frame,
                                    text="X Power Supply")
         self.x_ps_label.grid(row=2, column=0)
-
+        
         self.x_ps_status_entry = tk.Entry(self.connections_frame,
                                           textvariable=self.x_ps_status)
         self.x_ps_status_entry.insert(0, "Disconnected")
         self.x_ps_status_entry.configure(state="readonly")
         self.x_ps_status_entry.grid(row=2, column=1)
 
+        # Y-Axis power supply
         self.y_ps_status = tk.StringVar()
         self.y_ps_label = tk.Label(self.connections_frame,
                                    text="Y Power Supply").grid(row=3, column=0)
+        
         self.y_ps_status_entry = tk.Entry(self.connections_frame,
                                           textvariable=self.y_ps_status)
         self.y_ps_status_entry.insert(0, "Disconnected")
         self.y_ps_status_entry.configure(state="readonly")
         self.y_ps_status_entry.grid(row=3, column=1)
 
+        # Z-Axis power supply
         self.z_ps_status = tk.StringVar()
         self.z_ps_label = tk.Label(self.connections_frame,
                                    text="Z Power Supply").grid(row=4, column=0)
+                                   
         self.z_ps_status_entry = tk.Entry(self.connections_frame,
                                           textvariable=self.z_ps_status)
         self.z_ps_status_entry.insert(0, "Disconnected")
         self.z_ps_status_entry.configure(state="readonly")
         self.z_ps_status_entry.grid(row=4, column=1)
 
+        # Truth Magnetometer
         self.mag_status = tk.StringVar()
         self.mag_label = tk.Label(self.connections_frame,
                                   text="Magnetometer").grid(row=5, column=0)
+                                  
         self.mag_status_entry = tk.Entry(self.connections_frame,
                                          textvariable=self.mag_status)
         self.mag_status_entry.insert(0, "Disconnected")
         self.mag_status_entry.configure(state="readonly")
         self.mag_status_entry.grid(row=5, column=1)
 
+        # Refresh connections button
         self.refresh_connections_button = \
             tk.Button(self.connections_frame,
                       text="Check Connections",
@@ -517,64 +532,69 @@ class MainPage(tk.Frame):
         self.refresh_connections_button.grid(row=6, column=0, columnspan=2)
 
     def fill_calibrate_frame(self):
+        """
+        Fill in calibration subframe.
+        """
+        
+        # Relevant functions
         self.find_template_file()
         self.find_calibration_file()
-
+        
+        # Title bar
         self.calibration_label = \
             tk.Label(self.calibrate_frame, text="Calibration", font=LARGE_FONT)
         self.calibration_label.grid(row=0, column=0, columnspan=3,
                                     pady=5, sticky='nsew')
 
-        # find / display template file
+        # Template File
         self.template_file_label = \
             tk.Label(self.calibrate_frame, text="Cal. Template file:")
         self.template_file_label.grid(row=1, column=0)
 
         self.template_file_status_text = tk.StringVar()
-
         self.template_file_entry = \
             tk.Entry(self.calibrate_frame,
                      textvariable=self.template_file_status_text, width=10)
         self.template_file_entry.insert(0, data.template_file)
         self.template_file_entry.configure(state="readonly")
         self.template_file_entry.grid(row=1, column=1)
-
+        
         self.change_template_file_button = \
             tk.Button(self.calibrate_frame, text='select new',
                       command=lambda: self.change_template_file())
         self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
 
-        # find / display calibration file
+        # Calibration File 
         self.calibration_file_label = \
             tk.Label(self.calibrate_frame, text="Calibration file:")
         self.calibration_file_label.grid(row=2, column=0)
-
+        
         self.calibration_file_status_text = tk.StringVar()
-
         self.calibration_file_entry = \
             tk.Entry(self.calibrate_frame,
                      textvariable=self.calibration_file_status_text, width=10)
         self.calibration_file_entry.insert(0, data.calibration_file)
         self.calibration_file_entry.configure(state="readonly")
         self.calibration_file_entry.grid(row=2, column=1)
-
+        
         self.change_calibration_file_button = \
             tk.Button(self.calibrate_frame, text='select new',
                       command=lambda: self.change_calibration_file())
         self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
-
+        
+        # Create calibration file button
         self.calibrate_button = \
             tk.Button(self.calibrate_frame,
                       text='Create calibration file with template file',
                       command=lambda: self.calibrate_cage())
         self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
+        # Handle exceptions
         if data.template_file is not "none found":
             try:
                 self.load_template_file()
             except Exception as err:
                 print("Couldn't load template file | {}".format(err))
-
         if data.calibration_file is not "none found":
             try:
                 self.load_calibration_file()
@@ -582,13 +602,17 @@ class MainPage(tk.Frame):
                 print("Couldn't load calibration file | {}".format(err))
 
     def fill_static_buttons_frame(self, parent):
+        """
+        Fill in static-test subframe.
+        """
 
-        # used to validate that entries are floats
+        # Validate entry data type (must be float)
         vcmd_field = (parent.register(self.validate_field),
                       '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         vcmd_voltage = (parent.register(self.validate_voltage),
                         '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
 
+        # Title Bar (with "radiobutton")
         self.static_or_dynamic = tk.StringVar()
         self.select_static = \
             tk.Radiobutton(self.static_buttons_frame,
@@ -598,9 +622,10 @@ class MainPage(tk.Frame):
         self.select_static.grid(row=0, column=0, columnspan=4,
                                 pady=5, sticky='nsew')
 
-        self.field_or_voltage = tk.StringVar()
-
+        # Field strength or voltage set bar
         # TODO: update field text to find max field for max voltage
+        self.field_or_voltage = tk.StringVar()
+        
         field_text = "Enter Magnetic Field \n(Max {} Gauss)"\
                      .format(max_field_value)
         field_text = "Enter Magnetic Field \n (Gauss)" \
@@ -619,6 +644,7 @@ class MainPage(tk.Frame):
                            value="voltage", command=self.update_typable_entries)
         self.select_voltage.grid(row=1, column=2, columnspan=2, sticky='nsew')
 
+        # X-Axis label/inputs
         self.x_field_label = \
             tk.Label(self.static_buttons_frame,
                      text="x:", font=LARGE_FONT).grid(row=2, column=0,
@@ -641,7 +667,8 @@ class MainPage(tk.Frame):
                      validatecommand=vcmd_voltage,
                      textvariable=self.x_voltage, width=10)
         self.x_voltage_entry.grid(row=2, column=3)
-
+        
+        # Y-Axis label/inputs
         self.y_field_label = \
             tk.Label(self.static_buttons_frame,
                      text="y:", font=LARGE_FONT).grid(row=3, column=0)
@@ -663,7 +690,8 @@ class MainPage(tk.Frame):
                      validatecommand=vcmd_voltage,
                      textvariable=self.y_voltage, width=10)
         self.y_voltage_entry.grid(row=3, column=3)
-
+        
+        # Z-Axis label/inputs
         self.z_field_label = \
             tk.Label(self.static_buttons_frame,
                      text="z:", font=LARGE_FONT).grid(row=4, column=0)
@@ -687,14 +715,19 @@ class MainPage(tk.Frame):
         self.z_voltage_entry.grid(row=4, column=3)
 
     def fill_dynamic_buttons_frame(self):
-
+        """
+        Fill in dynamic-test subframe.
+        """
+        
+        # Title bar (with "radiobutton")
         self.select_dynamic = tk.Radiobutton(self.dynamic_buttons_frame,
                                              text="Dynamic Test: ",
                                              variable=self.static_or_dynamic,
                                              value="dynamic", font=LARGE_FONT)
         self.select_dynamic.grid(row=0, column=0, columnspan=4,
                                  pady=5, sticky='nsew')
-
+        
+        # Load dynamic test button
         self.open_dynamic_csv_button = \
             tk.Button(self.dynamic_buttons_frame,
                       text='Load Dynamic Field CSV File',
@@ -702,12 +735,17 @@ class MainPage(tk.Frame):
         self.open_dynamic_csv_button.grid(row=1, column=0, sticky='nsew')
 
     def fill_main_buttons_frame(self):
-
+        """
+        Fill in main functions subframe.
+        """
+        
+        # Start cage button
         self.start_button = \
             tk.Button(self.main_buttons_frame,
                       text='Start Cage', command=lambda: self.start_cage())
         self.start_button.grid(row=0, column=0, sticky='nsew')
-
+        
+        # Stop cage button
         self.stop_button = \
             tk.Button(self.main_buttons_frame,
                       text='Stop Cage', state=tk.DISABLED,
@@ -715,49 +753,57 @@ class MainPage(tk.Frame):
         self.stop_button.grid(row=0, column=1, sticky='nsew')
 
     def fill_help_frame(self):
+        """
+        Fill in help menu frame (TODO).
+        """
         pass
 
     def fill_plot_frame(self):
-
+        """
+        Fill in the main plot subframe.
+        """
         print("filling plot frame...")
+        
+        # Create figure and initialize plots
         if not data.plots_created:
-            # Create figure and initialize plots
             self.fig, (self.power_supplies_plot, self.mag_field_plot) = \
                 plt.subplots(nrows=2, facecolor='grey')
             self.power_supplies_plot = plt.subplot(211) # Power supplies plot
             self.mag_field_plot = plt.subplot(212) # Magnetic field plot
 
-        # separated for easy recreation when making new plots after hitting stop
+        # Separated for easy recreation when making new plots after hitting stop
         self.update_plot_info()
 
+        # Add to frame
         if not data.plots_created:
-
-            # Add to frame
             self.canvas = FigureCanvasTkAgg(self.fig, self.plots_frame)
             self.canvas.show()
             self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH,
                                              expand=True)
-
         data.plots_created = True
         self.canvas.draw()
 
-    # --- operational functions for MainPage below ---
     def refresh_connections(self):
+        """ 
+        Refresh the connections to the connected instruments (power supplies,
+        magnetometer, etc.). Hooked up to the "Check Connenctions" button.
+        """
+        
         main_page = self.controller.frames[MainPage]
 
-        # allow the entry fields to be changed
+        # Allow the entry fields to be changed
         main_page.x_ps_status_entry.configure(state=tk.NORMAL)
         main_page.y_ps_status_entry.configure(state=tk.NORMAL)
         main_page.z_ps_status_entry.configure(state=tk.NORMAL)
         main_page.mag_status_entry.configure(state=tk.NORMAL)
 
-        # must be done in try/except to set text back to readonly
+        # Must be done in try/except to set text back to readonly
         try:
             instruments.make_connections()
         except Exception as err:
             print("Could not connect instruments | {}".format(err))
 
-        # for applicable connections, delete the entry and update it
+        # For applicable connections, delete the entry and update it
         if not (instruments.x == "No connection"):
             main_page.x_ps_status_entry.delete(0, tk.END)
             main_page.x_ps_status_entry.insert(tk.END, "Connected")
@@ -774,20 +820,24 @@ class MainPage(tk.Frame):
             main_page.mag_status_entry.delete(0, tk.END)
             main_page.mag_status_entry.insert(tk.END, "Connected")
 
-        # set the entry fields back to read only ***not working??
+        # FIXME: Set the entry fields back to read only
         main_page.x_ps_status_entry.configure(state="readonly")
         main_page.y_ps_status_entry.configure(state="readonly")
         main_page.z_ps_status_entry.configure(state="readonly")
         main_page.mag_status_entry.configure(state="readonly")
 
-    # serves as both start_cage and update_cage
     def start_cage(self):
-        print("starting the cage")
-
+        """
+        Start the Helmholtz Cage. Can also be used to update the cage 
+        print("starting the cage"). Hooked up to the "Start Cage" button.
+        """
+        
+        # Get test options
         main_page = self.controller.frames[MainPage]
         static_or_dynamic = main_page.static_or_dynamic.get()
         field_or_voltage = main_page.field_or_voltage.get()
 
+        # Startup static test
         if static_or_dynamic == "static":
             if field_or_voltage == "voltage":
                 print("attempting to send specified voltages...")
@@ -837,7 +887,8 @@ class MainPage(tk.Frame):
                                        data.active_y_mag_field_requested,
                                        data.active_z_mag_field_requested,
                                        data)
-
+        
+        # Ensure connections are updated and then start tracking plots
         if not hasattr(instruments, "connections_checked"):
             print("Check connections before starting")
         else:
@@ -860,17 +911,23 @@ class MainPage(tk.Frame):
 
                 data.start_time = datetime.datetime.now()
 
-                # start recording data if logging hasn't already started
+                # Start recording data if logging hasn't already started
                 log_session_data()
 
                 self.start_cage_update_buttons()
 
     def start_cage_update_buttons(self):
+        """
+        Update the status of buttons after the cage has started.
+        """
+        
         main_page = self.controller.frames[MainPage]
-
+        
+        # Change buttons to update and stop
         main_page.start_button.config(text="Update Cage Values")
         main_page.stop_button.config(state=tk.NORMAL)
-
+        
+        # Disable invalid button choices during test
         main_page.refresh_connections_button.config(state=tk.DISABLED)
         main_page.change_template_file_button.config(state=tk.DISABLED)
         main_page.change_calibration_file_button.config(state=tk.DISABLED)
@@ -878,10 +935,16 @@ class MainPage(tk.Frame):
         main_page.open_dynamic_csv_button.config(state=tk.DISABLED)
 
     def stop_cage(self):
+        """
+        Stop the current run of the cage. Hooked up to the "Stop Cage"
+        button.
+        """
+        
         logger.info("stopping cage")
         # main_page = self.controller.frames[MainPage]
         instruments.send_voltage(0, 0, 0)
         instruments.log_data = "OFF"  # this will make logging data stop
+        
         # if cage is started again in current session, new log file is created
         data.session_log_filename = ""
         data.time = []
@@ -904,11 +967,17 @@ class MainPage(tk.Frame):
         self.stop_cage_update_buttons()
 
     def stop_cage_update_buttons(self):
+        """
+        Update the status of buttons after the cage has been stopped.
+        """
+        
         main_page = self.controller.frames[MainPage]
 
+        # Change main buttons back to original options
         main_page.start_button.configure(text="Start Cage")
         main_page.stop_button.configure(state="disabled")
-
+        
+        # Reenable buttons
         main_page.refresh_connections_button.config(state=tk.NORMAL)
         main_page.change_template_file_button.config(state=tk.NORMAL)
         main_page.change_calibration_file_button.config(state=tk.NORMAL)
@@ -916,9 +985,13 @@ class MainPage(tk.Frame):
         main_page.open_dynamic_csv_button.config(state=tk.NORMAL)
 
     def update_plot_info(self):
+        """
+        Update the data subplots.
+        """
+        
         print("updating plot info...")
 
-        # initialize lists for each variable that can be plotted
+        # Initialize lists for each variable that can be plotted
         x_mag_field_actual = data.x_mag_field_actual
         y_mag_field_actual = data.y_mag_field_actual
         z_mag_field_actual = data.z_mag_field_actual
@@ -927,7 +1000,7 @@ class MainPage(tk.Frame):
         y_mag_field_requested = []
         z_mag_field_requested = []
 
-        # logic to make check lists are of equal length in order to be plotted
+        # Logic to make check lists are of equal length in order to be plotted
         max_entries = len(data.time)
         print("max entries is {}".format(max_entries))
         print("len of x_mag_field_requested: {}".format(len(data.x_mag_field_requested)))
@@ -961,7 +1034,7 @@ class MainPage(tk.Frame):
         if len(data.z_mag_field_requested) != max_entries:
             data.z_mag_field_requested = [0]*max_entries
 
-        # get axis limits
+        # Get axis limits
         power_supplies_list = (data.x_out + data.y_out + data.z_out +
                                data.x_req + data.y_req + data.z_req)
         power_supplies_master_list = [float(x) for x in power_supplies_list]
@@ -985,7 +1058,7 @@ class MainPage(tk.Frame):
 
         min_y_plot_two = min(mag_field_master_list)
 
-        # plot
+        # Plot
         self.power_supplies_plot.plot(data.time, data.x_out, 'r', label='x_ps_output')
         self.power_supplies_plot.plot(data.time, data.x_req, 'r--', label='x_ps_requested')
         self.power_supplies_plot.plot(data.time, data.y_out, 'g', label='y_ps_output')
@@ -1017,20 +1090,20 @@ class MainPage(tk.Frame):
         self.mag_field_plot.set_title("Magnetic Field vs. Time")
         self.mag_field_plot.set_ylabel("Magnetic Field (Gauss)")
 
-        # create plot titles (only needs to be ran once)
+        # Create plot titles (only needs to be run once)
         if data.plot_titles == "None": # only need to do this once for the plots
             self.power_supplies_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.00),
                                             ncol=3, fancybox=True, prop={'size': 7})
-
-
             self.mag_field_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0),
                                        ncol=3, fancybox=True, prop={'size': 7})
-
             data.plot_titles = "Exist"
 
     def update_typable_entries(self):
-
-        # only let user type values in selected option
+        """
+        Determine, based on the selected radiobutton in the static test 
+        bar, if column should be enabled/disabled.
+        """
+        
         field_or_voltage = self.field_or_voltage.get()
         if field_or_voltage == "voltage":
             self.x_voltage_entry.configure(state=tk.NORMAL)
@@ -1044,8 +1117,8 @@ class MainPage(tk.Frame):
             self.x_field_entry.configure(state=tk.DISABLED)
             self.y_field_entry.configure(state=tk.DISABLED)
             self.z_field_entry.configure(state=tk.DISABLED)
-
-        if field_or_voltage == "field":
+            
+        elif field_or_voltage == "field":
             self.x_field_entry.configure(state=tk.NORMAL)
             self.y_field_entry.configure(state=tk.NORMAL)
             self.z_field_entry.configure(state=tk.NORMAL)
@@ -1058,10 +1131,13 @@ class MainPage(tk.Frame):
             self.y_voltage_entry.configure(state=tk.DISABLED)
             self.z_voltage_entry.configure(state=tk.DISABLED)
 
-        # check that constant value entry can be interpreted as a float
         def validate_field(self, action, index, value_if_allowed,
                            prior_value, text, validation_type, trigger_type,
                            widget_name):
+            """
+            Check that constant value entry can be interpreted as a float.
+            """
+            
             if (action == '1'):
                 if text in '0123456789.-+':
                     try:
@@ -1079,8 +1155,11 @@ class MainPage(tk.Frame):
                 return True
 
     def update_typable_entries(self):
-
-        # only let user type values in selected option
+        """
+        Determine, based on the selected radiobutton in the static test 
+        bar, if column should be enabled/disabled.
+        """
+        
         field_or_voltage = self.field_or_voltage.get()
         if field_or_voltage == "voltage":
             self.x_voltage_entry.configure(state=tk.NORMAL)
@@ -1108,10 +1187,13 @@ class MainPage(tk.Frame):
             self.y_voltage_entry.configure(state=tk.DISABLED)
             self.z_voltage_entry.configure(state=tk.DISABLED)
 
-    # check that constant value entry can be interpreted as a float
     def validate_field(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type,
                        widget_name):
+        """
+        Check that constant value entry can be interpreted as a float.
+        """
+        
         if (action == '1'):
             if text in '0123456789.-+':
                 try:
@@ -1131,6 +1213,10 @@ class MainPage(tk.Frame):
     def validate_voltage(self, action, index, value_if_allowed,
                          prior_value, text, validation_type, trigger_type,
                          widget_name):
+        """
+        Check that constant value entry can be interpreted as a float.
+        """
+                             
         if (action == '1'):
             if text in '0123456789.-+':
                 try:
@@ -1149,6 +1235,10 @@ class MainPage(tk.Frame):
             return True
 
     def find_template_file(self):
+        """
+        Locate the user specifed template file.
+        """
+        
         path = os.getcwd()
         only_files = [f for f in listdir(path) if isfile(join(path, f))]
         only_csv_files = [f for f in only_files if f.endswith(".csv")]
@@ -1162,6 +1252,10 @@ class MainPage(tk.Frame):
             logger.info("No template file found in current working directory")
 
     def find_calibration_file(self):
+        """
+        Locate the user specified calibration file.
+        """
+        
         root = os.getcwd()
         path = os.path.join(root, "calibration_files")
         os.chdir(path)
@@ -1176,9 +1270,14 @@ class MainPage(tk.Frame):
         os.chdir(root)
 
     def load_template_file(self):
+        """
+        Load the user specifed template file.
+        """
+        
         logger.info("Loading template file [{}]...".format(data.template_file))
         with open(data.template_file) as file:
-            # if the file is opened, reinitialize the data class
+            
+            # If the file is opened, reinitialize the data class
             data.template_voltages_x = []
             data.template_voltages_y = []
             data.template_voltages_z = []
@@ -1188,7 +1287,7 @@ class MainPage(tk.Frame):
                 data.template_voltages_x.append(row[0])
                 data.template_voltages_y.append(row[1])
                 data.template_voltages_z.append(row[2])
-
+                
         logger.info("loaded {} x, {} y, {} z voltages"
                     .format(len(data.template_voltages_x),
                             len(data.template_voltages_y),
@@ -1199,9 +1298,14 @@ class MainPage(tk.Frame):
         logger.info("...completed loading template file")
 
     def load_calibration_file(self):
+        """
+        Load the user specifed calibration file.
+        """
+        
         logger.info("Loading calibration file [{}]".format(data.calibration_file))
         with open(data.calibration_file) as file:
-            # if the file is opened, reinitialize the data class
+            
+            # If the file is opened, reinitialize the data class
             data.calibration_voltages_x = []
             data.calibration_voltages_y = []
             data.calibration_voltages_z = []
@@ -1243,6 +1347,10 @@ class MainPage(tk.Frame):
             logger.info("...completed loading template file")
 
     def change_template_file(self):
+        """
+        Change the current template file.
+        """
+        
         main_page = self.controller.frames[MainPage]
         data.template_file = filedialog.askopenfilename(
             filetypes=(("Calibration template file", "*.csv"),
@@ -1255,6 +1363,10 @@ class MainPage(tk.Frame):
         main_page.template_file_entry.configure(state="readonly")
 
     def change_calibration_file(self):
+        """
+        Change the current calibration file.
+        """
+        
         main_page = self.controller.frames[MainPage]
         data.calibration_file = filedialog.askopenfilename(
             filetypes=(("Calibration file", "*.csv"),
@@ -1267,20 +1379,33 @@ class MainPage(tk.Frame):
         main_page.calibration_file_entry.configure(state="readonly")
 
     def calibrate_cage(self):
+        """
+        Calibrate the Helmholtz Cage, by mapping coil voltages to the 
+        magnetic feild strength they create (for each axis individually).
+        
+        Should be run every time the cage is started up, due to natural 
+        varience in the Earth's magnetic feild.
+        
+        TODO: still a WIP
+        """
+        
         main_page = self.controller.frames[MainPage]
         data.stop_calibration = False
 
+        # Ensure that all instruments are properly connected
         if not hasattr(instruments, "connections_checked"):
             logger.info("Check connections before starting")
         else:
-            # connections are checked, start calibration if allowed
+            
+            # Connections are checked, start calibration if allowed
             if not data.calibrating_now:
-                # clear plots if information is on them
+                
+                # Clear plots if information is on them
                 main_page.power_supplies_plot.cla()
                 main_page.mag_field_plot.cla()
                 data.plot_titles = "None"
 
-                # reset information logged into the data class
+                # Reset information logged into the data class
                 (data.time, data.x_out, data.y_out, data.z_out,
                  data.x_req, data.y_req, data.z_req,
                  data.x_mag_field_actual, data.y_mag_field_actual,
@@ -1292,11 +1417,11 @@ class MainPage(tk.Frame):
                     data.start_time = datetime.datetime.now()
                     self.calibrate_cage_update_buttons()
             else:
-                # data.calibrating_now == true, so update the plots
+                # Data.calibrating_now == true, so update the plots
                 if not data.stop_calibration:
                     main_page.update_plot_info()
 
-            # check voltages that will be sent to allow calibration
+            # Check voltages that will be sent to allow calibration
             if not data.calibrating_now and not data.stop_calibration:
                 if len(data.template_voltages_x) == \
                         len(data.template_voltages_y) == \
@@ -1314,8 +1439,7 @@ class MainPage(tk.Frame):
                         y = float(data.template_voltages_y[value])
                         z = float(data.template_voltages_z[value])
 
-                        # check that none of the requested voltages
-                        # exceed max or are less than zero
+                        # Check that none of the requested voltage exceed max or are less than zero
                         if (x > max_voltage_value) or (x < 0):
                             logger.info("ERROR: cannot calibrate, x voltage of "
                                         "{} is above the max {} volts, or "
@@ -1331,7 +1455,6 @@ class MainPage(tk.Frame):
                                         "{} is above the max {} volts, or "
                                         "negative".format(z, max_voltage_value))
                             data.stop_calibration = True
-
                 else:
                     logger.info("The amount of X Y Z voltages are not all "
                                 "equal, calibration stopped")
@@ -1339,6 +1462,7 @@ class MainPage(tk.Frame):
                     instruments.log_data = "OFF"  # stops the logging process
                     data.calibration_log_filename = ""
 
+            # End calibration
             if data.current_value == len(data.template_voltages_x):
                 data.calibrating_now = False
                 data.stop_calibration = True
@@ -1362,14 +1486,20 @@ class MainPage(tk.Frame):
                                 "data.current_value, likely finished "
                                 "calibrating | {}".format(err))
                     x, y, z = 0, 0, 0
-
+                
+                # Set voltages
                 main_page.x_voltage.set(x)
                 main_page.y_voltage.set(y)
                 main_page.z_voltage.set(z)
 
     def calibrate_cage_update_buttons(self):
+        """
+        Update the buttons while the cage is calibrating and afterwards
+        """
+        
         main_page = self.controller.frames[MainPage]
 
+        # Disable buttons for invalid options during calibration
         if not data.calibrating_now:
             main_page.start_button.config(text="allow calibration to complete")
             main_page.start_button.config(state=tk.DISABLED)
@@ -1379,7 +1509,8 @@ class MainPage(tk.Frame):
             main_page.change_calibration_file_button.config(state=tk.DISABLED)
             main_page.calibrate_button.config(state=tk.DISABLED)
             main_page.open_dynamic_csv_button.config(state=tk.DISABLED)
-
+        
+        # Reenable buttons
         if not data.calibrating_now and data.stop_calibration \
                 and (data.current_value == 0):
             main_page.start_button.config(text="Start Cage")
@@ -1392,18 +1523,25 @@ class MainPage(tk.Frame):
 
 
 class HelpPage(tk.Frame):
+        """
+        An object class for a Help menu (TODO).
+        """
+        
         def __init__(self, parent, controller):
             tk.Frame.__init__(self, parent)
             self.controller = controller
-            # main container to hold all subframes
+            
+            # Main container to hold all subframes
             container = tk.Frame(self, bg="black")
             container.grid(sticky="nsew")
 
 
-# ------------------------------------------------------------------------------
-# CODE
-instruments = Instruments()
-data = Data()
-app = CageApp()
-app.minsize(width=250, height=600)
-app.mainloop()
+if __name__ == "__main__":
+    try:
+        instruments = Instruments()
+        data = Data()
+        app = CageApp()
+        app.minsize(width=250, height=600)
+        app.mainloop()
+    except:
+        pass
