@@ -1,6 +1,18 @@
 # Helmholtz-Cage
 
-Tips:
+## Status
+Currenty, we are in the process of cleaning up and updating the code. Current todo's
+
+ - Cleanup documentation
+ - Reorganize repository
+ - Test calibration file
+ - Add the ability to use relays to switch coil polarity
+ - Test on Linux system (Raspberry Pi? Ubuntu?)
+ - Help documentation?
+
+While this is happening, this repository may be broken. Commit a5349237229607aaa9d528a912eaa073b2b09c50 is the last one that for sure worked.
+
+##Tips:
 
 Use pycharm community edition on python 3.7+ for development
 
