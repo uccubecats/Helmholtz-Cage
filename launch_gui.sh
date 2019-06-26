@@ -7,5 +7,6 @@
 RELATIVE_PATH="`dirname \"$0\"`"
 ABSOLUTE_PATH="`( cd \"$RELATIVE_PATH\" && pwd )`"
 cd $ABSOLUTE_PATH/helmholtz_cage
-python main.py
 echo "Launching Helmholtz Cage control GUI..."
+python3 main.py
+

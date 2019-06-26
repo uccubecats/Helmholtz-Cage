@@ -22,6 +22,7 @@ from os.path import isfile, join
 import threading
 from tkinter import filedialog
 import tkinter as tk
+import traceback
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -537,8 +538,8 @@ class MainPage(tk.Frame):
         """
         
         # Relevant functions
-        self.find_template_file()
-        self.find_calibration_file()
+        #self.find_template_file() <--FIXME
+        #self.find_calibration_file() <--FIXME
         
         # Title bar
         self.calibration_label = \
@@ -589,17 +590,17 @@ class MainPage(tk.Frame):
                       command=lambda: self.calibrate_cage())
         self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
-        # Handle exceptions
-        if data.template_file is not "none found":
-            try:
-                self.load_template_file()
-            except Exception as err:
-                print("Couldn't load template file | {}".format(err))
-        if data.calibration_file is not "none found":
-            try:
-                self.load_calibration_file()
-            except Exception as err:
-                print("Couldn't load calibration file | {}".format(err))
+        # Handle exceptions <--FIXME
+        #if data.template_file is not "none found":
+            #try:
+                #self.load_template_file()
+            #except Exception as err:
+                #print("Couldn't load template file | {}".format(err))
+        #if data.calibration_file is not "none found":
+            #try:
+                #self.load_calibration_file()
+            #except Exception as err:
+                #print("Couldn't load calibration file | {}".format(err))
 
     def fill_static_buttons_frame(self, parent):
         """
@@ -777,7 +778,7 @@ class MainPage(tk.Frame):
         # Add to frame
         if not data.plots_created:
             self.canvas = FigureCanvasTkAgg(self.fig, self.plots_frame)
-            self.canvas.show()
+            self.canvas.draw
             self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH,
                                              expand=True)
         data.plots_created = True
@@ -1256,8 +1257,9 @@ class MainPage(tk.Frame):
         Locate the user specified calibration file.
         """
         
+        os.chdir("..")
         root = os.getcwd()
-        path = os.path.join(root, "calibration_files")
+        path = os.path.join(root, "calibrations")
         os.chdir(path)
         calibration_files = glob.glob("*CalibrationData*.csv")
         if len(calibration_files) > 0:
@@ -1543,5 +1545,5 @@ if __name__ == "__main__":
         app = CageApp()
         app.minsize(width=250, height=600)
         app.mainloop()
-    except:
-        pass
+    except Exception:
+        traceback.print_exc()
