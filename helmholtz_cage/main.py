@@ -12,8 +12,8 @@ Originally written by Jason Roll (rolljn@mail.uc.edu)
 """
 
 
-import datetime
 import csv
+import datetime
 import glob
 import logging
 import os
@@ -28,6 +28,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from connections import *
+from session import *
 
 
 # Setup logging
@@ -35,204 +36,19 @@ logging.getLogger("visa").setLevel(logging.WARNING)
 logger = logging.getLogger("main.py")
 logging.basicConfig(filename='helmholtz-gui.log', level=logging.DEBUG)
 
-# System constants
-max_field_value = 20
-max_voltage_value = 20
-update_plot_time = 1  # secs
-update_log_time = 5  # secs
-update_calibrate_time = 5  # secs
+# Global constants
+MAX_FIELD_VALUE = 20
+MAX_VOLTAGE_VALUE = 20
+UPDATE_PLOT_TIME = 1  # secs
+UPDATE_LOG_TIME = 5  # secs
+UPDATE_CALIBRATE_TIME = 5  # secs
 LARGE_FONT = ("Verdana", 12)
 MEDIUM_FONT = ("Verdana", 9)
 
 
-def log_session_data():
-    """
-    Create a session log file.
-    """
-    main_page = app.frames[MainPage]
-    print("instruments.log_data is {}".format(instruments.log_data))
-
-    if instruments.log_data == "ON":
-        today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        if data.session_log_filename == "":
-            data.session_log_filename = "HelmholtzCage_SessionData_{}.csv".\
-                format(today)
-            logger.info("creating log: {}".format(data.session_log_filename))
-
-            if not os.path.exists("session_files"):
-                os.mkdir("session_files")
-
-            with open(os.path.join("session_files", data.session_log_filename),
-                      'a') as file:
-                writer = csv.writer(file, delimiter=',')
-                writer.writerow(['time', 'x_req', 'y_req', 'z_req', 'x_out',
-                                 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
-
-        with open(os.path.join("session_files", data.session_log_filename),
-                  'a') as file:
-            threading.Timer(update_plot_time, log_session_data).start()
-            writer = csv.writer(file, delimiter=',')
-            time = int((datetime.datetime.now() - data.start_time)
-                       .total_seconds())
-            print("logging data at {}".format(str(time)))
-
-            # *** can be used for debugging if requested voltages from template
-            # file seem wrong on the output side from the power supply
-            # x_req, y_req, z_req = instruments.get_requested_voltage()
-
-            x_out, y_out, z_out = instruments.get_output_voltage()
-            # TODO: add below line back in
-            x_mag, y_mag, z_mag = instruments.get_magnetometer_field()
-            #x_mag, y_mag, z_mag = 100, 100, 100
-
-            if not x_mag:
-                try:
-                    x_mag = data.x_mag_field_actual[-1]
-                except IndexError:
-                    x_mag = 0.0
-            if not y_mag:
-                try:
-                    y_mag = data.y_mag_field_actual[-1]
-                except IndexError:
-                    y_mag = 0.0
-            if not z_mag:
-                try:
-                    z_mag = data.z_mag_field_actual[-1]
-                except IndexError:
-                    z_mag = 0.0
-
-            writer.writerow([time,
-                             data.active_x_voltage_requested,
-                             data.active_y_voltage_requested,
-                             data.active_z_voltage_requested,
-                             x_out, y_out, z_out,
-                             x_mag, y_mag, z_mag])
-
-            data.time.append(time)
-            data.x_req.append(data.active_x_voltage_requested)
-            data.y_req.append(data.active_y_voltage_requested)
-            data.z_req.append(data.active_z_voltage_requested)
-            data.x_out.append(x_out)
-            data.y_out.append(y_out)
-            data.z_out.append(z_out)
-
-            data.x_mag_field_actual.append(x_mag)
-            data.y_mag_field_actual.append(y_mag)
-            data.z_mag_field_actual.append(z_mag)
-
-            data.x_mag_field_requested.append(data.active_x_mag_field_requested)
-            data.y_mag_field_requested.append(data.active_y_mag_field_requested)
-            data.z_mag_field_requested.append(data.active_z_mag_field_requested)
-
-            main_page.fill_plot_frame()
-
-def log_calibration_data():
-    """
-    Creates a calibration file from a loaded template file.
-    """
-    main_page = app.frames[MainPage]
-
-    if instruments.log_data == "ON":
-        today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        if data.calibration_log_filename == "":
-            data.calibration_log_filename = "HelmholtzCage_CalibrationData_{}" \
-                                            ".csv".format(today)
-            if not os.path.exists("calibration_files"):
-                os.mkdir("calibration_files")
-
-            logger.info("creating calibration file: {}"
-                        .format(data.calibration_log_filename))
-
-            with open(os.path.join("calibration_files",
-                                   data.calibration_log_filename), 'a') as file:
-
-                writer = csv.writer(file, delimiter=',')
-                writer.writerow(['time', 'x_req', 'y_req', 'z_req', 'x_out',
-                                 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
-                data.start_time = datetime.datetime.now()
-                data.current_value = 0
-
-        with open(os.path.join("calibration_files",
-                               data.calibration_log_filename), 'a') as file:
-
-            threading.Timer(update_plot_time, log_calibration_data).start()
-            writer = csv.writer(file, delimiter=',')
-            time = int((datetime.datetime.now() - data.start_time)
-                       .total_seconds())
-
-            # Check if it is time to get new values from template yet
-            logger.info("time calibrating is: {}".format(time))
-            logger.info("data.current_value is {}".format(data.current_value))
-            logger.info("update_calibrate_time * data.current_value is: {}".
-                        format(data.current_value * update_calibrate_time))
-                        
-            # Get current calibration voltages for whichever increment
-            if time >= (data.current_value*update_calibrate_time):
-                try:
-                    data.cur_cal_x = float(data.template_voltages_x
-                                           [data.current_value])
-                    data.cur_cal_y = float(data.template_voltages_y
-                                           [data.current_value])
-                    data.cur_cal_z = float(data.template_voltages_z
-                                           [data.current_value])
-                except Exception as err:
-                    logger.info("Could not get x,y,z voltages to send, likely "
-                                "finished calibrating | {}".format(err))
-                    data.cur_cal_x, data.cur_cal_y, data.cur_cal_z = 0, 0, 0
-                instruments.send_voltage(data.cur_cal_x, data.cur_cal_y,
-                                         data.cur_cal_z)
-                data.current_value += 1
-
-            # *** can be used for debugging if requested voltages from template
-            # file seem wrong on the output side from the power supply
-            # x_req, y_req, z_req = instruments.get_requested_voltage()
-
-            # TODO: verify this gets the correct output voltage
-            # get the currently read voltages on the power supply displays
-            x_out, y_out, z_out = instruments.get_output_voltage()
-            x_mag = 1  # *** this will have to come from magnetometer connection
-            y_mag = 2
-            z_mag = 3
-
-            # Update values saved to calibration file
-            writer.writerow([time, data.cur_cal_x, data.cur_cal_y,
-                             data.cur_cal_z, x_out, y_out, z_out,
-                             x_mag, y_mag, z_mag])
-
-            # Update lists that will be plotted
-            data.time.append(time)
-            data.x_req.append(data.cur_cal_x)
-            data.y_req.append(data.cur_cal_y)
-            data.z_req.append(data.cur_cal_z)
-            data.x_out.append(x_out)
-            data.y_out.append(y_out)
-            data.z_out.append(z_out)
-
-        # Update plot if calibration is still going on
-        if not data.stop_calibration:
-            main_page.fill_plot_frame()
-
-        # Stop calibration if all template voltages have been used
-        if data.current_value == len(data.template_voltages_x):
-            instruments.log_data = "OFF"
-            logger.info("calibration file {} created - load it in before "
-                        "doing a dynamic test or requesting based on "
-                        "magnetic field".format(data.calibration_log_filename))
-            # Allows for a new calibration file to be created again? TODO: test
-            data.calibration_log_filename = ""
-            data.stop_calibration = True
-            logger.info("data.calibrating_now: {} | data.stop_calibration: {}"
-                        .format(data.calibrating_now, data.stop_calibration))
-            logger.info("in log calibration: data.stop_calibration is {}"
-                        .format(data.stop_calibration))
-            data.current_value = 0
-            logger.info("stopping calibration")
-            main_page.calibrate_cage_update_buttons()
-
-
 class Data:
     """
-    An object class for storing data from an opened file.
+    An object class for storing data from an open file.
     """
     
     def __init__(self):
@@ -266,7 +82,7 @@ class Data:
         self.calibration_mag_field_z = []
         self.current_value = 0
 
-        # Logging data
+        # Session logging data
         self.session_log_filename = ""
         self.start_time = None
         self.time = []
@@ -628,9 +444,9 @@ class MainPage(tk.Frame):
         self.field_or_voltage = tk.StringVar()
         
         field_text = "Enter Magnetic Field \n(Max {} Gauss)"\
-                     .format(max_field_value)
+                     .format(MAX_FIELD_VALUE)
         field_text = "Enter Magnetic Field \n (Gauss)" \
-            .format(max_field_value)
+            .format(MAX_FIELD_VALUE)
         self.select_field = \
             tk.Radiobutton(self.static_buttons_frame,
                            text=field_text, variable=self.field_or_voltage,
@@ -638,7 +454,7 @@ class MainPage(tk.Frame):
         self.select_field.grid(row=1, column=0, columnspan=2, sticky='nsew')
 
         voltage_text = "Enter Voltage \n(Max {} volts)"\
-                       .format(max_voltage_value)
+                       .format(MAX_VOLTAGE_VALUE)
         self.select_voltage = \
             tk.Radiobutton(self.static_buttons_frame,
                            text=voltage_text, variable=self.field_or_voltage,
@@ -768,7 +584,7 @@ class MainPage(tk.Frame):
         # Create figure and initialize plots
         if not data.plots_created:
             self.fig, (self.power_supplies_plot, self.mag_field_plot) = \
-                plt.subplots(nrows=2, facecolor='grey')
+                plt.subplots(nrows=2, facecolor='gray')
             self.power_supplies_plot = plt.subplot(211) # Power supplies plot
             self.mag_field_plot = plt.subplot(212) # Magnetic field plot
 
@@ -1143,7 +959,7 @@ class MainPage(tk.Frame):
                 if text in '0123456789.-+':
                     try:
                         value = float(value_if_allowed)
-                        if value <= max_field_value:
+                        if value <= MAX_FIELD_VALUE:
                             return True
                         else:
                             return False
@@ -1199,7 +1015,7 @@ class MainPage(tk.Frame):
             if text in '0123456789.-+':
                 try:
                     value = float(value_if_allowed)
-                    if value <= max_field_value:
+                    if value <= MAX_FIELD_VALUE:
                         return True
                     else:
                         return False
@@ -1222,7 +1038,7 @@ class MainPage(tk.Frame):
             if text in '0123456789.-+':
                 try:
                     value = float(value_if_allowed)
-                    if value <= max_voltage_value:
+                    if value <= MAX_VOLTAGE_VALUE:
                         return True
                     else:
                         return False
@@ -1431,8 +1247,8 @@ class MainPage(tk.Frame):
                     logger.info("Will calibrate using {} different X, Y, Z "
                                 "voltages every {} seconds"
                                 .format(len(data.template_voltages_x),
-                                        update_log_time))
-                    s_remaining = update_log_time*len(data.template_voltages_x)
+                                        UPDATE_LOG_TIME))
+                    s_remaining = UPDATE_LOG_TIME*len(data.template_voltages_x)
                     logger.info("Do not use GUI until process completes | {} "
                                 "seconds remaining".format(s_remaining))
 
@@ -1442,20 +1258,20 @@ class MainPage(tk.Frame):
                         z = float(data.template_voltages_z[value])
 
                         # Check that none of the requested voltage exceed max or are less than zero
-                        if (x > max_voltage_value) or (x < 0):
+                        if (x > MAX_VOLTAGE_VALUE) or (x < 0):
                             logger.info("ERROR: cannot calibrate, x voltage of "
                                         "{} is above the max {} volts, or "
-                                        "negative".format(x, max_voltage_value))
+                                        "negative".format(x, MAX_VOLTAGE_VALUE))
                             data.stop_calibration = True
-                        if (y > max_voltage_value) or (y < 0):
+                        if (y > MAX_VOLTAGE_VALUE) or (y < 0):
                             logger.info("ERROR: cannot calibrate, y voltage of "
                                         "{} is above the max {} volts, or "
-                                        "negative".format(y, max_voltage_value))
+                                        "negative".format(y, MAX_VOLTAGE_VALUE))
                             data.stop_calibration = True
-                        if (z > max_voltage_value) or (z < 0):
+                        if (z > MAX_VOLTAGE_VALUE) or (z < 0):
                             logger.info("ERROR: cannot calibrate, z voltage of "
                                         "{} is above the max {} volts, or "
-                                        "negative".format(z, max_voltage_value))
+                                        "negative".format(z, MAX_VOLTAGE_VALUE))
                             data.stop_calibration = True
                 else:
                     logger.info("The amount of X Y Z voltages are not all "
@@ -1478,7 +1294,7 @@ class MainPage(tk.Frame):
                     instruments.log_data = "ON"
                     log_calibration_data()  # starts the calibration process
                 data.calibrating_now = True
-                threading.Timer(update_log_time, self.calibrate_cage).start()
+                threading.Timer(UPDATE_LOG_TIME, self.calibrate_cage).start()
                 try:
                     x = float(data.template_voltages_x[data.current_value])
                     y = float(data.template_voltages_y[data.current_value])
