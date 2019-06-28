@@ -155,33 +155,41 @@ class MainPage(tk.Frame):
         self.controller = controller
 
         # Create container for all the subframes on the GUI
-        container = tk.Frame(self, bg="black")
+        container = tk.Frame(self, bg="silver")
         container.grid(sticky="nsew")
 
         # Create subframes for main frame
-        self.title_frame = tk.Frame(container, bg="gray", height=50,
-                                    highlightbackground="black",
+        self.title_frame = tk.Frame(container, bg="lightgray", 
+                                    height=50,
+                                    highlightbackground="silver",
                                     highlightthickness=2)
-        self.connections_frame = tk.Frame(container, bg="gray", height=50,
-                                          highlightbackground="black",
+        self.connections_frame = tk.Frame(container, bg="lightgray",
+										  height=50,
+                                          highlightbackground="silver",
                                           highlightthickness=2)
-        self.calibrate_frame = tk.Frame(container, bg="gray", height=50,
-                                        highlightbackground="black",
+        self.calibrate_frame = tk.Frame(container, bg="lightgray",
+										height=50,
+                                        highlightbackground="silver",
                                         highlightthickness=2)
-        self.static_buttons_frame = tk.Frame(container, bg="gray", height=50,
-                                             highlightbackground="black",
+        self.static_buttons_frame = tk.Frame(container, bg="lightgray",
+											 height=50,
+                                             highlightbackground="silver",
                                              highlightthickness=2)
-        self.dynamic_buttons_frame = tk.Frame(container, bg="gray", height=50,
-                                              highlightbackground="black",
+        self.dynamic_buttons_frame = tk.Frame(container, bg="lightgray",
+											  height=50,
+                                              highlightbackground="silver",
                                               highlightthickness=2)
-        self.main_buttons_frame = tk.Frame(container, bg="gray", height=50,
-                                           highlightbackground="black",
+        self.main_buttons_frame = tk.Frame(container, bg="lightgray",
+                                           height=50,
+                                           highlightbackground="silver",
                                            highlightthickness=2)
-        self.help_frame = tk.Frame(container, bg="gray", height=50,
-                                   highlightbackground="black",
+        self.help_frame = tk.Frame(container, bg="lightgray",
+                                   height=50,
+                                   highlightbackground="silver",
                                    highlightthickness=2)
-        self.plots_frame = tk.Frame(container, bg="gray", width=500,
-                                    highlightbackground="black",
+        self.plots_frame = tk.Frame(container, bg="lightgray",
+                                    width=500,
+                                    highlightbackground="silver",
                                     highlightthickness=4)
 
         # Position subframes
@@ -260,7 +268,7 @@ class MainPage(tk.Frame):
         self.canvas = None
 
         # Fill in the subframes (function calls)
-        self.fill_title_frame()
+        #self.fill_title_frame()
         self.fill_calibrate_frame()
         self.fill_connections_frame()
         self.fill_static_buttons_frame(parent)
@@ -284,26 +292,32 @@ class MainPage(tk.Frame):
         
         # Title bars
         self.connections_label = tk.Label(self.connections_frame,
-                                          text="Connections", font=LARGE_FONT)
+                                          text="Connections", font=LARGE_FONT,
+                                          bg="lightgray")
         self.connections_label.grid(row=0, column=0, columnspan=2,
                                     pady=5, sticky='nsew')
                                     
         self.unit_label = tk.Label(self.connections_frame,
-                                   text="Unit", font=LARGE_FONT)
+                                   text="Unit", font=MEDIUM_FONT, 
+                                   bg="lightgray")
         self.unit_label.grid(row=1, column=0)
         
         self.status_label = tk.Label(self.connections_frame,
-                                     text="Status", font=LARGE_FONT)
+                                     text="Status", font=MEDIUM_FONT,
+                                     bg="lightgray")
         self.status_label.grid(row=1, column=1)
         
         # X-Axis power supply
         self.x_ps_status = tk.StringVar()
         self.x_ps_label = tk.Label(self.connections_frame,
-                                   text="X Power Supply")
+                                   text="X Power Supply",
+                                   bg="lightgray",
+                                   width=14)
         self.x_ps_label.grid(row=2, column=0)
         
         self.x_ps_status_entry = tk.Entry(self.connections_frame,
-                                          textvariable=self.x_ps_status)
+                                          textvariable=self.x_ps_status,
+                                          width=22)
         self.x_ps_status_entry.insert(0, "Disconnected")
         self.x_ps_status_entry.configure(state="readonly")
         self.x_ps_status_entry.grid(row=2, column=1)
@@ -311,10 +325,13 @@ class MainPage(tk.Frame):
         # Y-Axis power supply
         self.y_ps_status = tk.StringVar()
         self.y_ps_label = tk.Label(self.connections_frame,
-                                   text="Y Power Supply").grid(row=3, column=0)
+                                   text="Y Power Supply",
+                                   bg="lightgray",
+                                   width=14).grid(row=3, column=0)
         
         self.y_ps_status_entry = tk.Entry(self.connections_frame,
-                                          textvariable=self.y_ps_status)
+                                          textvariable=self.y_ps_status,
+                                          width=22)
         self.y_ps_status_entry.insert(0, "Disconnected")
         self.y_ps_status_entry.configure(state="readonly")
         self.y_ps_status_entry.grid(row=3, column=1)
@@ -322,10 +339,13 @@ class MainPage(tk.Frame):
         # Z-Axis power supply
         self.z_ps_status = tk.StringVar()
         self.z_ps_label = tk.Label(self.connections_frame,
-                                   text="Z Power Supply").grid(row=4, column=0)
+                                   text="Z Power Supply", 
+                                   bg="lightgray",
+                                   width=14).grid(row=4, column=0)
                                    
         self.z_ps_status_entry = tk.Entry(self.connections_frame,
-                                          textvariable=self.z_ps_status)
+                                          textvariable=self.z_ps_status,
+                                          width=22)
         self.z_ps_status_entry.insert(0, "Disconnected")
         self.z_ps_status_entry.configure(state="readonly")
         self.z_ps_status_entry.grid(row=4, column=1)
@@ -333,10 +353,13 @@ class MainPage(tk.Frame):
         # Truth Magnetometer
         self.mag_status = tk.StringVar()
         self.mag_label = tk.Label(self.connections_frame,
-                                  text="Magnetometer").grid(row=5, column=0)
+                                  text="Magnetometer",
+                                  bg="lightgray",
+                                  width=14).grid(row=5, column=0)
                                   
         self.mag_status_entry = tk.Entry(self.connections_frame,
-                                         textvariable=self.mag_status)
+                                         textvariable=self.mag_status,
+                                         width=22)
         self.mag_status_entry.insert(0, "Disconnected")
         self.mag_status_entry.configure(state="readonly")
         self.mag_status_entry.grid(row=5, column=1)
@@ -359,50 +382,57 @@ class MainPage(tk.Frame):
         
         # Title bar
         self.calibration_label = \
-            tk.Label(self.calibrate_frame, text="Calibration", font=LARGE_FONT)
+            tk.Label(self.calibrate_frame, text="Calibration", font=LARGE_FONT,
+					 bg="lightgray")
         self.calibration_label.grid(row=0, column=0, columnspan=3,
                                     pady=5, sticky='nsew')
 
         # Template File
         self.template_file_label = \
-            tk.Label(self.calibrate_frame, text="Cal. Template file:")
+            tk.Label(self.calibrate_frame, text="Template file:",
+                     bg="lightgray", width=12)
         self.template_file_label.grid(row=1, column=0)
 
         self.template_file_status_text = tk.StringVar()
         self.template_file_entry = \
             tk.Entry(self.calibrate_frame,
-                     textvariable=self.template_file_status_text, width=10)
+                     textvariable=self.template_file_status_text,
+                     width=10)
         self.template_file_entry.insert(0, data.template_file)
         self.template_file_entry.configure(state="readonly")
         self.template_file_entry.grid(row=1, column=1)
         
         self.change_template_file_button = \
             tk.Button(self.calibrate_frame, text='select new',
-                      command=lambda: self.change_template_file())
+                      command=lambda: self.change_template_file(),
+                      width=10)
         self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
 
         # Calibration File 
         self.calibration_file_label = \
-            tk.Label(self.calibrate_frame, text="Calibration file:")
+            tk.Label(self.calibrate_frame, text="Calibration file:",
+                     bg="lightgray", width=12)
         self.calibration_file_label.grid(row=2, column=0)
         
         self.calibration_file_status_text = tk.StringVar()
         self.calibration_file_entry = \
             tk.Entry(self.calibrate_frame,
-                     textvariable=self.calibration_file_status_text, width=10)
+                     textvariable=self.calibration_file_status_text,
+                     width=10)
         self.calibration_file_entry.insert(0, data.calibration_file)
         self.calibration_file_entry.configure(state="readonly")
         self.calibration_file_entry.grid(row=2, column=1)
         
         self.change_calibration_file_button = \
             tk.Button(self.calibrate_frame, text='select new',
-                      command=lambda: self.change_calibration_file())
+                      command=lambda: self.change_calibration_file(),
+                      width=10)
         self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
         
         # Create calibration file button
         self.calibrate_button = \
             tk.Button(self.calibrate_frame,
-                      text='Create calibration file with template file',
+                      text='Create Calibration File with Template File',
                       command=lambda: self.calibrate_cage())
         self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
@@ -435,7 +465,8 @@ class MainPage(tk.Frame):
             tk.Radiobutton(self.static_buttons_frame,
                            text="Static Test: ",
                            variable=self.static_or_dynamic,
-                           value="static", font=LARGE_FONT)
+                           value="static", font=LARGE_FONT,
+                           bg="lightgray", highlightthickness=0)
         self.select_static.grid(row=0, column=0, columnspan=4,
                                 pady=5, sticky='nsew')
 
@@ -443,14 +474,14 @@ class MainPage(tk.Frame):
         # TODO: update field text to find max field for max voltage
         self.field_or_voltage = tk.StringVar()
         
-        field_text = "Enter Magnetic Field \n(Max {} Gauss)"\
-                     .format(MAX_FIELD_VALUE)
         field_text = "Enter Magnetic Field \n (Gauss)" \
             .format(MAX_FIELD_VALUE)
         self.select_field = \
             tk.Radiobutton(self.static_buttons_frame,
                            text=field_text, variable=self.field_or_voltage,
-                           value="field", command=self.update_typable_entries)
+                           value="field", command=self.update_typable_entries,
+                           bg="lightgray", highlightthickness=0,
+                           width=15)
         self.select_field.grid(row=1, column=0, columnspan=2, sticky='nsew')
 
         voltage_text = "Enter Voltage \n(Max {} volts)"\
@@ -458,14 +489,16 @@ class MainPage(tk.Frame):
         self.select_voltage = \
             tk.Radiobutton(self.static_buttons_frame,
                            text=voltage_text, variable=self.field_or_voltage,
-                           value="voltage", command=self.update_typable_entries)
+                           value="voltage", command=self.update_typable_entries,
+                           bg="lightgray", highlightthickness=0,
+                           width=15)
         self.select_voltage.grid(row=1, column=2, columnspan=2, sticky='nsew')
 
         # X-Axis label/inputs
         self.x_field_label = \
             tk.Label(self.static_buttons_frame,
-                     text="x:", font=LARGE_FONT).grid(row=2, column=0,
-                                                      sticky='ns')
+                     text="x:", font=LARGE_FONT,bg="lightgray").grid(row=2,
+						column=0, sticky='ns')
         self.x_field = tk.StringVar()
         self.x_field_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -476,7 +509,8 @@ class MainPage(tk.Frame):
 
         self.x_voltage_label = \
             tk.Label(self.static_buttons_frame,
-                     text="x:", font=LARGE_FONT).grid(row=2, column=2)
+                     text="x:", font=LARGE_FONT, bg="lightgray").grid(row=2,
+                     column=2)
         self.x_voltage = tk.StringVar()
         self.x_voltage_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -488,7 +522,8 @@ class MainPage(tk.Frame):
         # Y-Axis label/inputs
         self.y_field_label = \
             tk.Label(self.static_buttons_frame,
-                     text="y:", font=LARGE_FONT).grid(row=3, column=0)
+                     text="y:", font=LARGE_FONT, bg="lightgray").grid(row=3,
+						column=0)
         self.y_field = tk.StringVar()
         self.y_field_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -499,7 +534,8 @@ class MainPage(tk.Frame):
 
         self.y_voltage_label = \
             tk.Label(self.static_buttons_frame,
-                     text="y:", font=LARGE_FONT).grid(row=3, column=2)
+                     text="y:", font=LARGE_FONT, bg="lightgray").grid(row=3,
+						column=2)
         self.y_voltage = tk.StringVar()
         self.y_voltage_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -511,7 +547,8 @@ class MainPage(tk.Frame):
         # Z-Axis label/inputs
         self.z_field_label = \
             tk.Label(self.static_buttons_frame,
-                     text="z:", font=LARGE_FONT).grid(row=4, column=0)
+                     text="z:", font=LARGE_FONT, bg="lightgray").grid(row=4,
+						column=0)
         self.z_field = tk.StringVar()
         self.z_field_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -522,7 +559,8 @@ class MainPage(tk.Frame):
 
         self.z_voltage_label = \
             tk.Label(self.static_buttons_frame,
-                     text="z:", font=LARGE_FONT).grid(row=4, column=2)
+                     text="z:", font=LARGE_FONT, bg="lightgray").grid(row=4,
+						column=2)
         self.z_voltage = tk.StringVar()
         self.z_voltage_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -540,7 +578,10 @@ class MainPage(tk.Frame):
         self.select_dynamic = tk.Radiobutton(self.dynamic_buttons_frame,
                                              text="Dynamic Test: ",
                                              variable=self.static_or_dynamic,
-                                             value="dynamic", font=LARGE_FONT)
+                                             value="dynamic", font=LARGE_FONT,
+                                             bg="lightgray",
+                                             highlightthickness=0,
+                                             width=15)
         self.select_dynamic.grid(row=0, column=0, columnspan=4,
                                  pady=5, sticky='nsew')
         
@@ -550,6 +591,10 @@ class MainPage(tk.Frame):
                       text='Load Dynamic Field CSV File',
                       command=lambda: open_csv(app))
         self.open_dynamic_csv_button.grid(row=1, column=0, sticky='nsew')
+        
+        self.blank_label = \
+			tk.Label(self.dynamic_buttons_frame, text=" ", bg="lightgray",
+			         width=12).grid(row=1, column=1)
 
     def fill_main_buttons_frame(self):
         """
@@ -579,12 +624,12 @@ class MainPage(tk.Frame):
         """
         Fill in the main plot subframe.
         """
-        print("filling plot frame...")
+        print("Filling plot frame...")
         
         # Create figure and initialize plots
         if not data.plots_created:
             self.fig, (self.power_supplies_plot, self.mag_field_plot) = \
-                plt.subplots(nrows=2, facecolor='gray')
+                plt.subplots(nrows=2, facecolor='lightgray')
             self.power_supplies_plot = plt.subplot(211) # Power supplies plot
             self.mag_field_plot = plt.subplot(212) # Magnetic field plot
 
@@ -806,7 +851,7 @@ class MainPage(tk.Frame):
         Update the data subplots.
         """
         
-        print("updating plot info...")
+        print("Updating plot info...")
 
         # Initialize lists for each variable that can be plotted
         x_mag_field_actual = data.x_mag_field_actual
@@ -819,8 +864,8 @@ class MainPage(tk.Frame):
 
         # Logic to make check lists are of equal length in order to be plotted
         max_entries = len(data.time)
-        print("max entries is {}".format(max_entries))
-        print("len of x_mag_field_requested: {}".format(len(data.x_mag_field_requested)))
+        print("Max entries is {}".format(max_entries))
+        print("Length of 'x_mag_field_requested': {}".format(len(data.x_mag_field_requested)))
         if max_entries == 0:
             max_entries = 1
 
@@ -855,7 +900,7 @@ class MainPage(tk.Frame):
         power_supplies_list = (data.x_out + data.y_out + data.z_out +
                                data.x_req + data.y_req + data.z_req)
         power_supplies_master_list = [float(x) for x in power_supplies_list]
-        print("power_supplies_master_list: {}".format(power_supplies_master_list))
+        print("power_supplies_master_list = {}".format(power_supplies_master_list))
         max_y_plot_one = 1.2*max(power_supplies_master_list)
         if max_y_plot_one < 1:
             max_y_plot_one = 1
@@ -898,14 +943,15 @@ class MainPage(tk.Frame):
 
         self.power_supplies_plot.get_shared_x_axes().join(self.power_supplies_plot, self.mag_field_plot)
         self.power_supplies_plot.set_xticklabels([])
-        self.power_supplies_plot.set_facecolor("grey")
-        self.mag_field_plot.set_facecolor("grey")
+        self.power_supplies_plot.set_facecolor("whitesmoke")
+        self.mag_field_plot.set_facecolor("whitesmoke")
 
-        self.power_supplies_plot.set_title("Voltage vs. Time")
-        self.power_supplies_plot.set_ylabel("Voltage (V)")
+        self.power_supplies_plot.set_title("Voltage")
+        self.power_supplies_plot.set_ylabel("Volts")
 
-        self.mag_field_plot.set_title("Magnetic Field vs. Time")
-        self.mag_field_plot.set_ylabel("Magnetic Field (Gauss)")
+        self.mag_field_plot.set_title("Magnetic Field")
+        self.mag_field_plot.set_xlabel("Seconds")
+        self.mag_field_plot.set_ylabel("Gauss")
 
         # Create plot titles (only needs to be run once)
         if data.plot_titles == "None": # only need to do this once for the plots
@@ -1350,7 +1396,7 @@ class HelpPage(tk.Frame):
             self.controller = controller
             
             # Main container to hold all subframes
-            container = tk.Frame(self, bg="black")
+            container = tk.Frame(self, bg="silver")
             container.grid(sticky="nsew")
 
 
@@ -1361,5 +1407,6 @@ if __name__ == "__main__":
         app = CageApp()
         app.minsize(width=250, height=600)
         app.mainloop()
+        
     except Exception:
         traceback.print_exc()
