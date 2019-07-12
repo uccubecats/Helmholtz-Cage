@@ -27,7 +27,7 @@ import traceback
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-from connections import *
+from instruments import *
 from session import *
 
 
