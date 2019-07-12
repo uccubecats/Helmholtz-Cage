@@ -164,19 +164,19 @@ class MainPage(tk.Frame):
                                     highlightbackground="silver",
                                     highlightthickness=2)
         self.connections_frame = tk.Frame(container, bg="lightgray",
-										  height=50,
+                                          height=50,
                                           highlightbackground="silver",
                                           highlightthickness=2)
         self.calibrate_frame = tk.Frame(container, bg="lightgray",
-										height=50,
+                                        height=50,
                                         highlightbackground="silver",
                                         highlightthickness=2)
         self.static_buttons_frame = tk.Frame(container, bg="lightgray",
-											 height=50,
+                                             height=50,
                                              highlightbackground="silver",
                                              highlightthickness=2)
         self.dynamic_buttons_frame = tk.Frame(container, bg="lightgray",
-											  height=50,
+                                              height=50,
                                               highlightbackground="silver",
                                               highlightthickness=2)
         self.main_buttons_frame = tk.Frame(container, bg="lightgray",
@@ -383,7 +383,7 @@ class MainPage(tk.Frame):
         # Title bar
         self.calibration_label = \
             tk.Label(self.calibrate_frame, text="Calibration", font=LARGE_FONT,
-					 bg="lightgray")
+                     bg="lightgray")
         self.calibration_label.grid(row=0, column=0, columnspan=3,
                                     pady=5, sticky='nsew')
 
@@ -498,7 +498,7 @@ class MainPage(tk.Frame):
         self.x_field_label = \
             tk.Label(self.static_buttons_frame,
                      text="x:", font=LARGE_FONT,bg="lightgray").grid(row=2,
-						column=0, sticky='ns')
+                        column=0, sticky='ns')
         self.x_field = tk.StringVar()
         self.x_field_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -523,7 +523,7 @@ class MainPage(tk.Frame):
         self.y_field_label = \
             tk.Label(self.static_buttons_frame,
                      text="y:", font=LARGE_FONT, bg="lightgray").grid(row=3,
-						column=0)
+                        column=0)
         self.y_field = tk.StringVar()
         self.y_field_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -535,7 +535,7 @@ class MainPage(tk.Frame):
         self.y_voltage_label = \
             tk.Label(self.static_buttons_frame,
                      text="y:", font=LARGE_FONT, bg="lightgray").grid(row=3,
-						column=2)
+                        column=2)
         self.y_voltage = tk.StringVar()
         self.y_voltage_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -548,7 +548,7 @@ class MainPage(tk.Frame):
         self.z_field_label = \
             tk.Label(self.static_buttons_frame,
                      text="z:", font=LARGE_FONT, bg="lightgray").grid(row=4,
-						column=0)
+                        column=0)
         self.z_field = tk.StringVar()
         self.z_field_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -560,7 +560,7 @@ class MainPage(tk.Frame):
         self.z_voltage_label = \
             tk.Label(self.static_buttons_frame,
                      text="z:", font=LARGE_FONT, bg="lightgray").grid(row=4,
-						column=2)
+                        column=2)
         self.z_voltage = tk.StringVar()
         self.z_voltage_entry = \
             tk.Entry(self.static_buttons_frame,
@@ -593,8 +593,8 @@ class MainPage(tk.Frame):
         self.open_dynamic_csv_button.grid(row=1, column=0, sticky='nsew')
         
         self.blank_label = \
-			tk.Label(self.dynamic_buttons_frame, text=" ", bg="lightgray",
-			         width=12).grid(row=1, column=1)
+            tk.Label(self.dynamic_buttons_frame, text=" ", bg="lightgray",
+                     width=12).grid(row=1, column=1)
 
     def fill_main_buttons_frame(self):
         """
@@ -1139,27 +1139,83 @@ class MainPage(tk.Frame):
         """
         
         logger.info("Loading template file [{}]...".format(data.template_file))
+        
         with open(data.template_file) as file:
             
-            # If the file is opened, reinitialize the data class
-            data.template_voltages_x = []
-            data.template_voltages_y = []
-            data.template_voltages_z = []
+            # Get the data from the template file
+            template_voltages_x = []
+            template_voltages_y = []
+            template_voltages_z = []
             file_info = csv.reader(file, delimiter=',')
             next(file_info, None)  # skip the 1st line, these are headers
             for row in file_info:
-                data.template_voltages_x.append(row[0])
-                data.template_voltages_y.append(row[1])
-                data.template_voltages_z.append(row[2])
+                template_voltages_x.append(float(row[0]))
+                template_voltages_y.append(float(row[1]))
+                template_voltages_z.append(float(row[2]))
+        
+        # Check the template file values
+        out = self.check_template_values(template_voltages_x,
+                                         template_voltages_y,
+                                         template_voltages_z)
+		
+		# If the values are okay, write to Data
+		if out:
+			data.template_voltages_x = template_voltages_x
+            data.template_voltages_y = template_voltages_y
+            data.template_voltages_z = template_voltages_z
                 
-        logger.info("loaded {} x, {} y, {} z voltages"
-                    .format(len(data.template_voltages_x),
-                            len(data.template_voltages_y),
-                            len(data.template_voltages_z)))
-        logger.info("x template voltages: {}".format(data.template_voltages_x))
-        logger.info("y template voltages: {}".format(data.template_voltages_y))
-        logger.info("z template voltages: {}".format(data.template_voltages_z))
-        logger.info("...completed loading template file")
+			logger.info("loaded {} x, {} y, {} z voltages"
+						.format(len(data.template_voltages_x),
+								len(data.template_voltages_y),
+								len(data.template_voltages_z)))
+			logger.info("x template voltages: {}".format(data.template_voltages_x))
+			logger.info("y template voltages: {}".format(data.template_voltages_y))
+			logger.info("z template voltages: {}".format(data.template_voltages_z))
+			logger.info("...completed loading template file")
+			
+		# Otherwise return an error
+		else:
+			logger.info("template file values are not achievable on the system")
+
+    def check_template_values(self, x_values, y_values, z_values):
+        """
+        Check the values from a template file to ensure they are outside
+        the systems limits.
+        """
+        
+        #Check voltages that will be sent to allow calibration
+        if len(x_values) == len(y_values) == len(z_values):
+
+            for value in range(0, len(x_values)):
+				x = x_values[value]
+                y = y_values[value]
+                z = z_values[value]
+
+				# Check that none of the requested voltage exceed max or are less than zero
+                if (x > MAX_VOLTAGE_VALUE) or (x < 0):
+                    logger.info("ERROR: cannot calibrate, x voltage of "
+                                "{} is above the max {} volts, or "
+                                "negative".format(x, MAX_VOLTAGE_VALUE))
+                    return False
+                if (y > MAX_VOLTAGE_VALUE) or (y < 0):
+                    logger.info("ERROR: cannot calibrate, y voltage of "
+                                "{} is above the max {} volts, or "
+                                "negative".format(y, MAX_VOLTAGE_VALUE))
+                    return False
+                if (z > MAX_VOLTAGE_VALUE) or (z < 0):
+                    logger.info("ERROR: cannot calibrate, z voltage of "
+                                "{} is above the max {} volts, or "
+                                "negative".format(z, MAX_VOLTAGE_VALUE))
+                    return False
+		else:
+			logger.info("The amount of X Y Z voltages are not all "
+                        "equal.")
+			instruments.log_data = "OFF"  # stops the logging process
+			data.calibration_log_filename = ""
+			return False
+		
+		# All values are okay
+		return True
 
     def load_calibration_file(self):
         """
@@ -1260,7 +1316,7 @@ class MainPage(tk.Frame):
         if not hasattr(instruments, "connections_checked"):
             logger.info("Check connections before starting")
         else:
-            
+
             # Connections are checked, start calibration if allowed
             if not data.calibrating_now:
                 
@@ -1281,80 +1337,39 @@ class MainPage(tk.Frame):
                     data.start_time = datetime.datetime.now()
                     self.calibrate_cage_update_buttons()
             else:
-                # Data.calibrating_now == true, so update the plots
                 if not data.stop_calibration:
                     main_page.update_plot_info()
-
-            # Check voltages that will be sent to allow calibration
-            if not data.calibrating_now and not data.stop_calibration:
-                if len(data.template_voltages_x) == \
-                        len(data.template_voltages_y) == \
-                        len(data.template_voltages_z):
-                    logger.info("Will calibrate using {} different X, Y, Z "
-                                "voltages every {} seconds"
-                                .format(len(data.template_voltages_x),
-                                        UPDATE_LOG_TIME))
-                    s_remaining = UPDATE_LOG_TIME*len(data.template_voltages_x)
-                    logger.info("Do not use GUI until process completes | {} "
-                                "seconds remaining".format(s_remaining))
-
-                    for value in range(0, len(data.template_voltages_x)):
-                        x = float(data.template_voltages_x[value])
-                        y = float(data.template_voltages_y[value])
-                        z = float(data.template_voltages_z[value])
-
-                        # Check that none of the requested voltage exceed max or are less than zero
-                        if (x > MAX_VOLTAGE_VALUE) or (x < 0):
-                            logger.info("ERROR: cannot calibrate, x voltage of "
-                                        "{} is above the max {} volts, or "
-                                        "negative".format(x, MAX_VOLTAGE_VALUE))
-                            data.stop_calibration = True
-                        if (y > MAX_VOLTAGE_VALUE) or (y < 0):
-                            logger.info("ERROR: cannot calibrate, y voltage of "
-                                        "{} is above the max {} volts, or "
-                                        "negative".format(y, MAX_VOLTAGE_VALUE))
-                            data.stop_calibration = True
-                        if (z > MAX_VOLTAGE_VALUE) or (z < 0):
-                            logger.info("ERROR: cannot calibrate, z voltage of "
-                                        "{} is above the max {} volts, or "
-                                        "negative".format(z, MAX_VOLTAGE_VALUE))
-                            data.stop_calibration = True
-                else:
-                    logger.info("The amount of X Y Z voltages are not all "
-                                "equal, calibration stopped")
-                    data.stop_calibration = True
-                    instruments.log_data = "OFF"  # stops the logging process
-                    data.calibration_log_filename = ""
-
-            # End calibration
-            if data.current_value == len(data.template_voltages_x):
-                data.calibrating_now = False
-                data.stop_calibration = True
-                data.current_value = 0
-                logger.info("stopping calibration")
-                self.calibrate_cage_update_buttons()
-                logger.info("should not need this")
-
-            if not data.stop_calibration:
-                if not data.calibrating_now:
-                    instruments.log_data = "ON"
-                    log_calibration_data()  # starts the calibration process
-                data.calibrating_now = True
-                threading.Timer(UPDATE_LOG_TIME, self.calibrate_cage).start()
-                try:
-                    x = float(data.template_voltages_x[data.current_value])
-                    y = float(data.template_voltages_y[data.current_value])
-                    z = float(data.template_voltages_z[data.current_value])
-                except Exception as err:
-                    logger.info("Could not get x,y,z voltage for "
-                                "data.current_value, likely finished "
-                                "calibrating | {}".format(err))
-                    x, y, z = 0, 0, 0
-                
-                # Set voltages
-                main_page.x_voltage.set(x)
-                main_page.y_voltage.set(y)
-                main_page.z_voltage.set(z)
+        
+        # Begin the calibration
+        data.calibrating_now = True
+        
+        # Run through calibration values
+        for value in range(0, len(data.template_voltages_x)):
+            instruments.send_voltage(data.template_voltages_x[value],
+                                     data.template_voltages_y[value],
+                                     data.template_voltages_z[value])
+            sleep(0.01)
+            
+            # Read and save returned values
+            (x_act, y_act, z_act) = instruments.get_requested_voltage()
+            (x_mag_field_act, y_mag_field_act, z_mag_field_act) \
+                = instruments.get_magnetometer_field()
+            data.x_out.append(x_act)
+            data.y_out.append(y_act)
+            data.z_out.append(z_act)
+            data.x_mag_field_actual.append(x_mag_field_act)
+            data.y_mag_field_actual.append(y_mag_field_act)
+            data.x_mag_field_actual.append(z_mag_field_act)
+        instruments.send_voltage(0.0, 0.0, 0.0)
+        
+        # TODO: Curve fitting
+        
+        # End calibration
+        data.calibrating_now = False
+        data.stop_calibration = True
+        data.current_value = 0
+        logger.info("Stopping calibration")
+        self.calibrate_cage_update_buttons()
 
     def calibrate_cage_update_buttons(self):
         """
