@@ -63,7 +63,7 @@ class ReadLine:
 class Instruments:
 
     def __init__(self):
-		
+        
         # Note: Check these are correct for you
         self.x_id = "GPIB0::3::INSTR"
         self.y_id = "GPIB0::5::INSTR"
@@ -73,16 +73,16 @@ class Instruments:
         self.connections_checked = True
 
     def make_connections(self):
-		"""
-		Attempt connections to the power supplies and magnetometer.
-		
-		NOTE: The control computer may store the power supply addresses 
-			  in memory, and show they have connected to them, even when
-			  the cables are completely disconnected. A zero voltage 
-			  command needs to be sent to confirm successful connection.
-		"""
-		
-		# Get a list of connected devices
+        """
+        Attempt connections to the power supplies and magnetometer.
+        
+        NOTE: The control computer may store the power supply addresses 
+              in memory, and show they have connected to them, even when
+              the cables are completely disconnected. A zero voltage 
+              command needs to be sent to confirm successful connection.
+        """
+        
+        # Get a list of connected devices
         try:
             connected_devices = rm.list_resources()
         except Exception as err:
@@ -132,10 +132,10 @@ class Instruments:
             self.mag = "No connection"
 
     def send_voltage(self, x_voltage, y_voltage, z_voltage):
-		"""
-		Send the commanded voltage values to the power supplies.
-		"""
-		
+        """
+        Send the commanded voltage values to the power supplies.
+        """
+        
         try:
             self.x.write(("VSET {} V").format(x_voltage))
         except Exception as err:
@@ -150,10 +150,10 @@ class Instruments:
             print("Could not send z voltage | {}".format(err))
 
     def send_field(self, x_field, y_field, z_field, data_object):
-		"""
-		Send the commanded magnetic field values to the power supplies.
-		"""
-		# Convert the field values into the required voltages
+        """
+        Send the commanded magnetic field values to the power supplies.
+        """
+        # Convert the field values into the required voltages
         x_voltage, y_voltage, z_voltage = convert_fields_to_voltages(x_field, y_field, z_field, data_object)
         
         # Send commanded voltage values to the power supplies.
@@ -174,29 +174,29 @@ class Instruments:
 
     def get_magnetometer_field(self):
         """
-		Read the current field values from the magnetometer.
+        Read the current field values from the magnetometer.
         
         NOTE: Buffer reset is needed to properly get the current field 
-			  values. In the input buffer is all the lines of data written 
-			  out from magnetometer, which grows very quickly. This leads
-			  to a backlog of data, which gets read out much slower
-			  than real time (so old data is being displayed).
-			  
-		NOTE: "time.sleep" allows the input buffer to populate with 
-			  multiple lines, since the reset could happen in the middle
-			  of a line. This way a complete set of field values should
-			  be read.
-			  
-		NOTE: The magnetometer input buffer cannot be reset if it's not
-		      connected.
+              values. In the input buffer is all the lines of data written 
+              out from magnetometer, which grows very quickly. This leads
+              to a backlog of data, which gets read out much slower
+              than real time (so old data is being displayed).
+              
+        NOTE: "time.sleep" allows the input buffer to populate with 
+              multiple lines, since the reset could happen in the middle
+              of a line. This way a complete set of field values should
+              be read.
+              
+        NOTE: The magnetometer input buffer cannot be reset if it's not
+              connected.
         """
 
         valid_characters = ["0", "1", "2", "3", "4", "5",
                             "6", "7", "8", "9", ".", "-"]
 
         try:
-			
-			# Reset serial buffer to pervent it from growing too large.
+            
+            # Reset serial buffer to pervent it from growing too large.
             self.mag.reset_input_buffer()
             time.sleep(0.001)
             field_string = self.mag.readline().decode("utf-8")
@@ -250,10 +250,10 @@ class Instruments:
             return 999, 999, 999  # so that it is not confused with 0.0
 
     def get_requested_voltage(self):
-		"""
-		Get the currently commanded voltages on the power supplies.
-		"""
-		
+        """
+        Get the currently commanded voltages on the power supplies.
+        """
+        
         try:
             x_req = self.x.query("VSET?")
             x_req = re.findall('\d+\.\d+', x_req)[0]
@@ -281,10 +281,10 @@ class Instruments:
         return (x_req, y_req, z_req)
 
     def get_output_voltage(self):
-		"""
-		Get the actual measured voltage on the power supplies.
-		"""
-		
+        """
+        Get the actual measured voltage on the power supplies.
+        """
+        
         try:
             x_out = self.x.query("VOUT?")
             x_out = re.findall('\d+\.\d+', x_out)[0]
