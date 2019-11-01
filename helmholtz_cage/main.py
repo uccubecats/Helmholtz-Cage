@@ -268,6 +268,12 @@ class Data:
         self.calibration_mag_field_y = []
         self.calibration_mag_field_z = []
         self.current_value = 0
+        self.x_slope = 0
+        self.y_slope = 0
+        self.z_slope = 0
+        self.x_intercept = 0
+        self.y_intercept = 0
+        self.z_intercept = 0
 
         # Session logging data
         self.session_log_filename = ""
@@ -620,7 +626,7 @@ class MainPage(tk.Frame):
         self.calibrate_button = \
             tk.Button(self.calibrate_frame,
                       text='Create Calibration File with Template File',
-                      command=lambda: self.test_calibration_page())#self.calibrate_cage())
+                      command=lambda: self.calibrate_cage())
         self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
         # Handle exceptions <--FIXME
@@ -634,23 +640,6 @@ class MainPage(tk.Frame):
                 #self.load_calibration_file()
             #except Exception as err:
                 #print("Couldn't load calibration file | {}".format(err))
-                
-    def test_calibration_page(self):
-        """
-        
-        """
-        
-        fake_data = Data()
-        fake_data.x_out = [0,1,2,3,4,5,6,7,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        fake_data.y_out = [0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,0,0,0,0,0,0,0,0,0]
-        fake_data.z_out = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8]
-        fake_data.x_mag_field_actual = [0,1.1,2,3,4,5,6,7.5,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        fake_data.y_mag_field_actual = [0,0,0,0,0,0,0,0,0,0,1,2.5,3,4,6,7,9,10,0,0,0,0,0,0,0,0,0]
-        fake_data.z_mag_field_actual = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,6,7,9]
-        x_data, y_data, z_data = parse_data(fake_data, 9, 17)
-        x_equation, y_equation, z_equation = calibration_results_popup(x_data, y_data, z_data)
-        print(x_equation)
-        print(REGRESS_REJECTED)
 
     def fill_static_buttons_frame(self, parent):
         """
@@ -1510,7 +1499,7 @@ class MainPage(tk.Frame):
         Should be run every time the cage is started, due to natural 
         varience in the Earth's magnetic feild.
         
-        TODO: still a WIP
+        TODO: Test
         """
         
         main_page = self.controller.frames[MainPage]
@@ -1575,7 +1564,16 @@ class MainPage(tk.Frame):
         instruments.send_voltage(0.0, 0.0, 0.0)
         
         # Perform line fit to the data and analyse results
-        self.show_frame(CalibrationFrame)
+        x_data, y_data, z_data = parse_data(fake_data, cutoff_x, cutoff_y)
+        x_equation, y_equation, z_equation = calibration_results_popup(x_data, y_data, z_data)
+        
+        # Store equation bits
+        data.x_slope = x_equation[1]
+        data.y_slope = y_equation[1]
+        data.z_slope = z_equation[1]
+        data.x_intercept = x_equation[2]
+        data.y_intercept = y_equation[2]
+        data.z_intercept = z_equation[2]
         
         # End calibration
         data.calibrating_now = False

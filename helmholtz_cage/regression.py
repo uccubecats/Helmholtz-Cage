@@ -140,11 +140,11 @@ def create_axis_regression_display(regression_display, axis, equations):
                                 font=MEDIUM_FONT, bg="lightgray")
     x_equation_label.grid(row=2, column=0)
     
-    x_equation_entry = tk.Entry(regression_display, width=28)
+    x_equation_entry = tk.Entry(regression_display, width=28, state="readonly")
     x_equation_entry.grid(row=2, column=1)
     x_equation_entry.insert(tk.END, "B = %.7f*V + (%.7f)" % (equations[0], equations[1]))
     
-    xR_value_entry = tk.Entry(regression_display, width=10)
+    xR_value_entry = tk.Entry(regression_display, width=10, state="readonly")
     xR_value_entry.grid(row=2, column=2)
     xR_value_entry.insert(tk.END, "%.7f" % equations[2])
     
@@ -153,11 +153,11 @@ def create_axis_regression_display(regression_display, axis, equations):
                                 font=MEDIUM_FONT, bg="lightgray")
     y_equation_label.grid(row=3, column=0)
     
-    y_equation_entry = tk.Entry(regression_display, width=28)
+    y_equation_entry = tk.Entry(regression_display, width=28, state="readonly")
     y_equation_entry.grid(row=3, column=1)
     y_equation_entry.insert(tk.END, "B = %.7f*V + (%.7f)" % (equations[3], equations[4]))
     
-    yR_value_entry = tk.Entry(regression_display, width=10)
+    yR_value_entry = tk.Entry(regression_display, width=10, state="readonly")
     yR_value_entry.grid(row=3, column=2)
     yR_value_entry.insert(tk.END, "%.7f" % equations[5])
     
@@ -166,11 +166,11 @@ def create_axis_regression_display(regression_display, axis, equations):
                                 font=MEDIUM_FONT, bg="lightgray")
     z_equation_label.grid(row=4, column=0)
     
-    z_equation_entry = tk.Entry(regression_display, width=28)
+    z_equation_entry = tk.Entry(regression_display, width=28, state="readonly")
     z_equation_entry.grid(row=4, column=1)
     z_equation_entry.insert(tk.END, "B = %.7f*V + (%.7f)" % (equations[6], equations[7]))
     
-    zR_value_entry = tk.Entry(regression_display, width=10)
+    zR_value_entry = tk.Entry(regression_display, width=10, state="readonly")
     zR_value_entry.grid(row=4, column=2)    
     zR_value_entry.insert(tk.END, "%.7f" % equations[8])
     
