@@ -4,7 +4,8 @@ Functions for using template files with the Helmholtz Cage.
 Copyright 2021 UC CubeCats
 All rights reserved. See LICENSE file at:
 https://github.com/uccubecats/Helmholtz-Cage/LICENSE
-Additional copyright may be held by others, as reflected in the commit history.
+Additional copyright may be held by others, as reflected in the commit
+history.
 """
 
 
