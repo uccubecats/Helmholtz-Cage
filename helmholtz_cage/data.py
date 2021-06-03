@@ -31,10 +31,10 @@ class Data(object):
         self.plot_titles = "" # flag variable so titles are only added the first time data is logged
         
         # Template data
-        self.template_file = "none found"
+        self.template_file = None
 
         # Calibration data
-        self.calibration_file = "none found"
+        self.calibration_file = None
         self.xy_cutoff = None
         self.yz_cutoff = None
 
