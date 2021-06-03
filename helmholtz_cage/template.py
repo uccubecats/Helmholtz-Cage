@@ -11,7 +11,7 @@ history.
 
 import os
 
-from utilities import read_csv
+from utilities import read_from_csv
 
 
 def retrieve_template(self, main_dir, filename):
@@ -28,7 +28,7 @@ def retrieve_template(self, main_dir, filename):
 
     # Read in data from csv data
     template_dir = os.path.join(main_dir, "templates")
-    content = read_csv(temp_dir, filename)
+    content = read_from_csv(temp_dir, filename)
         
     # Parse data into lists
     i = 0

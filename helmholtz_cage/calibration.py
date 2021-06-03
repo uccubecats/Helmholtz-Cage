@@ -13,7 +13,7 @@ import os
 
 from scipy import stats
 
-from utilities import read_csv, write_csv
+from utilities import read_from_csv, write_to_csv
 
 
 class Calibration(object):
@@ -28,6 +28,7 @@ class Calibration(object):
         self.calibration_dir = os.path.join(main_dir, "calibrations")
         
         # Initialize calibration variables
+        self.calibration_log_file = ""
         self.x_slope = 0.0
         self.x_intercept = 0.0
         self.x_zero = 0.0
@@ -141,7 +142,7 @@ class Calibration(object):
         content = [row1, row2, row3, row4]
         
         # Write to csv file        
-        write_csv(self.calibration_dir, self.filename, content)        
+        write_to_csv(self.calibration_dir, self.filename, content, 'w')        
     
     def load_calibration_file(self):
         """
@@ -152,7 +153,7 @@ class Calibration(object):
         """
         
         # Read in values from file
-        content = read_csv(self.calibration_dir, self.filename)
+        content = read_from_csv(self.calibration_dir, self.filename)
         
         # Parse data into class variables
         for row in content:
