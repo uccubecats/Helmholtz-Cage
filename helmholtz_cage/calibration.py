@@ -160,19 +160,19 @@ class Calibration(object):
             if str(row[0])=="x":
                 self.x_slope = float(row[1])
                 self.x_intercept = float(row[2])
-                self.x_zero = float(row[3]
+                self.x_zero = float(row[3])
                 self.x_r = float(row[4])
                 self.x_resist = float(row[5])
             if str(row[0])=="y":
                 self.y_slope = float(row[1])
                 self.y_intercept = float(row[2])
-                self.y_zero = float(row[3]
+                self.y_zero = float(row[3])
                 self.y_r = float(row[4])
                 self.y_resist = float(row[5])
             if str(row[0])=="z":
                 self.z_slope = float(row[1])
                 self.z_intercept = float(row[2])
-                self.z_zero = float(row[3]
+                self.z_zero = float(row[3])
                 self.z_r = float(row[4])
                 self.z_resist = float(row[5])
             else:

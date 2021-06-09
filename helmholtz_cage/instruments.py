@@ -75,7 +75,7 @@ class GPIBDaisyChainPS(object):
         # Create a VISA Resource Manager object
         self.rm = visa.ResourceManager()
 
-    def make_connections(self):
+    def connect_to_device(self):
         """
         Attempt connections to the power supplies and magnetometer.
         
@@ -199,7 +199,7 @@ class GPIBDaisyChainPS(object):
                 data[i] = self.resource[i].query(command)
             except:
                 "Could not get requested {} voltage, assumed to be zero | {}".format(
-                    self.axis[i], err))
+                    self.axis[i], err)
                 data[i] = 0.0
                 
         return data
@@ -250,7 +250,7 @@ class GPIBDaisyChainPS(object):
                 data[i] = self.resource[i].query(command)
             except:
                 "Could not get {} voltage, assumed to be zero | {}".format(
-                    self.axis[i], err))
+                    self.axis[i], err)
                 data[i] = 0.0
                 
             # Query the output currents
