@@ -31,9 +31,9 @@ import traceback
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
+from calibration import Calibration
 from helmholtz_cage import HelmholtzCage
-#from instruments import *
-from regression import *
+from template import retrieve_template, check_template_values
 #from doc import *
 
 
@@ -493,18 +493,6 @@ class MainPage(tk.Frame):
                       command=lambda: self.calibrate_cage())
         self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
-        # Handle exceptions <--FIXME
-        #if cage.data.template_file is not "none found":
-            #try:
-                #self.load_template_file()
-            #except Exception as err:
-                #print("Couldn't load template file | {}".format(err))
-        #if cage.data.calibration_file is not "none found":
-            #try:
-                #self.load_calibration_file()
-            #except Exception as err:
-                #print("Couldn't load calibration file | {}".format(err))
-
     def fill_static_buttons_frame(self, parent):
         """
         Fill in the static-test subframe.
@@ -842,7 +830,7 @@ class MainPage(tk.Frame):
 
         # Logic to make check lists are equal length in order to be plotted
         max_entries = len(cage.data.time)
-        print("Max entries is {}".format(max_entries))
+        #print("Max entries is {}".format(max_entries))
         if max_entries == 0:
             max_entries = 1
         if len(cage.data.time) != max_entries:
@@ -1013,214 +1001,78 @@ class MainPage(tk.Frame):
                         return False
 
                 except ValueError:
-
                     return False
             else:
                 return False
         else:
             return True
 
-    def find_template_file(self):
-        """
-        Locate the user specifed template file.
-        """
-        
-        path = os.getcwd()
-        only_files = [f for f in listdir(path) if isfile(join(path, f))]
-        only_csv_files = [f for f in only_files if f.endswith(".csv")]
-        template_files = [f for f in only_csv_files if "TEMPLATE" in f.upper()]
-        if len(template_files) > 0:
-            cage.data.template_file = template_files[0]  # use the first found file
-            logger.info("Found {} template files, loading: {}".format(
-                len(template_files), cage.data.template_file))
-            self.load_template_file()
-        else:
-            logger.info("No template file found in current working directory")
-
-    def find_calibration_file(self):
-        """
-        Locate the user specified calibration file.
-        """
-        
-        os.chdir("..")
-        root = os.getcwd()
-        path = os.path.join(root, "calibrations")
-        os.chdir(path)
-        calibration_files = glob.glob("*CalibrationData*.csv")
-        if len(calibration_files) > 0:
-            cage.data.calibration_file = calibration_files[0]  # use the first
-            logger.info("Found {} calibration files, loading: {}".format(
-                len(calibration_files), cage.data.calibration_file))
-            self.load_calibration_file()
-        else:
-            logger.info("No calibration file found in current working dir")
-        os.chdir(root)
-
-    def load_template_file(self):
+    def change_template_file(self):
         """
         Load the user specifed template file.
         """
         
-        logger.info("Loading template file [{}]...".format(cage.data.template_file))
-        
-        with open(cage.data.template_file) as file:
-            
-            # Get the data from the template file
-            template_voltages_x = []
-            template_voltages_y = []
-            template_voltages_z = []
-            file_info = csv.reader(file, delimiter=',')
-            next(file_info, None)  # skip the 1st line, these are headers
-            for row in file_info:
-                template_voltages_x.append(float(row[0]))
-                template_voltages_y.append(float(row[1]))
-                template_voltages_z.append(float(row[2]))
-        
-        # Check the template file values
-        out = self.check_template_values(template_voltages_x,
-                                         template_voltages_y,
-                                         template_voltages_z)
-        
-        # If the values are okay, write to Data
-        if out:
-            cage.data.template_voltages_x = template_voltages_x
-            cage.data.template_voltages_y = template_voltages_y
-            cage.data.template_voltages_z = template_voltages_z
-                
-            logger.info("loaded {} x, {} y, {} z voltages"
-                        .format(len(cage.data.template_voltages_x),
-                                len(cage.data.template_voltages_y),
-                                len(cage.data.template_voltages_z)))
-            logger.info("x template voltages: {}".format(cage.data.template_voltages_x))
-            logger.info("y template voltages: {}".format(cage.data.template_voltages_y))
-            logger.info("z template voltages: {}".format(cage.data.template_voltages_z))
-            logger.info("...completed loading template file")
-            
-        # Otherwise return an error
-        else:
-            logger.info("template file values are not achievable on the system")
-
-    def check_template_values(self, x_values, y_values, z_values):
-        """
-        Check the values from a template file to ensure they are outside
-        the systems limits.
-        """
-        
-        #Check voltages that will be sent to allow calibration
-        if len(x_values) == len(y_values) == len(z_values):
-
-            for value in range(0, len(x_values)):
-                x = x_values[value]
-                y = y_values[value]
-                z = z_values[value]
-
-                # Check that none of the requested voltage exceed max or are less than zero
-                if (x > MAX_VOLTAGE_VALUE) or (x < 0):
-                    logger.info("ERROR: cannot calibrate, x voltage of "
-                                "{} is above the max {} volts, or "
-                                "negative".format(x, MAX_VOLTAGE_VALUE))
-                    return False
-                if (y > MAX_VOLTAGE_VALUE) or (y < 0):
-                    logger.info("ERROR: cannot calibrate, y voltage of "
-                                "{} is above the max {} volts, or "
-                                "negative".format(y, MAX_VOLTAGE_VALUE))
-                    return False
-                if (z > MAX_VOLTAGE_VALUE) or (z < 0):
-                    logger.info("ERROR: cannot calibrate, z voltage of "
-                                "{} is above the max {} volts, or "
-                                "negative".format(z, MAX_VOLTAGE_VALUE))
-                    return False
-        else:
-            logger.info("The amount of X Y Z voltages are not all "
-                        "equal.")
-            instruments.log_data = "OFF"  # stops the logging process
-            cage.data.calibration_log_filename = ""
-            return False
-        
-        # All values are okay
-        return True
-
-    def load_calibration_file(self):
-        """
-        Load the user specifed calibration file.
-        """
-        
-        logger.info("Loading calibration file [{}]".format(cage.data.calibration_file))
-        with open(cage.data.calibration_file) as file:
-            
-            # If the file is opened, reinitialize the data class
-            cage.data.calibration_voltages_x = []
-            cage.data.calibration_voltages_y = []
-            cage.data.calibration_voltages_z = []
-            cage.data.calibration_mag_field_x = []
-            cage.data.calibration_mag_field_y = []
-            cage.data.calibration_mag_field_z = []
-
-            file_info = csv.reader(file, delimiter=',')
-            next(file_info, None)  # skip the 1st line, these are headers
-            for row in file_info:
-                if len(row) > 0:  # skip blank rows
-                    # data format: time, x_req, y_req, z_req,
-                    # x_out, y_out, z_out, x_mag, y_mag, z_mag
-                    logger.debug("row: {}".format(row))
-                    cage.data.calibration_time.append(row[0])
-                    # since column 2 3 4 are requested voltages, they don't
-                    # matter for calibration
-                    cage.data.calibration_voltages_x.append(row[4])
-                    cage.data.calibration_voltages_y.append(row[5])
-                    cage.data.calibration_voltages_z.append(row[6])
-                    cage.data.calibration_mag_field_x.append(row[7])
-                    cage.data.calibration_mag_field_y.append(row[8])
-                    cage.data.calibration_mag_field_z.append(row[9])
-
-            logger.info("loaded {} calibration voltages/fields"
-                        .format(len(cage.data.calibration_voltages_x)))
-            logger.info("x calibration voltages: {}"
-                        .format(cage.data.calibration_voltages_x))
-            logger.info("y calibration voltages: {}"
-                        .format(cage.data.calibration_voltages_y))
-            logger.info("z calibration voltages: {}"
-                        .format(cage.data.calibration_voltages_z))
-            logger.info("x calibration fields: {}"
-                        .format(cage.data.calibration_mag_field_x))
-            logger.info("y calibration fields: {}"
-                        .format(cage.data.calibration_mag_field_y))
-            logger.info("z calibration fields: {}"
-                        .format(cage.data.calibration_mag_field_z))
-            logger.info("...completed loading template file")
-
-    def change_template_file(self):
-        """
-        Change the current template file.
-        """
-        
+        # Ask the user for the template file
         main_page = self.controller.frames[MainPage]
-        cage.data.template_file = filedialog.askopenfilename(
-            filetypes=(("Calibration template file", "*.csv"),
-                       ("All files", "*.*")))
-        new_filename = os.path.basename(cage.data.template_file)
-        main_page.load_template_file()
-        main_page.template_file_entry.configure(state=tk.NORMAL)
-        main_page.template_file_entry.delete(0, 'end')
-        main_page.template_file_entry.insert(0, new_filename)
-        main_page.template_file_entry.configure(state="readonly")
-
+        start_dir = os.path.join(main_dir, "templates")
+        template_file = filedialog.askopenfilename(initialdir=start_dir,
+                                                   filetypes=(("csv file","*.csv"),
+                                                              ("All files","*.*")))
+        # logger.info("Loading template file [{}]...".format(template_file))
+        
+        # Retrieve and check template
+        template_dir, template_name = os.path.split(template_file)
+        template = retrieve_template(template_dir, template_name)
+        is_okay = check_template_values(template, [5.0, 1.5]) # <--TODO: replace these
+        
+        # Give template to the Helmholtz Cage
+        if is_okay:
+            cage.template = template
+            cage.has_template = True
+            cage.data.template_file = template_file
+        
+            # Put template file name into GUI entry
+            main_page.template_file_entry.configure(state=tk.NORMAL)
+            main_page.template_file_entry.delete(0, 'end')
+            main_page.template_file_entry.insert(0, template_file)
+            main_page.template_file_entry.configure(state="readonly")
+        else:
+            print("ERROR: Unable to load selected template file")
+    
     def change_calibration_file(self):
         """
-        Change the current calibration file.
+        Load the user specifed calibration file.
+        
+        TODO: Test
         """
         
+        # Ask the user for the calibration file
         main_page = self.controller.frames[MainPage]
-        cage.data.calibration_file = filedialog.askopenfilename(
-            filetypes=(("Calibration file", "*.csv"),
-                       ("All files", "*.*")))
-        new_filename = os.path.basename(cage.data.calibration_file)
-        main_page.load_calibration_file()
-        main_page.calibration_file_entry.configure(state=tk.NORMAL)
-        main_page.calibration_file_entry.delete(0, 'end')
-        main_page.calibration_file_entry.insert(0, new_filename)
-        main_page.calibration_file_entry.configure(state="readonly")
-
+        start_dir = os.path.join(main_dir, "calibrations")
+        calibration_file = filedialog.askopenfilename(initialdir=start_dir,
+                                                      filetypes=(("csv file","*.csv"),
+                                                                 ("All files","*.*")))
+        # logger.info("Loading calibration file [{}]".format(calibration_file))
+        
+        # Retrieve and check the calibration
+        calibration_dir, calibration_name = os.path.split(calibration_file)
+        calibration = Calibration(calibration_dir, calibration_name)
+        success = calibration.load_calibration_file()
+        
+        # Give calibration to the Helmholtz Cage
+        if success:
+            cage.calibration = calibration
+            cage.has_calibration = True
+            cage.data.calibration_file = calibration_file
+            
+            # Put calibration file name into GUI entry
+            main_page.calibration_file_entry.configure(state=tk.NORMAL)
+            main_page.calibration_file_entry.delete(0, 'end')
+            main_page.calibration_file_entry.insert(0, calibration_file)
+            main_page.calibration_file_entry.configure(state="readonly")
+        else:
+            print("ERROR: Unable to load selected calibration file")
+    
     def calibrate_cage(self):
         """
         Calibrate the Helmholtz Cage, by mapping coil voltages to the 

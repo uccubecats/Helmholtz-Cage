@@ -21,11 +21,11 @@ class Calibration(object):
     Helmholtz Cage calibration object.
     """
     
-    def __init__(self, main_dir, filename):
+    def __init__(self, file_dir, file_name):
         
         # Filename and directory
-        self.filename = filename
-        self.calibration_dir = os.path.join(main_dir, "calibrations")
+        self.file_name = file_name
+        self.file_dir = file_dir
         
         # Initialize calibration variables
         self.calibration_log_file = ""
@@ -148,32 +148,53 @@ class Calibration(object):
         """
         Load an existing cage calibration from a file of the correct
         format.
-        
-        TODO: Test
         """
         
+        x_found = False
+        y_found = False
+        z_found = False
+        success = False
+        
         # Read in values from file
-        content = read_from_csv(self.calibration_dir, self.filename)
+        content = read_from_csv(self.file_dir, self.file_name)
         
         # Parse data into class variables
         for row in content:
-            if str(row[0])=="x":
+            if str(row[0])=="axis":
+                pass
+            elif str(row[0])=="x":
                 self.x_slope = float(row[1])
                 self.x_intercept = float(row[2])
                 self.x_zero = float(row[3])
                 self.x_r = float(row[4])
                 self.x_resist = float(row[5])
-            if str(row[0])=="y":
+                x_found = True
+            elif str(row[0])=="y":
                 self.y_slope = float(row[1])
                 self.y_intercept = float(row[2])
                 self.y_zero = float(row[3])
                 self.y_r = float(row[4])
                 self.y_resist = float(row[5])
-            if str(row[0])=="z":
+                y_found = True
+            elif str(row[0])=="z":
                 self.z_slope = float(row[1])
                 self.z_intercept = float(row[2])
                 self.z_zero = float(row[3])
                 self.z_r = float(row[4])
                 self.z_resist = float(row[5])
+                z_found = True
             else:
-                pass
+                print ("WARN: Axis '{}' is not recognized".format(str(row[0])))
+                
+        # Warn about missing data
+        if x_found and y_found and z_found:
+            success = True
+        else:
+            if not x_found:
+                print ("ERROR: Calibration data for x-axis not found")
+            if not y_found:
+                print ("ERROR: Calibration data for y-axis not found")
+            if not z_found:
+                print ("ERROR: Calibration data for z-axis not found")
+                
+        return success

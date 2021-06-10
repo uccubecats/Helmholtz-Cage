@@ -15,7 +15,7 @@ import logging
 from calibration import Calibration
 from data import Data
 from instruments import GPIBDaisyChainPS, SerialMagnetometer
-from template import retrieve_template
+from template import retrieve_template, check_template_values
 
 
 class HelmholtzCage(object):
