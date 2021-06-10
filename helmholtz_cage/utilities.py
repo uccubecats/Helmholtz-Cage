@@ -29,10 +29,13 @@ def read_from_csv(file_path, file_name):
         os.chdir(file_path)
         
         # Retrieve the contents of the csv file
+        content = []
         with open(file_name, 'r') as csv_file:
-            csv_content = csv.reader(csv_file)
+            csv_reader = csv.reader(csv_file)
+            for row in csv_reader:
+                content.append(row)
         
-        return csv_content
+        return content
         
     finally:
         
@@ -63,4 +66,5 @@ def write_to_csv(file_path, file_name, content, mode):
     finally:
         
         # Go back to the starting directory
-        os.chdir(start_dir)
+        os.chdir(start_dir)   
+        
