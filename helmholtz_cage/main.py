@@ -433,37 +433,12 @@ class MainPage(tk.Frame):
         Fill in the calibration subframe.
         """
         
-        # Relevant functions
-        #self.find_template_file() <--FIXME
-        #self.find_calibration_file() <--FIXME
-        
         # Title bar
         self.calibration_label = \
             tk.Label(self.calibrate_frame, text="Calibration", font=LARGE_FONT,
                      bg="lightgray")
         self.calibration_label.grid(row=0, column=0, columnspan=3,
                                     pady=5, sticky='nsew')
-
-        # Template File
-        self.template_file_label = \
-            tk.Label(self.calibrate_frame, text="Template file:",
-                     bg="lightgray", width=12)
-        self.template_file_label.grid(row=1, column=0)
-
-        self.template_file_status_text = tk.StringVar()
-        self.template_file_entry = \
-            tk.Entry(self.calibrate_frame,
-                     textvariable=self.template_file_status_text,
-                     width=10)
-        #self.template_file_entry.insert(0, cage.data.template_file)
-        self.template_file_entry.configure(state="readonly")
-        self.template_file_entry.grid(row=1, column=1)
-        
-        self.change_template_file_button = \
-            tk.Button(self.calibrate_frame, text='select new',
-                      command=lambda: self.change_template_file(),
-                      width=10)
-        self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
 
         # Calibration File 
         self.calibration_file_label = \
@@ -476,7 +451,6 @@ class MainPage(tk.Frame):
             tk.Entry(self.calibrate_frame,
                      textvariable=self.calibration_file_status_text,
                      width=10)
-        #self.calibration_file_entry.insert(0, cage.data.calibration_file)
         self.calibration_file_entry.configure(state="readonly")
         self.calibration_file_entry.grid(row=2, column=1)
         
@@ -487,11 +461,11 @@ class MainPage(tk.Frame):
         self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
         
         # Create calibration file button
-        self.calibrate_button = \
-            tk.Button(self.calibrate_frame,
-                      text='Create Calibration File with Template File',
-                      command=lambda: self.calibrate_cage())
-        self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
+        #self.calibrate_button = \
+            #tk.Button(self.calibrate_frame,
+                      #text='Create Calibration File with Template File',
+                      #command=lambda: self.calibrate_cage())
+        #self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
     def fill_static_buttons_frame(self, parent):
         """
@@ -508,7 +482,7 @@ class MainPage(tk.Frame):
         self.static_or_dynamic = tk.StringVar()
         self.select_static = \
             tk.Radiobutton(self.static_buttons_frame,
-                           text="Static Test: ",
+                           text="Static Test",
                            variable=self.static_or_dynamic,
                            value="static", font=LARGE_FONT,
                            bg="lightgray", highlightthickness=0)
@@ -621,7 +595,7 @@ class MainPage(tk.Frame):
         
         # Title bar (with "radiobutton")
         self.select_dynamic = tk.Radiobutton(self.dynamic_buttons_frame,
-                                             text="Dynamic Test: ",
+                                             text="Dynamic Test",
                                              variable=self.static_or_dynamic,
                                              value="dynamic", font=LARGE_FONT,
                                              bg="lightgray",
@@ -630,16 +604,34 @@ class MainPage(tk.Frame):
         self.select_dynamic.grid(row=0, column=0, columnspan=4,
                                  pady=5, sticky='nsew')
         
-        # Load dynamic test button
-        self.open_dynamic_csv_button = \
-            tk.Button(self.dynamic_buttons_frame,
-                      text='Load Dynamic Field CSV File',
-                      command=lambda: open_csv(app))
-        self.open_dynamic_csv_button.grid(row=1, column=0, sticky='nsew')
+        # Template File
+        self.template_file_label = \
+            tk.Label(self.dynamic_buttons_frame, text="Template file:",
+                     bg="lightgray", width=12)
+        self.template_file_label.grid(row=1, column=0)
+
+        self.template_file_status_text = tk.StringVar()
+        self.template_file_entry = \
+            tk.Entry(self.dynamic_buttons_frame,
+                     textvariable=self.template_file_status_text,
+                     width=10)
+        self.template_file_entry.configure(state="readonly")
+        self.template_file_entry.grid(row=1, column=1)
         
-        self.blank_label = \
-            tk.Label(self.dynamic_buttons_frame, text=" ", bg="lightgray",
-                     width=12).grid(row=1, column=1)
+        self.change_template_file_button = \
+            tk.Button(self.dynamic_buttons_frame, text='select new',
+                      command=lambda: self.change_template_file(),
+                      width=10)
+        self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
+        
+        self.is_calibration_run = tk.BooleanVar()
+        self.select_calibration = \
+            tk.Checkbutton(self.dynamic_buttons_frame,
+                           text="Calibrate from template",
+                           variable=self.is_calibration_run,
+                           bg="lightgray", highlightthickness=0)
+        self.select_calibration.grid(row=2, column=0, columnspan=3,
+                                     sticky="nsew")
 
     def fill_main_buttons_frame(self):
         """
