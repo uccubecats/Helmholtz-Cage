@@ -51,228 +51,189 @@ UPDATE_CALIBRATE_TIME = 5  # secs
 LARGE_FONT = ("Verdana", 12)
 MEDIUM_FONT = ("Verdana", 9)
 
-def log_session_data():
-    """
-    Create a session log file.
-    """
-    main_page = app.frames[MainPage]
-    print("instruments.log_data is {}".format(instruments.log_data))
+# def log_session_data():
+    # """
+    # Create a session log file.
+    # """
+    # main_page = app.frames[MainPage]
+    # print("instruments.log_data is {}".format(instruments.log_data))
 
-    if instruments.log_data == "ON":
-        today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        if data.session_log_filename == "":
-            data.session_log_filename = "HelmholtzCage_SessionData_{}.csv".\
-                format(today)
-            logger.info("creating log: {}".format(data.session_log_filename))
+    # if instruments.log_data == "ON":
+        # today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        # if data.session_log_filename == "":
+            # data.session_log_filename = "HelmholtzCage_SessionData_{}.csv".\
+                # format(today)
+            # logger.info("creating log: {}".format(data.session_log_filename))
 
-            if not os.path.exists("session_files"):
-                os.mkdir("session_files")
+            # if not os.path.exists("session_files"):
+                # os.mkdir("session_files")
 
-            with open(os.path.join("session_files", data.session_log_filename),
-                      'a') as file:
-                writer = csv.writer(file, delimiter=',')
-                writer.writerow(['time', 'x_req', 'y_req', 'z_req', 'x_out',
-                                 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
+            # with open(os.path.join("session_files", data.session_log_filename),
+                      # 'a') as file:
+                # writer = csv.writer(file, delimiter=',')
+                # writer.writerow(['time', 'x_req', 'y_req', 'z_req', 'x_out',
+                                 # 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
 
-        with open(os.path.join("session_files", data.session_log_filename),
-                  'a') as file:
-            threading.Timer(UPDATE_PLOT_TIME, log_session_data).start()
-            writer = csv.writer(file, delimiter=',')
-            time = int((datetime.datetime.now() - data.start_time)
-                       .total_seconds())
-            print("logging data at {}".format(str(time)))
+        # with open(os.path.join("session_files", data.session_log_filename),
+                  # 'a') as file:
+            # threading.Timer(UPDATE_PLOT_TIME, log_session_data).start()
+            # writer = csv.writer(file, delimiter=',')
+            # time = int((datetime.datetime.now() - data.start_time)
+                       # .total_seconds())
+            # print("logging data at {}".format(str(time)))
 
-            # *** can be used for debugging if requested voltages from template
-            # file seem wrong on the output side from the power supply
-            # x_req, y_req, z_req = instruments.get_requested_voltage()
+            # # *** can be used for debugging if requested voltages from template
+            # # file seem wrong on the output side from the power supply
+            # # x_req, y_req, z_req = instruments.get_requested_voltage()
 
-            x_out, y_out, z_out = instruments.get_output_voltage()
-            # TODO: add below line back in
-            x_mag, y_mag, z_mag = instruments.get_magnetometer_field()
-            #x_mag, y_mag, z_mag = 100, 100, 100
+            # x_out, y_out, z_out = instruments.get_output_voltage()
+            # # TODO: add below line back in
+            # x_mag, y_mag, z_mag = instruments.get_magnetometer_field()
+            # #x_mag, y_mag, z_mag = 100, 100, 100
 
-            if not x_mag:
-                try:
-                    x_mag = data.x_mag_field_actual[-1]
-                except IndexError:
-                    x_mag = 0.0
-            if not y_mag:
-                try:
-                    y_mag = data.y_mag_field_actual[-1]
-                except IndexError:
-                    y_mag = 0.0
-            if not z_mag:
-                try:
-                    z_mag = data.z_mag_field_actual[-1]
-                except IndexError:
-                    z_mag = 0.0
+            # if not x_mag:
+                # try:
+                    # x_mag = data.x_mag_field_actual[-1]
+                # except IndexError:
+                    # x_mag = 0.0
+            # if not y_mag:
+                # try:
+                    # y_mag = data.y_mag_field_actual[-1]
+                # except IndexError:
+                    # y_mag = 0.0
+            # if not z_mag:
+                # try:
+                    # z_mag = data.z_mag_field_actual[-1]
+                # except IndexError:
+                    # z_mag = 0.0
 
-            writer.writerow([time,
-                             data.active_x_voltage_requested,
-                             data.active_y_voltage_requested,
-                             data.active_z_voltage_requested,
-                             x_out, y_out, z_out,
-                             x_mag, y_mag, z_mag])
+            # writer.writerow([time,
+                             # data.active_x_voltage_requested,
+                             # data.active_y_voltage_requested,
+                             # data.active_z_voltage_requested,
+                             # x_out, y_out, z_out,
+                             # x_mag, y_mag, z_mag])
 
-            data.time.append(time)
-            data.x_req.append(data.active_x_voltage_requested)
-            data.y_req.append(data.active_y_voltage_requested)
-            data.z_req.append(data.active_z_voltage_requested)
-            data.x_out.append(x_out)
-            data.y_out.append(y_out)
-            data.z_out.append(z_out)
+            # data.time.append(time)
+            # data.x_req.append(data.active_x_voltage_requested)
+            # data.y_req.append(data.active_y_voltage_requested)
+            # data.z_req.append(data.active_z_voltage_requested)
+            # data.x_out.append(x_out)
+            # data.y_out.append(y_out)
+            # data.z_out.append(z_out)
 
-            data.x_mag_field_actual.append(x_mag)
-            data.y_mag_field_actual.append(y_mag)
-            data.z_mag_field_actual.append(z_mag)
+            # data.x_mag_field_actual.append(x_mag)
+            # data.y_mag_field_actual.append(y_mag)
+            # data.z_mag_field_actual.append(z_mag)
 
-            data.x_mag_field_requested.append(data.active_x_mag_field_requested)
-            data.y_mag_field_requested.append(data.active_y_mag_field_requested)
-            data.z_mag_field_requested.append(data.active_z_mag_field_requested)
+            # data.x_mag_field_requested.append(data.active_x_mag_field_requested)
+            # data.y_mag_field_requested.append(data.active_y_mag_field_requested)
+            # data.z_mag_field_requested.append(data.active_z_mag_field_requested)
 
-            main_page.fill_plot_frame()
+            # main_page.fill_plot_frame()
 
-def log_calibration_data():
-    """
-    Creates a calibration file from a loaded template file.
-    """
-    main_page = app.frames[MainPage]
+# def log_calibration_data():
+    # """
+    # Creates a calibration file from a loaded template file.
+    # """
+    # main_page = app.frames[MainPage]
 
-    if instruments.log_data == "ON":
-        today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        if data.calibration_log_filename == "":
-            data.calibration_log_filename = "HelmholtzCage_CalibrationData_{}" \
-                                            ".csv".format(today)
-            if not os.path.exists("calibration_files"):
-                os.mkdir("calibration_files")
+    # if instruments.log_data == "ON":
+        # today = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        # if data.calibration_log_filename == "":
+            # data.calibration_log_filename = "HelmholtzCage_CalibrationData_{}" \
+                                            # ".csv".format(today)
+            # if not os.path.exists("calibration_files"):
+                # os.mkdir("calibration_files")
 
-            logger.info("creating calibration file: {}"
-                        .format(data.calibration_log_filename))
+            # logger.info("creating calibration file: {}"
+                        # .format(data.calibration_log_filename))
 
-            with open(os.path.join("calibration_files",
-                                   data.calibration_log_filename), 'a') as file:
+            # with open(os.path.join("calibration_files",
+                                   # data.calibration_log_filename), 'a') as file:
 
-                writer = csv.writer(file, delimiter=',')
-                writer.writerow(['time', 'x_req', 'y_req', 'z_req', 'x_out',
-                                 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
-                data.start_time = datetime.datetime.now()
-                data.current_value = 0
+                # writer = csv.writer(file, delimiter=',')
+                # writer.writerow(['time', 'x_req', 'y_req', 'z_req', 'x_out',
+                                 # 'y_out', 'z_out', 'x_mag', 'y_mag', 'z_mag'])
+                # data.start_time = datetime.datetime.now()
+                # data.current_value = 0
 
-        with open(os.path.join("calibration_files",
-                               data.calibration_log_filename), 'a') as file:
+        # with open(os.path.join("calibration_files",
+                               # data.calibration_log_filename), 'a') as file:
 
-            threading.Timer(UPDATE_PLOT_TIME, log_calibration_data).start()
-            writer = csv.writer(file, delimiter=',')
-            time = int((datetime.datetime.now() - data.start_time)
-                       .total_seconds())
+            # threading.Timer(UPDATE_PLOT_TIME, log_calibration_data).start()
+            # writer = csv.writer(file, delimiter=',')
+            # time = int((datetime.datetime.now() - data.start_time)
+                       # .total_seconds())
 
-            # Check if it is time to get new values from template yet
-            logger.info("time calibrating is: {}".format(time))
-            logger.info("data.current_value is {}".format(data.current_value))
-            logger.info("update_calibrate_time * data.current_value is: {}".
-                        format(data.current_value * update_calibrate_time))
+            # # Check if it is time to get new values from template yet
+            # logger.info("time calibrating is: {}".format(time))
+            # logger.info("data.current_value is {}".format(data.current_value))
+            # logger.info("update_calibrate_time * data.current_value is: {}".
+                        # format(data.current_value * update_calibrate_time))
                         
-            # Get current calibration voltages for whichever increment
-            if time >= (data.current_value*update_calibrate_time):
-                try:
-                    data.cur_cal_x = float(data.template_voltages_x
-                                           [data.current_value])
-                    data.cur_cal_y = float(data.template_voltages_y
-                                           [data.current_value])
-                    data.cur_cal_z = float(data.template_voltages_z
-                                           [data.current_value])
-                except Exception as err:
-                    logger.info("Could not get x,y,z voltages to send, likely "
-                                "finished calibrating | {}".format(err))
-                    data.cur_cal_x, data.cur_cal_y, data.cur_cal_z = 0, 0, 0
-                instruments.send_voltage(data.cur_cal_x, data.cur_cal_y,
-                                         data.cur_cal_z)
-                data.current_value += 1
+            # # Get current calibration voltages for whichever increment
+            # if time >= (data.current_value*update_calibrate_time):
+                # try:
+                    # data.cur_cal_x = float(data.template_voltages_x
+                                           # [data.current_value])
+                    # data.cur_cal_y = float(data.template_voltages_y
+                                           # [data.current_value])
+                    # data.cur_cal_z = float(data.template_voltages_z
+                                           # [data.current_value])
+                # except Exception as err:
+                    # logger.info("Could not get x,y,z voltages to send, likely "
+                                # "finished calibrating | {}".format(err))
+                    # data.cur_cal_x, data.cur_cal_y, data.cur_cal_z = 0, 0, 0
+                # instruments.send_voltage(data.cur_cal_x, data.cur_cal_y,
+                                         # data.cur_cal_z)
+                # data.current_value += 1
 
-            # *** can be used for debugging if requested voltages from template
-            # file seem wrong on the output side from the power supply
-            # x_req, y_req, z_req = instruments.get_requested_voltage()
+            # # *** can be used for debugging if requested voltages from template
+            # # file seem wrong on the output side from the power supply
+            # # x_req, y_req, z_req = instruments.get_requested_voltage()
 
-            # TODO: verify this gets the correct output voltage
-            # get the currently read voltages on the power supply displays
-            x_out, y_out, z_out = instruments.get_output_voltage()
-            x_mag = 1  # *** this will have to come from magnetometer connection
-            y_mag = 2
-            z_mag = 3
+            # # TODO: verify this gets the correct output voltage
+            # # get the currently read voltages on the power supply displays
+            # x_out, y_out, z_out = instruments.get_output_voltage()
+            # x_mag = 1  # *** this will have to come from magnetometer connection
+            # y_mag = 2
+            # z_mag = 3
 
-            # Update values saved to calibration file
-            writer.writerow([time, data.cur_cal_x, data.cur_cal_y,
-                             data.cur_cal_z, x_out, y_out, z_out,
-                             x_mag, y_mag, z_mag])
+            # # Update values saved to calibration file
+            # writer.writerow([time, data.cur_cal_x, data.cur_cal_y,
+                             # data.cur_cal_z, x_out, y_out, z_out,
+                             # x_mag, y_mag, z_mag])
 
-            # Update lists that will be plotted
-            data.time.append(time)
-            data.x_req.append(data.cur_cal_x)
-            data.y_req.append(data.cur_cal_y)
-            data.z_req.append(data.cur_cal_z)
-            data.x_out.append(x_out)
-            data.y_out.append(y_out)
-            data.z_out.append(z_out)
+            # # Update lists that will be plotted
+            # data.time.append(time)
+            # data.x_req.append(data.cur_cal_x)
+            # data.y_req.append(data.cur_cal_y)
+            # data.z_req.append(data.cur_cal_z)
+            # data.x_out.append(x_out)
+            # data.y_out.append(y_out)
+            # data.z_out.append(z_out)
 
-        # Update plot if calibration is still going on
-        if not data.stop_calibration:
-            main_page.fill_plot_frame()
+        # # Update plot if calibration is still going on
+        # if not data.stop_calibration:
+            # main_page.fill_plot_frame()
 
-        # Stop calibration if all template voltages have been used
-        if data.current_value == len(data.template_voltages_x):
-            instruments.log_data = "OFF"
-            logger.info("calibration file {} created - load it in before "
-                        "doing a dynamic test or requesting based on "
-                        "magnetic field".format(data.calibration_log_filename))
-            # Allows for a new calibration file to be created again? TODO: test
-            data.calibration_log_filename = ""
-            data.stop_calibration = True
-            logger.info("data.calibrating_now: {} | data.stop_calibration: {}"
-                        .format(data.calibrating_now, data.stop_calibration))
-            logger.info("in log calibration: data.stop_calibration is {}"
-                        .format(data.stop_calibration))
-            data.current_value = 0
-            logger.info("stopping calibration")
-            main_page.calibrate_cage_update_buttons()
-
-class CageApp(tk.Tk):
-    """
-    An object class for main Helmholtz Cage application.
-    """
-    
-    def __init__(self, *args, **kwargs):
-        
-        # Initialize frame
-        tk.Tk.__init__(self, *args, **kwargs)
-
-        # Add title info
-        self.title = "Helmholtz Cage"
-        tk.Tk.wm_title(self, self.title)
-        # tk.Tk.iconbitmap(self, default="icon.ico") #*** add ico file for cage
-
-        # Expand frame to window
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-
-        # Frames are laid ontop of each other, startPage shown first
-        self.frames = {}
-        for Frame in (MainPage, HelpPage):
-            frame = Frame(container, self)
-            self.frames[Frame] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-            frame.columnconfigure(0, weight=1)
-            frame.rowconfigure(0, weight=1)
-        self.show_frame(MainPage)
-
-    def show_frame(self, cont):
-        """
-        Function to switch frames.
-        """
-        frame = self.frames[cont]
-        frame.tkraise()
-
+        # # Stop calibration if all template voltages have been used
+        # if data.current_value == len(data.template_voltages_x):
+            # instruments.log_data = "OFF"
+            # logger.info("calibration file {} created - load it in before "
+                        # "doing a dynamic test or requesting based on "
+                        # "magnetic field".format(data.calibration_log_filename))
+            # # Allows for a new calibration file to be created again? TODO: test
+            # data.calibration_log_filename = ""
+            # data.stop_calibration = True
+            # logger.info("data.calibrating_now: {} | data.stop_calibration: {}"
+                        # .format(data.calibrating_now, data.stop_calibration))
+            # logger.info("in log calibration: data.stop_calibration is {}"
+                        # .format(data.stop_calibration))
+            # data.current_value = 0
+            # logger.info("stopping calibration")
+            # main_page.calibrate_cage_update_buttons()
 
 class MainPage(tk.Frame):
     """
@@ -425,7 +386,7 @@ class MainPage(tk.Frame):
         self.refresh_connections_button = \
             tk.Button(self.connections_frame,
                       text="Check Connections",
-                      command=lambda: self.refresh_connections())
+                      command=lambda: self.controller.refresh_connections())
         self.refresh_connections_button.grid(row=6, column=0, columnspan=2)
 
     def fill_calibrate_frame(self):
@@ -455,17 +416,10 @@ class MainPage(tk.Frame):
         self.calibration_file_entry.grid(row=2, column=1)
         
         self.change_calibration_file_button = \
-            tk.Button(self.calibrate_frame, text='select new',
-                      command=lambda: self.change_calibration_file(),
+            tk.Button(self.calibrate_frame, text='Select',
+                      command=lambda: self.controller.change_calibration_file(),
                       width=10)
         self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
-        
-        # Create calibration file button
-        #self.calibrate_button = \
-            #tk.Button(self.calibrate_frame,
-                      #text='Create Calibration File with Template File',
-                      #command=lambda: self.calibrate_cage())
-        #self.calibrate_button.grid(row=3, column=0, columnspan=3, sticky='nsew')
 
     def fill_static_buttons_frame(self, parent):
         """
@@ -484,6 +438,7 @@ class MainPage(tk.Frame):
             tk.Radiobutton(self.static_buttons_frame,
                            text="Static Test",
                            variable=self.static_or_dynamic,
+                           command=self.update_static_dynamic_buttons,
                            value="static", font=LARGE_FONT,
                            bg="lightgray", highlightthickness=0)
         self.select_static.grid(row=0, column=0, columnspan=4,
@@ -587,6 +542,14 @@ class MainPage(tk.Frame):
                      validatecommand=vcmd_voltage,
                      textvariable=self.z_voltage, width=10)
         self.z_voltage_entry.grid(row=4, column=3)
+        
+        # Static value command button
+        self.static_command_button = \
+            tk.Button(self.static_buttons_frame, text='Command Values',
+                      command=lambda: self.controller.command_static_value(),
+                      width=15, state=tk.DISABLED)
+        self.static_command_button.grid(row=5, column=0, columnspan=4,
+                                        sticky='ns')
 
     def fill_dynamic_buttons_frame(self):
         """
@@ -594,13 +557,13 @@ class MainPage(tk.Frame):
         """
         
         # Title bar (with "radiobutton")
-        self.select_dynamic = tk.Radiobutton(self.dynamic_buttons_frame,
-                                             text="Dynamic Test",
-                                             variable=self.static_or_dynamic,
-                                             value="dynamic", font=LARGE_FONT,
-                                             bg="lightgray",
-                                             highlightthickness=0,
-                                             width=15)
+        self.select_dynamic = \
+            tk.Radiobutton(self.dynamic_buttons_frame,
+                           text="Dynamic Test",
+                           variable=self.static_or_dynamic,
+                           command=self.update_static_dynamic_buttons,
+                           value="dynamic", font=LARGE_FONT, bg="lightgray",
+                           highlightthickness=0, width=15)
         self.select_dynamic.grid(row=0, column=0, columnspan=4,
                                  pady=5, sticky='nsew')
         
@@ -619,8 +582,8 @@ class MainPage(tk.Frame):
         self.template_file_entry.grid(row=1, column=1)
         
         self.change_template_file_button = \
-            tk.Button(self.dynamic_buttons_frame, text='select new',
-                      command=lambda: self.change_template_file(),
+            tk.Button(self.dynamic_buttons_frame, text='Select',
+                      command=lambda: self.controller.change_template_file(),
                       width=10)
         self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
         
@@ -629,10 +592,11 @@ class MainPage(tk.Frame):
             tk.Checkbutton(self.dynamic_buttons_frame,
                            text="Calibrate from template",
                            variable=self.is_calibration_run,
-                           bg="lightgray", highlightthickness=0)
+                           bg="lightgray", highlightthickness=0,
+                           state=tk.DISABLED)
         self.select_calibration.grid(row=2, column=0, columnspan=3,
                                      sticky="nsew")
-
+#HERE
     def fill_main_buttons_frame(self):
         """
         Fill in the main functions subframe.
@@ -641,14 +605,15 @@ class MainPage(tk.Frame):
         # Start cage button
         self.start_button = \
             tk.Button(self.main_buttons_frame,
-                      text='Start Cage', command=lambda: self.start_cage())
+                      text='Start Cage',
+                      command=lambda: self.controller.start_cage())
         self.start_button.grid(row=0, column=0, sticky='nsew')
         
         # Stop cage button
         self.stop_button = \
             tk.Button(self.main_buttons_frame,
                       text='Stop Cage', state=tk.DISABLED,
-                      command=lambda: self.stop_cage())
+                      command=lambda: self.controller.stop_cage())
         self.stop_button.grid(row=0, column=1, sticky='nsew')
 
     def fill_help_frame(self):
@@ -664,7 +629,7 @@ class MainPage(tk.Frame):
         print("Filling plot frame...")
         
         # Create figure and initialize plots
-        if not cage.data.plots_created:
+        if not self.controller.cage.data.plots_created:
             self.fig, (self.power_supplies_plot, self.mag_field_plot) = \
                 plt.subplots(nrows=2, facecolor='lightgray')
             self.power_supplies_plot = plt.subplot(211) # Power supplies plot
@@ -674,35 +639,26 @@ class MainPage(tk.Frame):
         self.update_plot_info()
 
         # Add to frame
-        if not cage.data.plots_created:
+        if not self.controller.cage.data.plots_created:
             self.canvas = FigureCanvasTkAgg(self.fig, self.plots_frame)
             self.canvas.draw
             self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH,
                                              expand=True)
-        cage.data.plots_created = True
+        self.controller.cage.data.plots_created = True
         self.canvas.draw()
 
-    def refresh_connections(self):
-        """ 
-        Refresh the connections to the connected instruments (Hooked up 
-        to the "Check Connenctions" button).
-        
-        TODO: Test
+    def update_connection_entries(self, ps_status, mag_status):
         """
-
+        
+        """
+        
         # Allow the entry fields to be changed
         main_page = self.controller.frames[MainPage]
         main_page.x_ps_status_entry.configure(state=tk.NORMAL)
         main_page.y_ps_status_entry.configure(state=tk.NORMAL)
         main_page.z_ps_status_entry.configure(state=tk.NORMAL)
         main_page.mag_status_entry.configure(state=tk.NORMAL)
-
-        # Must be done in try/except to set text back to readonly
-        try:
-            ps_status, mag_status = cage.make_connections()
-        except Exception as err:
-            print("Could not connect instruments | {}".format(err))
-
+        
         # For applicable connections, delete the entry and update it
         if not (ps_status[0] == False):
             main_page.x_ps_status_entry.delete(0, tk.END)
@@ -726,102 +682,18 @@ class MainPage(tk.Frame):
         main_page.z_ps_status_entry.configure(state="readonly")
         main_page.mag_status_entry.configure(state="readonly")
 
-    def start_cage(self):
-        """
-        Start the Helmholtz Cage (hooked up to the "Start Cage" button).
-                
-        TODO: Test
-        """
-        
-        # Get test options
-        main_page = self.controller.frames[MainPage]
-        static_or_dynamic = main_page.static_or_dynamic.get()
-        field_or_voltage = main_page.field_or_voltage.get()
-        
-        # Tell cage to start
-        success = cage.start_cage(static_or_dynamic, field_or_voltage)
-        
-        # Start tracking plots
-        if success:
-            print("found Start Cage text on start button")
-            main_page.power_supplies_plot.cla()
-            main_page.mag_field_plot.cla()
-
-            # Update plots
-            cage.data.plot_titles = "None"
-            main_page.update_plot_info()
-
-            # Record start time
-            cage.data.start_time = datetime.datetime.now()
-
-            # Start recording data if logging hasn't already started
-            # log_session_data()
-
-            # Update buttons
-            self.start_cage_update_buttons()
-
-    def start_cage_update_buttons(self):
-        """
-        Update the status of buttons after the cage has started.
-        """
-        
-        main_page = self.controller.frames[MainPage]
-        main_page.stop_button.config(state=tk.NORMAL)
-        main_page.refresh_connections_button.config(state=tk.DISABLED)
-        main_page.change_template_file_button.config(state=tk.DISABLED)
-        main_page.change_calibration_file_button.config(state=tk.DISABLED)
-        main_page.calibrate_button.config(state=tk.DISABLED)
-        main_page.open_dynamic_csv_button.config(state=tk.DISABLED)
-
-    def stop_cage(self):
-        """
-        Stop the current run of the cage. Hooked up to the "Stop Cage"
-        button.
-        
-        TODO: Test
-        """
-        
-        # Command the cage to stop
-        main_page = self.controller.frames[MainPage]
-        success = cage.stop_cage()
-        # instruments.log_data = "OFF"  # this will make logging data stop
-        # logger.info("stopping cage")
-        
-        # Reset GUI and data
-        if success:
-            # If cage is started again in current session, new log file is created
-            # TODO
-            self.stop_cage_update_buttons()
-        
-        # Warn user if the cage isn't shutting down
-        else:
-            print("ERROR: Unable to command cage to stop")
-
-    def stop_cage_update_buttons(self):
-        """
-        Update the status of buttons after the cage has been stopped.
-        """
-        
-        main_page = self.controller.frames[MainPage]
-        main_page.stop_button.configure(state=tk.DISABLED)
-        main_page.refresh_connections_button.config(state=tk.NORMAL)
-        main_page.change_template_file_button.config(state=tk.NORMAL)
-        main_page.change_calibration_file_button.config(state=tk.NORMAL)
-        main_page.calibrate_button.config(state=tk.NORMAL)
-        main_page.open_dynamic_csv_button.config(state=tk.NORMAL)
-
     def update_plot_info(self):
         """
         Update the data subplots.
         
                 
-        TODO: Test
+        TODO: Update and Test
         """
         
         #print("Updating plot info...")
 
         # Logic to make check lists are equal length in order to be plotted
-        max_entries = len(cage.data.time)
+        max_entries = len(self.controller.cage.data.time)
         #print("Max entries is {}".format(max_entries))
         if max_entries == 0:
             max_entries = 1
@@ -919,39 +791,6 @@ class MainPage(tk.Frame):
             self.mag_field_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0),
                                        ncol=3, fancybox=True, prop={'size': 7})
             cage.data.plot_titles = "Exist"
-
-    def update_typable_entries(self):
-        """
-        Determine, based on the selected radiobutton in the static test 
-        bar, if column should be enabled/disabled.
-        """
-        
-        field_or_voltage = self.field_or_voltage.get()
-        if field_or_voltage == "voltage":
-            self.x_voltage_entry.configure(state=tk.NORMAL)
-            self.y_voltage_entry.configure(state=tk.NORMAL)
-            self.z_voltage_entry.configure(state=tk.NORMAL)
-
-            self.x_field_entry.delete(0, 'end')
-            self.y_field_entry.delete(0, 'end')
-            self.z_field_entry.delete(0, 'end')
-
-            self.x_field_entry.configure(state=tk.DISABLED)
-            self.y_field_entry.configure(state=tk.DISABLED)
-            self.z_field_entry.configure(state=tk.DISABLED)
-
-        if field_or_voltage == "field":
-            self.x_field_entry.configure(state=tk.NORMAL)
-            self.y_field_entry.configure(state=tk.NORMAL)
-            self.z_field_entry.configure(state=tk.NORMAL)
-
-            self.x_voltage_entry.delete(0, 'end')
-            self.y_voltage_entry.delete(0, 'end')
-            self.z_voltage_entry.delete(0, 'end')
-
-            self.x_voltage_entry.configure(state=tk.DISABLED)
-            self.y_voltage_entry.configure(state=tk.DISABLED)
-            self.z_voltage_entry.configure(state=tk.DISABLED)
 
     def validate_field(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type,
@@ -1064,126 +903,92 @@ class MainPage(tk.Frame):
             main_page.calibration_file_entry.configure(state="readonly")
         else:
             print("ERROR: Unable to load selected calibration file")
-    
-    def calibrate_cage(self):
+
+    def start_cage_update_buttons(self):
         """
-        Calibrate the Helmholtz Cage, by mapping coil voltages to the 
-        magnetic feild strength they create (for each axis individually).
-        
-        Should be run every time the cage is started, due to natural 
-        varience in the Earth's magnetic feild.
-        
-        TODO: Needs extensive rework.
-        """
-        pass
-        # main_page = self.controller.frames[MainPage]
-        # data.stop_calibration = False
-        # data_len = len(data.template_voltages_x)
-
-        # # Ensure that all instruments are properly connected
-        # if not hasattr(instruments, "connections_checked"):
-            # logger.info("Check connections before starting")
-        # else:
-
-            # # Connections are checked, start calibration if allowed
-            # if not data.calibrating_now:
-                
-                # # Clear plots if information is on them
-                # main_page.power_supplies_plot.cla()
-                # main_page.mag_field_plot.cla()
-                # data.plot_titles = "None"
-
-                # # Reset information logged into the data class
-                # (data.time, data.x_out, data.y_out, data.z_out,
-                 # data.x_req, data.y_req, data.z_req,
-                 # data.x_mag_field_actual, data.y_mag_field_actual,
-                 # data.z_mag_field_actual, data.x_mag_field_requested,
-                 # data.y_mag_field_requested, data.z_mag_field_requested) \
-                    # = [], [], [], [], [], [], [], [], [], [], [], [], []
-
-                # if not data.stop_calibration:
-                    # data.start_time = datetime.datetime.now()
-                    # self.calibrate_cage_update_buttons()
-            # else:
-                # if not data.stop_calibration:
-                    # main_page.update_plot_info()
-        
-        # # Begin the calibration
-        # data.calibrating_now = True
-        
-        # # Run through calibration values
-        # for value in range(0, data_len):
-            # instruments.send_voltage(x_volts[value], y_volts[value], z_volts[value])
-            # sleep(0.1)
-                
-            # # Read and save returned values
-            # (x_act, y_act, z_act) = instruments.get_requested_voltage()
-            # (x_mag_field_act, y_mag_field_act, z_mag_field_act) \
-                    # = instruments.get_magnetometer_field()
-            # data.x_out.append(x_act)
-            # data.y_out.append(y_act)
-            # data.z_out.append(z_act)
-            # data.x_mag_field_actual.append(x_mag_field_act)
-            # data.y_mag_field_actual.append(y_mag_field_act)
-            # data.x_mag_field_actual.append(z_mag_field_act)
-            
-            # # Capture where in the data we switch to the next coil
-            # if (data_len-value>>2):
-                # if (x_volts[value]!=0) and (y_volts[value+2]!=0):
-                    # cutoff_x = value
-                # if (y_volts[value]!=0) and (z_volts[value+2]!=0):
-                    # cutoff_y = value
-                    
-        # # Reset voltages
-        # instruments.send_voltage(0.0, 0.0, 0.0)
-        
-        # # Perform line fit to the data and analyse results
-        # x_data, y_data, z_data = parse_data(fake_data, cutoff_x, cutoff_y)
-        # x_equation, y_equation, z_equation = calibration_results_popup(x_data, y_data, z_data)
-        
-        # # Store equation bits
-        # data.x_slope = x_equation[1]
-        # data.y_slope = y_equation[1]
-        # data.z_slope = z_equation[1]
-        # data.x_intercept = x_equation[2]
-        # data.y_intercept = y_equation[2]
-        # data.z_intercept = z_equation[2]
-        
-        # # End calibration
-        # data.calibrating_now = False
-        # data.stop_calibration = True
-        # data.current_value = 0
-        # logger.info("Stopping calibration")
-        # self.calibrate_cage_update_buttons()
-
-    def calibrate_cage_update_buttons(self):
-        """
-        Update the buttons while the cage is calibrating and afterwards
+        Update the status of buttons after the cage has started.
         """
         
-        main_page = self.controller.frames[MainPage]
+        self.start_button.config(state=tk.DISABLED)
+        self.stop_button.config(state=tk.NORMAL)
+        self.refresh_connections_button.config(state=tk.DISABLED)
+        self.change_template_file_button.config(state=tk.DISABLED)
+        self.change_calibration_file_button.config(state=tk.DISABLED)
 
-        # Disable buttons for invalid options during calibration
-        if not cage.data.calibrating_now:
-            main_page.start_button.config(text="allow calibration to complete")
-            main_page.start_button.config(state=tk.DISABLED)
-
-            main_page.refresh_connections_button.config(state=tk.DISABLED)
-            main_page.change_template_file_button.config(state=tk.DISABLED)
-            main_page.change_calibration_file_button.config(state=tk.DISABLED)
-            main_page.calibrate_button.config(state=tk.DISABLED)
-            main_page.open_dynamic_csv_button.config(state=tk.DISABLED)
+    def stop_cage_update_buttons(self):
+        """
+        Update the status of buttons after the cage has been stopped.
+        """
         
-        # Reenable buttons
-        if not cage.data.calibrating_now and cage.data.stop_calibration \
-                and (cage.data.current_value == 0):
-            main_page.start_button.config(text="Start Cage")
-            main_page.start_button.config(state=tk.NORMAL)
-            main_page.refresh_connections_button.config(state=tk.NORMAL)
-            main_page.change_template_file_button.config(state=tk.NORMAL)
-            main_page.change_calibration_file_button.config(state=tk.NORMAL)
-            main_page.calibrate_button.config(state=tk.NORMAL)
-            main_page.open_dynamic_csv_button.config(state=tk.NORMAL)
+        self.start_button.config(state=tk.NORMAL)
+        self.stop_button.configure(state=tk.DISABLED)
+        self.refresh_connections_button.config(state=tk.NORMAL)
+        self.change_template_file_button.config(state=tk.NORMAL)
+        self.change_calibration_file_button.config(state=tk.NORMAL)
+
+    def update_typable_entries(self):
+        """
+        Determine, based on the selected radiobutton in the static test 
+        bar, if column should be enabled/disabled.
+        """
+        
+        field_or_voltage = self.field_or_voltage.get()
+        
+        if field_or_voltage == "voltage":
+            self.x_voltage_entry.configure(state=tk.NORMAL)
+            self.y_voltage_entry.configure(state=tk.NORMAL)
+            self.z_voltage_entry.configure(state=tk.NORMAL)
+            self.x_field_entry.delete(0, 'end')
+            self.y_field_entry.delete(0, 'end')
+            self.z_field_entry.delete(0, 'end')
+            self.x_field_entry.configure(state=tk.DISABLED)
+            self.y_field_entry.configure(state=tk.DISABLED)
+            self.z_field_entry.configure(state=tk.DISABLED)
+
+        elif field_or_voltage == "field":
+            self.x_field_entry.configure(state=tk.NORMAL)
+            self.y_field_entry.configure(state=tk.NORMAL)
+            self.z_field_entry.configure(state=tk.NORMAL)
+            self.x_voltage_entry.delete(0, 'end')
+            self.y_voltage_entry.delete(0, 'end')
+            self.z_voltage_entry.delete(0, 'end')
+            self.x_voltage_entry.configure(state=tk.DISABLED)
+            self.y_voltage_entry.configure(state=tk.DISABLED)
+            self.z_voltage_entry.configure(state=tk.DISABLED)
+
+    def update_static_dynamic_buttons(self):
+        """
+        Determine based on the selected radiobutton if the static frame,
+        or dynamic frame should be enabled/disabled.
+        """
+
+        static_or_dynamic = self.static_or_dynamic.get()
+        
+        if static_or_dynamic == "static":
+            self.template_file_entry.configure(state=tk.NORMAL)
+            self.template_file_entry.delete(0, 'end')
+            self.template_file_entry.configure(state="readonly")
+            self.static_command_button.configure(state=tk.NORMAL)
+            self.select_calibration.deselect()
+            self.select_calibration.configure(state=tk.DISABLED)
+        
+        if static_or_dynamic == "dynamic":
+            self.select_field.deselect()
+            self.select_voltage.deselect()
+            self.static_command_button.configure(state=tk.DISABLED)
+            self.select_calibration.configure(state=tk.NORMAL)
+            self.x_voltage_entry.delete(0, 'end')
+            self.y_voltage_entry.delete(0, 'end')
+            self.z_voltage_entry.delete(0, 'end')
+            self.x_field_entry.delete(0, 'end')
+            self.y_field_entry.delete(0, 'end')
+            self.z_field_entry.delete(0, 'end')
+            self.x_voltage_entry.configure(state=tk.DISABLED)
+            self.y_voltage_entry.configure(state=tk.DISABLED)
+            self.z_voltage_entry.configure(state=tk.DISABLED)
+            self.x_field_entry.configure(state=tk.DISABLED)
+            self.y_field_entry.configure(state=tk.DISABLED)
+            self.z_field_entry.configure(state=tk.DISABLED)
 
 
 class HelpPage(tk.Frame):
@@ -1193,18 +998,3 @@ class HelpPage(tk.Frame):
             # main container to hold all subframes
             container = tk.Frame(self, bg="black")
             container.grid(sticky="nsew")
-
-
-if __name__ == "__main__":
-    
-    # Retrieve program directory path
-    main_dir = str(sys.argv[1])
-    
-    try:
-        cage = HelmholtzCage(main_dir)
-        app = CageApp()
-        app.minsize(width=250, height=600)
-        app.mainloop()
-        
-    except Exception:
-        traceback.print_exc()
