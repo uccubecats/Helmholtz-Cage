@@ -13,7 +13,7 @@ import os
 
 from scipy import stats
 
-from utilities import read_from_csv, write_to_csv
+from utilities.files import read_from_csv, write_to_csv
 
 
 class Calibration(object):

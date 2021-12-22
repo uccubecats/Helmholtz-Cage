@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Main GUI script for the UC Helmholtz Cage
+Main GUI code for the UC Helmholtz Cage
 
 Copyright 2018-2021 UC CubeCats
 All rights reserved. See LICENSE file at:
@@ -14,27 +14,18 @@ Originally written by Jason Roll (rolljn@mail.uc.edu)
 
 
 import csv
-import datetime
-import glob
+#import datetime
 import logging
-import numpy as np
 import os
-from os import listdir
-from os.path import isfile, join
-import sys
-import threading
+#import threading
 import tkinter as tk
 from tkinter import filedialog
-from tkinter import ttk
-import traceback
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-from calibration import Calibration
-from helmholtz_cage import HelmholtzCage
-from template import retrieve_template, check_template_values
-#from doc import *
+from utilities.calibration import Calibration
+from utilities.template import retrieve_template, check_template_values
 
 
 # Setup logging
@@ -989,12 +980,3 @@ class MainPage(tk.Frame):
             self.x_field_entry.configure(state=tk.DISABLED)
             self.y_field_entry.configure(state=tk.DISABLED)
             self.z_field_entry.configure(state=tk.DISABLED)
-
-
-class HelpPage(tk.Frame):
-        def __init__(self, parent, controller):
-            tk.Frame.__init__(self, parent)
-            self.controller = controller
-            # main container to hold all subframes
-            container = tk.Frame(self, bg="black")
-            container.grid(sticky="nsew")

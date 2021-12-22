@@ -8,6 +8,8 @@ Copyright 2018-2019 UC CubeCats
 All rights reserved. See LICENSE file at:
 https://github.com/uccubecats/Helmholtz-Cage/LICENSE
 Additional copyright may be held by others, as reflected in the commit history.
+
+TODO: needs extensive rework
 """
 
 

@@ -11,7 +11,7 @@ history.
 
 import os
 
-from utilities import read_from_csv
+from utilities.files import read_from_csv
 
 
 def retrieve_template(file_dir, file_name):

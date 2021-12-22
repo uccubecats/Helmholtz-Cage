@@ -19,8 +19,9 @@ import threading
 import tkinter as tk
 import traceback
 
-from helmholtz_cage import HelmholtzCage
-from main import MainPage, HelpPage
+from hardware.helmholtz_cage import HelmholtzCage
+from interface.main_page import MainPage
+from interface.help_page import HelpPage
 
 
 # Global constants

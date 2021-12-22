@@ -12,7 +12,7 @@ history.
 import datetime
 import os
 
-from utilities import write_to_csv
+from utilities.files import write_to_csv
 
 
 class Data(object):

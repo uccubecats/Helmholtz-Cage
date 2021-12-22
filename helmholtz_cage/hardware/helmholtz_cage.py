@@ -12,10 +12,10 @@ history.
 import datetime
 import logging
 
-from calibration import Calibration
-from data import Data
-from instruments import GPIBDaisyChainPS, SerialMagnetometer
-from template import retrieve_template, check_template_values
+from data.data import Data
+from hardware.instruments import GPIBDaisyChainPS, SerialMagnetometer
+from utilities.calibration import Calibration
+from utilities.template import retrieve_template, check_template_values
 
 
 class HelmholtzCage(object):
