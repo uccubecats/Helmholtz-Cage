@@ -3,7 +3,7 @@
 """
   Main application program for the UC Helmholtz Cage.
   
-  Copyright 2021 UC CubeCats
+  Copyright 2022 UC CubeCats
   All rights reserved. See LICENSE file at:
   https://github.com/uccubecats/Helmholtz-Cage/LICENSE
   Additional copyright may be held by others, as reflected in the commit
@@ -18,6 +18,7 @@ import os
 import threading
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 import traceback
 
 from data.calibration import Calibration
@@ -233,6 +234,14 @@ class CageApp(tk.Tk):
         
         frame = self.frames[cont]
         frame.tkraise()
+        
+    def close_app(self):
+        """
+        Close the app when exiting from the main window.
+        """
+        
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.quit()
 
 
 if __name__ == "__main__":
@@ -240,7 +249,11 @@ if __name__ == "__main__":
     try:
         app = CageApp()
         app.minsize(width=250, height=600)
+        app.protocol("WM_DELETE_WINDOW", app.close_app)
         app.mainloop()
         
     except Exception:
         traceback.print_exc()
+        
+    except KeyboardInterrupt:
+        print("")

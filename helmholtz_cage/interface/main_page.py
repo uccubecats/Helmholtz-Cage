@@ -3,7 +3,7 @@
 """
   Main GUI code for the UC Helmholtz Cage
 
-  Copyright 2018-2021 UC CubeCats
+  Copyright 2018-2022 UC CubeCats
   All rights reserved. See LICENSE file at:
   https://github.com/uccubecats/Helmholtz-Cage/LICENSE
   Additional copyright may be held by others, as reflected in the commit
