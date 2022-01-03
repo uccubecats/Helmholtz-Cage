@@ -12,9 +12,9 @@ history.
 import datetime
 import logging
 
+from data.calibration import Calibration
 from data.data import Data
 from hardware.instruments import GPIBDaisyChainPS, SerialMagnetometer
-from utilities.calibration import Calibration
 from utilities.template import retrieve_template, check_template_values
 
 

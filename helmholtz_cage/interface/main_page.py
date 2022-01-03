@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
 """
-Main GUI code for the UC Helmholtz Cage
+  Main GUI code for the UC Helmholtz Cage
 
-Copyright 2018-2021 UC CubeCats
-All rights reserved. See LICENSE file at:
-https://github.com/uccubecats/Helmholtz-Cage/LICENSE
-Additional copyright may be held by others, as reflected in the commit
-history.
+  Copyright 2018-2021 UC CubeCats
+  All rights reserved. See LICENSE file at:
+  https://github.com/uccubecats/Helmholtz-Cage/LICENSE
+  Additional copyright may be held by others, as reflected in the commit
+  history.
 
-Originally written by Jason Roll (rolljn@mail.uc.edu)
+  Originally written by Jason Roll (rolljn@mail.uc.edu)
 """
 
 
@@ -19,13 +19,9 @@ import logging
 import os
 #import threading
 import tkinter as tk
-from tkinter import filedialog
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-
-from utilities.calibration import Calibration
-from utilities.template import retrieve_template, check_template_values
 
 
 # Setup logging
@@ -228,50 +224,65 @@ MEDIUM_FONT = ("Verdana", 9)
 
 class MainPage(tk.Frame):
     """
-    An object class for main frame of the Helmholtz Cage application.
+    A Tkinter Frame object class for the main page of the Helmholtz Cage
+    application.
     """
     
     def __init__(self, parent, controller):
         
+        # Initialize Tkinter frame
         tk.Frame.__init__(self, parent)
-
-        # Controller allows MainPage to access things from CageApp class
+        
+        # Add controller to access parent CageApp class
         self.controller = controller
-
+        
         # Create container for all the subframes on the GUI
         container = tk.Frame(self, bg="silver")
         container.grid(sticky="nsew")
-
+        
         # Create subframes for main frame
-        self.connections_frame = tk.Frame(container, bg="lightgray",
+        self.connections_frame = tk.Frame(container,
+                                          bg="lightgray",
                                           height=50,
                                           highlightbackground="silver",
                                           highlightthickness=2)
-        self.calibrate_frame = tk.Frame(container, bg="lightgray",
+        
+        self.calibrate_frame = tk.Frame(container,
+                                        bg="lightgray",
                                         height=50,
                                         highlightbackground="silver",
                                         highlightthickness=2)
-        self.static_buttons_frame = tk.Frame(container, bg="lightgray",
+        
+        self.static_buttons_frame = tk.Frame(container,
+                                             bg="lightgray",
                                              height=50,
                                              highlightbackground="silver",
                                              highlightthickness=2)
-        self.dynamic_buttons_frame = tk.Frame(container, bg="lightgray",
+        
+        self.dynamic_buttons_frame = tk.Frame(container,
+                                              bg="lightgray",
                                               height=50,
                                               highlightbackground="silver",
                                               highlightthickness=2)
-        self.main_buttons_frame = tk.Frame(container, bg="lightgray",
+        
+        self.main_buttons_frame = tk.Frame(container,
+                                           bg="lightgray",
                                            height=50,
                                            highlightbackground="silver",
                                            highlightthickness=2)
-        self.help_frame = tk.Frame(container, bg="lightgray",
+        
+        self.help_frame = tk.Frame(container,
+                                   bg="lightgray",
                                    height=50,
                                    highlightbackground="silver",
                                    highlightthickness=2)
-        self.plots_frame = tk.Frame(container, bg="lightgray",
+        
+        self.plots_frame = tk.Frame(container,
+                                    bg="lightgray",
                                     width=500,
                                     highlightbackground="silver",
                                     highlightthickness=4)
-
+        
         # Position subframes
         self.connections_frame.grid(row=1, sticky="nsew")
         self.calibrate_frame.grid(row=2, sticky="nsew")
@@ -280,11 +291,11 @@ class MainPage(tk.Frame):
         self.main_buttons_frame.grid(row=5, sticky="nsew")
         self.help_frame.grid(row=6, sticky="nsew")
         self.plots_frame.grid(row=0, column=1, sticky="nsew", rowspan=7)
-
-        # Set weight for expansion
+        
+        # Set weights for expansion
         [container.rowconfigure(r, weight=1) for r in range(1, 5)]
         container.columnconfigure(1, weight=1)
-
+        
         # Fill in the subframes (function calls)
         self.fill_calibrate_frame()
         self.fill_connections_frame()
@@ -293,330 +304,371 @@ class MainPage(tk.Frame):
         self.fill_main_buttons_frame()
         self.fill_help_frame()
         self.fill_plot_frame()
-
+    
     def fill_connections_frame(self):
         """
         Fill in the connections subframe.
         """
         
-        # Title bars
-        self.connections_label = tk.Label(self.connections_frame,
-                                          text="Connections", font=LARGE_FONT,
-                                          bg="lightgray")
-        self.connections_label.grid(row=0, column=0, columnspan=2,
-                                    pady=5, sticky='nsew')
+        # Create Tk entry variables
+        self.x_ps_status = tk.StringVar()
+        self.y_ps_status = tk.StringVar()
+        self.z_ps_status = tk.StringVar()
+        self.mag_status = tk.StringVar()
+        
+        # Create labels
+        self.cxn_title = tk.Label(self.connections_frame,
+                                  text="Connections",
+                                  font=LARGE_FONT,
+                                  bg="lightgray")
                                     
         self.unit_label = tk.Label(self.connections_frame,
-                                   text="Unit", font=MEDIUM_FONT, 
+                                   text="Unit",
+                                   font=MEDIUM_FONT, 
                                    bg="lightgray")
-        self.unit_label.grid(row=1, column=0)
         
         self.status_label = tk.Label(self.connections_frame,
-                                     text="Status", font=MEDIUM_FONT,
+                                     text="Status",
+                                     font=MEDIUM_FONT,
                                      bg="lightgray")
-        self.status_label.grid(row=1, column=1)
         
-        # X-Axis power supply
-        self.x_ps_status = tk.StringVar()
         self.x_ps_label = tk.Label(self.connections_frame,
                                    text="X Power Supply",
                                    bg="lightgray",
                                    width=14)
-        self.x_ps_label.grid(row=2, column=0)
         
+        self.y_ps_label = tk.Label(self.connections_frame,
+                                   text="Y Power Supply",
+                                   bg="lightgray",
+                                   width=14)
+        
+        self.z_ps_label = tk.Label(self.connections_frame,
+                                   text="Z Power Supply", 
+                                   bg="lightgray",
+                                   width=14)
+        
+        self.mag_label = tk.Label(self.connections_frame,
+                                  text="Magnetometer",
+                                  bg="lightgray",
+                                  width=14)
+        
+        # Create and configure connection status entries
         self.x_ps_status_entry = tk.Entry(self.connections_frame,
                                           textvariable=self.x_ps_status,
                                           width=22)
         self.x_ps_status_entry.insert(0, "Disconnected")
         self.x_ps_status_entry.configure(state="readonly")
-        self.x_ps_status_entry.grid(row=2, column=1)
-
-        # Y-Axis power supply
-        self.y_ps_status = tk.StringVar()
-        self.y_ps_label = tk.Label(self.connections_frame,
-                                   text="Y Power Supply",
-                                   bg="lightgray",
-                                   width=14).grid(row=3, column=0)
         
         self.y_ps_status_entry = tk.Entry(self.connections_frame,
                                           textvariable=self.y_ps_status,
                                           width=22)
         self.y_ps_status_entry.insert(0, "Disconnected")
         self.y_ps_status_entry.configure(state="readonly")
-        self.y_ps_status_entry.grid(row=3, column=1)
-
-        # Z-Axis power supply
-        self.z_ps_status = tk.StringVar()
-        self.z_ps_label = tk.Label(self.connections_frame,
-                                   text="Z Power Supply", 
-                                   bg="lightgray",
-                                   width=14).grid(row=4, column=0)
-                                   
+        
         self.z_ps_status_entry = tk.Entry(self.connections_frame,
                                           textvariable=self.z_ps_status,
                                           width=22)
         self.z_ps_status_entry.insert(0, "Disconnected")
         self.z_ps_status_entry.configure(state="readonly")
-        self.z_ps_status_entry.grid(row=4, column=1)
-
-        # Truth Magnetometer
-        self.mag_status = tk.StringVar()
-        self.mag_label = tk.Label(self.connections_frame,
-                                  text="Magnetometer",
-                                  bg="lightgray",
-                                  width=14).grid(row=5, column=0)
-                                  
+        
         self.mag_status_entry = tk.Entry(self.connections_frame,
                                          textvariable=self.mag_status,
                                          width=22)
         self.mag_status_entry.insert(0, "Disconnected")
         self.mag_status_entry.configure(state="readonly")
+        
+        # Create check connection button
+        self.refresh_cxns_button = tk.Button(self.connections_frame,
+                                             text="Check Connections",
+                                             command=lambda: self.controller.refresh_connections())
+        
+        # Position widgets
+        self.cxn_title.grid(row=0, column=0, columnspan=2, pady=5, sticky='nsew')
+        self.unit_label.grid(row=1, column=0)
+        self.status_label.grid(row=1, column=1)
+        self.x_ps_label.grid(row=2, column=0)
+        self.x_ps_status_entry.grid(row=2, column=1)
+        self.y_ps_label.grid(row=3, column=0)
+        self.y_ps_status_entry.grid(row=3, column=1)
+        self.z_ps_label.grid(row=4, column=0)
+        self.z_ps_status_entry.grid(row=4, column=1)
+        self.mag_label.grid(row=5, column=0)
         self.mag_status_entry.grid(row=5, column=1)
-
-        # Refresh connections button
-        self.refresh_connections_button = \
-            tk.Button(self.connections_frame,
-                      text="Check Connections",
-                      command=lambda: self.controller.refresh_connections())
-        self.refresh_connections_button.grid(row=6, column=0, columnspan=2)
-
+        self.refresh_cxns_button.grid(row=6, column=0, columnspan=2)
+    
     def fill_calibrate_frame(self):
         """
         Fill in the calibration subframe.
         """
         
-        # Title bar
-        self.calibration_label = \
-            tk.Label(self.calibrate_frame, text="Calibration", font=LARGE_FONT,
-                     bg="lightgray")
-        self.calibration_label.grid(row=0, column=0, columnspan=3,
-                                    pady=5, sticky='nsew')
-
-        # Calibration File 
-        self.calibration_file_label = \
-            tk.Label(self.calibrate_frame, text="Calibration file:",
-                     bg="lightgray", width=12)
-        self.calibration_file_label.grid(row=2, column=0)
+        # Create calibration file Tk entry variable
+        self.calibration_file_status = tk.StringVar()
         
-        self.calibration_file_status_text = tk.StringVar()
-        self.calibration_file_entry = \
-            tk.Entry(self.calibrate_frame,
-                     textvariable=self.calibration_file_status_text,
-                     width=10)
+        # Create labels
+        self.calibration_label = tk.Label(self.calibrate_frame,
+                                          text="Calibration",
+                                          font=LARGE_FONT,
+                                          bg="lightgray")
+        
+        self.calibration_file_label = tk.Label(self.calibrate_frame,
+                                               text="Calibration file:",
+                                               bg="lightgray",
+                                               width=12)
+        
+        # Create and configure file entry
+        self.calibration_file_entry = tk.Entry(self.calibrate_frame,
+                                               textvariable=self.calibration_file_status,
+                                               width=10)
         self.calibration_file_entry.configure(state="readonly")
-        self.calibration_file_entry.grid(row=2, column=1)
         
-        self.change_calibration_file_button = \
-            tk.Button(self.calibrate_frame, text='Select',
-                      command=lambda: self.controller.change_calibration_file(),
-                      width=10)
+        # Create change calibration file button
+        self.change_calibration_file_button = tk.Button(self.calibrate_frame,
+                                                        text='Select',
+                                                        command=lambda: self.controller.change_calibration_file(),
+                                                        width=10)
+        
+        # Position widgets
+        self.calibration_label.grid(row=0, column=0, columnspan=3, pady=5, sticky='nsew')
+        self.calibration_file_label.grid(row=2, column=0)
+        self.calibration_file_entry.grid(row=2, column=1)
         self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
-
+    
     def fill_static_buttons_frame(self, parent):
         """
         Fill in the static-test subframe.
         """
-
-        # Validate entry data type (must be float)
+        
+        # Create Tk entry variables
+        self.test_type = tk.StringVar()
+        self.ctrl_type = tk.StringVar()
+        self.x_field = tk.StringVar()
+        self.x_voltage = tk.StringVar()
+        self.y_field = tk.StringVar()
+        self.y_voltage = tk.StringVar()
+        self.z_field = tk.StringVar()
+        self.z_voltage = tk.StringVar()
+        
+        # Pre-create button text labels
+        # TODO: update field text to find max field for max voltage
+        field_text = "Enter Magnetic Field \n (Gauss)".format(MAX_FIELD_VALUE)
+        voltage_text = "Enter Voltage \n(Max {} volts)".format(MAX_VOLTAGE_VALUE)
+        
+        # Configure validate entry data types (must be float)
         vcmd_field = (parent.register(self.validate_field),
                       '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         vcmd_voltage = (parent.register(self.validate_voltage),
                         '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-
-        # Title Bar (with "radiobutton")
-        self.static_or_dynamic = tk.StringVar()
-        self.select_static = \
-            tk.Radiobutton(self.static_buttons_frame,
-                           text="Static Test",
-                           variable=self.static_or_dynamic,
-                           command=self.update_static_dynamic_buttons,
-                           value="static", font=LARGE_FONT,
-                           bg="lightgray", highlightthickness=0)
-        self.select_static.grid(row=0, column=0, columnspan=4,
-                                pady=5, sticky='nsew')
-
-        # Field strength or voltage set bar
-        # TODO: update field text to find max field for max voltage
-        self.field_or_voltage = tk.StringVar()
         
-        field_text = "Enter Magnetic Field \n (Gauss)" \
-            .format(MAX_FIELD_VALUE)
-        self.select_field = \
-            tk.Radiobutton(self.static_buttons_frame,
-                           text=field_text, variable=self.field_or_voltage,
-                           value="field", command=self.update_typable_entries,
-                           bg="lightgray", highlightthickness=0,
-                           width=15)
+        # Create test type selection buttons
+        self.select_static = tk.Radiobutton(self.static_buttons_frame,
+                                            text="Static Test",
+                                            variable=self.test_type,
+                                            command=self.update_static_dynamic_buttons,
+                                            value="static",
+                                            font=LARGE_FONT,
+                                            bg="lightgray",
+                                            highlightthickness=0)
+        
+        self.select_field = tk.Radiobutton(self.static_buttons_frame,
+                                           text=field_text,
+                                           variable=self.ctrl_type,
+                                           value="field",
+                                           command=self.update_typable_entries,
+                                           bg="lightgray",
+                                           highlightthickness=0,
+                                           width=15)
+        
+        self.select_voltage = tk.Radiobutton(self.static_buttons_frame,
+                                             text=voltage_text,
+                                             variable=self.ctrl_type,
+                                             value="voltage",
+                                             command=self.update_typable_entries,
+                                             bg="lightgray",
+                                             highlightthickness=0,
+                                             width=15)
+        
+        # Create labels
+        self.x_field_label = tk.Label(self.static_buttons_frame,
+                                      text="x:",
+                                      font=LARGE_FONT,
+                                      bg="lightgray")
+        
+        self.x_voltage_label = tk.Label(self.static_buttons_frame,
+                                        text="x:",
+                                        font=LARGE_FONT,
+                                        bg="lightgray")
+        
+        self.y_field_label = tk.Label(self.static_buttons_frame,
+                                      text="y:",
+                                      font=LARGE_FONT,
+                                      bg="lightgray")
+        
+        self.y_voltage_label = tk.Label(self.static_buttons_frame,
+                                        text="y:",
+                                        font=LARGE_FONT,
+                                        bg="lightgray")
+        
+        self.z_field_label = tk.Label(self.static_buttons_frame,
+                                      text="z:",
+                                      font=LARGE_FONT,
+                                      bg="lightgray")
+        
+        self.z_voltage_label = tk.Label(self.static_buttons_frame,
+                                        text="z:",
+                                        font=LARGE_FONT,
+                                        bg="lightgray")
+                                        
+        # Create value entries
+        self.x_field_entry = tk.Entry(self.static_buttons_frame,
+                                      state=tk.DISABLED,
+                                      validate='key',
+                                      validatecommand=vcmd_field,
+                                      textvariable=self.x_field,
+                                      width=10)
+        
+        self.x_voltage_entry = tk.Entry(self.static_buttons_frame,
+                                        state=tk.DISABLED,
+                                        validate='key',
+                                        validatecommand=vcmd_voltage,
+                                        textvariable=self.x_voltage,
+                                        width=10)
+        
+        self.y_field_entry = tk.Entry(self.static_buttons_frame,
+                                      state=tk.DISABLED,
+                                      validate='key',
+                                      validatecommand=vcmd_field,
+                                      textvariable=self.y_field,
+                                      width=10)
+        
+        self.y_voltage_entry = tk.Entry(self.static_buttons_frame,
+                                        state=tk.DISABLED,
+                                        validate='key',
+                                        validatecommand=vcmd_voltage,
+                                        textvariable=self.y_voltage,
+                                        width=10)
+        
+        self.z_field_entry = tk.Entry(self.static_buttons_frame,
+                                      state=tk.DISABLED,
+                                      validate='key',
+                                      validatecommand=vcmd_field,
+                                      textvariable=self.z_field,
+                                      width=10)
+        
+        self.z_voltage_entry = tk.Entry(self.static_buttons_frame,
+                                        state=tk.DISABLED,
+                                        validate='key',
+                                        validatecommand=vcmd_voltage,
+                                        textvariable=self.z_voltage,
+                                        width=10)
+        
+        # Create static value command button
+        self.static_command_button = tk.Button(self.static_buttons_frame,
+                                               text='Command Values',
+                                               command=lambda: self.controller.command_static_value(),
+                                               width=15,
+                                               state=tk.DISABLED)
+        
+        # Position widgets
+        self.select_static.grid(row=0, column=0, columnspan=4, pady=5, sticky='nsew')
         self.select_field.grid(row=1, column=0, columnspan=2, sticky='nsew')
-
-        voltage_text = "Enter Voltage \n(Max {} volts)"\
-                       .format(MAX_VOLTAGE_VALUE)
-        self.select_voltage = \
-            tk.Radiobutton(self.static_buttons_frame,
-                           text=voltage_text, variable=self.field_or_voltage,
-                           value="voltage", command=self.update_typable_entries,
-                           bg="lightgray", highlightthickness=0,
-                           width=15)
         self.select_voltage.grid(row=1, column=2, columnspan=2, sticky='nsew')
-
-        # X-Axis label/inputs
-        self.x_field_label = \
-            tk.Label(self.static_buttons_frame,
-                     text="x:", font=LARGE_FONT,bg="lightgray").grid(row=2,
-                        column=0, sticky='ns')
-        self.x_field = tk.StringVar()
-        self.x_field_entry = \
-            tk.Entry(self.static_buttons_frame,
-                     state=tk.DISABLED, validate='key',
-                     validatecommand=vcmd_field,
-                     textvariable=self.x_field, width=10)
+        self.x_field_label.grid(row=2, column=0, sticky='ns')
         self.x_field_entry.grid(row=2, column=1)
-
-        self.x_voltage_label = \
-            tk.Label(self.static_buttons_frame,
-                     text="x:", font=LARGE_FONT, bg="lightgray").grid(row=2,
-                     column=2)
-        self.x_voltage = tk.StringVar()
-        self.x_voltage_entry = \
-            tk.Entry(self.static_buttons_frame,
-                     state=tk.DISABLED, validate='key',
-                     validatecommand=vcmd_voltage,
-                     textvariable=self.x_voltage, width=10)
+        self.x_voltage_label.grid(row=2, column=2)
         self.x_voltage_entry.grid(row=2, column=3)
-        
-        # Y-Axis label/inputs
-        self.y_field_label = \
-            tk.Label(self.static_buttons_frame,
-                     text="y:", font=LARGE_FONT, bg="lightgray").grid(row=3,
-                        column=0)
-        self.y_field = tk.StringVar()
-        self.y_field_entry = \
-            tk.Entry(self.static_buttons_frame,
-                     state=tk.DISABLED, validate='key',
-                     validatecommand=vcmd_field,
-                     textvariable=self.y_field, width=10)
+        self.y_field_label.grid(row=3, column=0)
         self.y_field_entry.grid(row=3, column=1)
-
-        self.y_voltage_label = \
-            tk.Label(self.static_buttons_frame,
-                     text="y:", font=LARGE_FONT, bg="lightgray").grid(row=3,
-                        column=2)
-        self.y_voltage = tk.StringVar()
-        self.y_voltage_entry = \
-            tk.Entry(self.static_buttons_frame,
-                     state=tk.DISABLED, validate='key',
-                     validatecommand=vcmd_voltage,
-                     textvariable=self.y_voltage, width=10)
+        self.y_voltage_label.grid(row=3, column=2)
         self.y_voltage_entry.grid(row=3, column=3)
-        
-        # Z-Axis label/inputs
-        self.z_field_label = \
-            tk.Label(self.static_buttons_frame,
-                     text="z:", font=LARGE_FONT, bg="lightgray").grid(row=4,
-                        column=0)
-        self.z_field = tk.StringVar()
-        self.z_field_entry = \
-            tk.Entry(self.static_buttons_frame,
-                     state=tk.DISABLED, validate='key',
-                     validatecommand=vcmd_field,
-                     textvariable=self.z_field, width=10)
+        self.z_field_label.grid(row=4, column=0)
         self.z_field_entry.grid(row=4, column=1)
-
-        self.z_voltage_label = \
-            tk.Label(self.static_buttons_frame,
-                     text="z:", font=LARGE_FONT, bg="lightgray").grid(row=4,
-                        column=2)
-        self.z_voltage = tk.StringVar()
-        self.z_voltage_entry = \
-            tk.Entry(self.static_buttons_frame,
-                     state=tk.DISABLED, validate='key',
-                     validatecommand=vcmd_voltage,
-                     textvariable=self.z_voltage, width=10)
+        self.z_voltage_label.grid(row=4, column=2)
         self.z_voltage_entry.grid(row=4, column=3)
-        
-        # Static value command button
-        self.static_command_button = \
-            tk.Button(self.static_buttons_frame, text='Command Values',
-                      command=lambda: self.controller.command_static_value(),
-                      width=15, state=tk.DISABLED)
-        self.static_command_button.grid(row=5, column=0, columnspan=4,
-                                        sticky='ns')
-
+        self.static_command_button.grid(row=5, column=0, columnspan=4, sticky='ns')
+    
     def fill_dynamic_buttons_frame(self):
         """
         Fill in the dynamic-test subframe.
         """
         
-        # Title bar (with "radiobutton")
-        self.select_dynamic = \
-            tk.Radiobutton(self.dynamic_buttons_frame,
-                           text="Dynamic Test",
-                           variable=self.static_or_dynamic,
-                           command=self.update_static_dynamic_buttons,
-                           value="dynamic", font=LARGE_FONT, bg="lightgray",
-                           highlightthickness=0, width=15)
-        self.select_dynamic.grid(row=0, column=0, columnspan=4,
-                                 pady=5, sticky='nsew')
-        
-        # Template File
-        self.template_file_label = \
-            tk.Label(self.dynamic_buttons_frame, text="Template file:",
-                     bg="lightgray", width=12)
-        self.template_file_label.grid(row=1, column=0)
-
+        # Create Tk entry variables
         self.template_file_status_text = tk.StringVar()
-        self.template_file_entry = \
-            tk.Entry(self.dynamic_buttons_frame,
-                     textvariable=self.template_file_status_text,
-                     width=10)
-        self.template_file_entry.configure(state="readonly")
-        self.template_file_entry.grid(row=1, column=1)
-        
-        self.change_template_file_button = \
-            tk.Button(self.dynamic_buttons_frame, text='Select',
-                      command=lambda: self.controller.change_template_file(),
-                      width=10)
-        self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
-        
         self.is_calibration_run = tk.BooleanVar()
-        self.select_calibration = \
-            tk.Checkbutton(self.dynamic_buttons_frame,
-                           text="Calibrate from template",
-                           variable=self.is_calibration_run,
-                           bg="lightgray", highlightthickness=0,
-                           state=tk.DISABLED)
-        self.select_calibration.grid(row=2, column=0, columnspan=3,
-                                     sticky="nsew")
-#HERE
+        
+        # Create test type selection button (dynamic)
+        self.select_dynamic =  tk.Radiobutton(self.dynamic_buttons_frame,
+                                              text="Dynamic Test",
+                                              variable=self.test_type,
+                                              command=self.update_static_dynamic_buttons,
+                                              value="dynamic",
+                                              font=LARGE_FONT,
+                                              bg="lightgray",
+                                              highlightthickness=0,
+                                              width=15)
+        
+        # Create label
+        self.template_file_label = tk.Label(self.dynamic_buttons_frame,
+                                            text="Template file:",
+                                            bg="lightgray",
+                                            width=12)
+        
+        # Create and configure template file name entry
+        self.template_file_entry = tk.Entry(self.dynamic_buttons_frame,
+                                            textvariable=self.template_file_status_text,
+                                            width=10)
+        self.template_file_entry.configure(state="readonly")
+        
+        # Create change template file button
+        self.change_template_file_button = tk.Button(self.dynamic_buttons_frame,
+                                                     text='Select',
+                                                     command=lambda: self.controller.change_template_file(),
+                                                     width=10)
+        
+        # Create button for calibrating from template file
+        self.select_calibration = tk.Checkbutton(self.dynamic_buttons_frame,
+                                                 text="Calibrate from template",
+                                                 variable=self.is_calibration_run,
+                                                 bg="lightgray",
+                                                 highlightthickness=0,
+                                                 state=tk.DISABLED)
+        
+        # Position widgets
+        self.select_dynamic.grid(row=0, column=0, columnspan=4, pady=5, sticky='nsew')
+        self.template_file_label.grid(row=1, column=0)
+        self.template_file_entry.grid(row=1, column=1)
+        self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
+        self.select_calibration.grid(row=2, column=0, columnspan=3, sticky="nsew")
+    
     def fill_main_buttons_frame(self):
         """
         Fill in the main functions subframe.
         """
         
-        # Start cage button
-        self.start_button = \
-            tk.Button(self.main_buttons_frame,
-                      text='Start Cage',
-                      command=lambda: self.controller.start_cage())
-        self.start_button.grid(row=0, column=0, sticky='nsew')
+        # Create buttons
+        self.start_button = tk.Button(self.main_buttons_frame,
+                                      text='Start Cage',
+                                      command=lambda: self.controller.start_cage())
         
-        # Stop cage button
-        self.stop_button = \
-            tk.Button(self.main_buttons_frame,
-                      text='Stop Cage', state=tk.DISABLED,
-                      command=lambda: self.controller.stop_cage())
+        self.stop_button = tk.Button(self.main_buttons_frame,
+                                     text='Stop Cage',
+                                     state=tk.DISABLED,
+                                     command=lambda: self.controller.stop_cage())
+        
+        # Position widgets
+        self.start_button.grid(row=0, column=0, sticky='nsew')
         self.stop_button.grid(row=0, column=1, sticky='nsew')
-
+    
     def fill_help_frame(self):
         """
         Fill in the help menu frame (TODO).
         """
         pass
-
+    
     def fill_plot_frame(self):
         """
         Fill in the main plot subframe.
         """
+        
         print("Filling plot frame...")
         
         # Create figure and initialize plots
@@ -625,22 +677,25 @@ class MainPage(tk.Frame):
                 plt.subplots(nrows=2, facecolor='lightgray')
             self.power_supplies_plot = plt.subplot(211) # Power supplies plot
             self.mag_field_plot = plt.subplot(212) # Magnetic field plot
-
+        
         # Separated for easy recreation when making new plots after hitting stop
         self.update_plot_info()
-
+        
         # Add to frame
         if not self.controller.cage.data.plots_created:
             self.canvas = FigureCanvasTkAgg(self.fig, self.plots_frame)
-            self.canvas.draw
-            self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH,
+            self.canvas.draw()
+            self.canvas.get_tk_widget().pack(side=tk.BOTTOM,
+                                             fill=tk.BOTH,
                                              expand=True)
+        
         self.controller.cage.data.plots_created = True
         self.canvas.draw()
-
+    
     def update_connection_entries(self, ps_status, mag_status):
         """
-        
+        Update the connection frame status entries for each connected 
+        device
         """
         
         # Allow the entry fields to be changed
@@ -654,25 +709,25 @@ class MainPage(tk.Frame):
         if not (ps_status[0] == False):
             main_page.x_ps_status_entry.delete(0, tk.END)
             main_page.x_ps_status_entry.insert(tk.END, "Connected")
-
+        
         if not (ps_status[1] == False):
             main_page.y_ps_status_entry.delete(0, tk.END)
             main_page.y_ps_status_entry.insert(tk.END, "Connected")
-
+        
         if not (ps_status[2] == False):
             main_page.z_ps_status_entry.delete(0, tk.END)
             main_page.z_ps_status_entry.insert(tk.END, "Connected")
-
+        
         if not (mag_status == False):
             main_page.mag_status_entry.delete(0, tk.END)
             main_page.mag_status_entry.insert(tk.END, "Connected")
-
+        
         # FIXME: Set the entry fields back to read only
         main_page.x_ps_status_entry.configure(state="readonly")
         main_page.y_ps_status_entry.configure(state="readonly")
         main_page.z_ps_status_entry.configure(state="readonly")
         main_page.mag_status_entry.configure(state="readonly")
-
+    
     def update_plot_info(self):
         """
         Update the data subplots.
@@ -680,9 +735,9 @@ class MainPage(tk.Frame):
                 
         TODO: Update and Test
         """
-        
+        return
         #print("Updating plot info...")
-
+        
         # Logic to make check lists are equal length in order to be plotted
         max_entries = len(self.controller.cage.data.time)
         #print("Max entries is {}".format(max_entries))
@@ -708,7 +763,7 @@ class MainPage(tk.Frame):
             cage.data.By = [0]*max_entries
         if len(cage.data.Bz) != max_entries:
             cage.data.Bz = [0]*max_entries
-
+        
         # Get voltage graph axis limits
         power_supplies_list = (cage.data.Vx +
                                cage.data.Vy + 
@@ -736,7 +791,7 @@ class MainPage(tk.Frame):
         if max_y_plot_two < 1:
             max_y_plot_two = 1
         min_y_plot_two = min(mag_field_list)
-
+        
         # Plot
         # Power supply voltage graph
         self.power_supplies_plot.plot(cage.data.time, cage.data.Vx, 'r', label='x_ps_output')
@@ -746,10 +801,10 @@ class MainPage(tk.Frame):
             self.power_supplies_plot.plot(cage.data.time, cage.data.x_req, 'r--', label='x_ps_requested')
             self.power_supplies_plot.plot(cage.data.time, cage.data.y_req, 'g--', label='y_ps_requested')
             self.power_supplies_plot.plot(cage.data.time, cage.data.z_req, 'b--', label='z_ps_requested')
-
+        
         self.plot_1_axes = self.power_supplies_plot.axes
         self.plot_1_axes.set_ylim(min_y_plot_one, max_y_plot_one)
-
+        
         # Magnetic field graph
         self.mag_field_plot.plot(cage.data.time, cage.data.Bx, 'r', label='x_mag_field_actual')
         self.mag_field_plot.plot(cage.data.time, cage.data.By, 'g', label='y_mag_field_actual')
@@ -758,10 +813,10 @@ class MainPage(tk.Frame):
             self.mag_field_plot.plot(cage.data.time, cage.data.x_req, 'r--', label='x_mag_field_requested')
             self.mag_field_plot.plot(cage.data.time, cage.data.y_req, 'g--', label='y_mag_field_requested')
             self.mag_field_plot.plot(cage.data.time, cage.data.z_req, 'b--', label='z_mag_field_requested')
-
+        
         self.plot_2_axes = self.mag_field_plot.axes
         self.plot_2_axes.set_ylim(min_y_plot_two, max_y_plot_two)
-
+        
         # Combine plots for GUI display
         self.power_supplies_plot.get_shared_x_axes().join(self.power_supplies_plot, self.mag_field_plot)
         self.power_supplies_plot.set_xticklabels([])
@@ -774,7 +829,7 @@ class MainPage(tk.Frame):
         self.mag_field_plot.set_title("Magnetic Flux Density")
         self.mag_field_plot.set_xlabel("Seconds")
         self.mag_field_plot.set_ylabel("Gauss")
-
+        
         # Create plot titles (only needs to be run once)
         if cage.data.plot_titles == "None": # only need to do this once for the plots
             self.power_supplies_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.00),
@@ -782,119 +837,7 @@ class MainPage(tk.Frame):
             self.mag_field_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0),
                                        ncol=3, fancybox=True, prop={'size': 7})
             cage.data.plot_titles = "Exist"
-
-    def validate_field(self, action, index, value_if_allowed,
-                       prior_value, text, validation_type, trigger_type,
-                       widget_name):
-        """
-        Check that constant value entry can be interpreted as a float.
-        """
-        
-        if (action == '1'):
-            if text in '0123456789.-+':
-                try:
-                    value = float(value_if_allowed)
-                    if value <= MAX_FIELD_VALUE:
-                        return True
-                    else:
-                        return False
-
-                except ValueError:
-                    return False
-            else:
-                return False
-        else:
-            return True
-
-    def validate_voltage(self, action, index, value_if_allowed,
-                         prior_value, text, validation_type, trigger_type,
-                         widget_name):
-        """
-        Check that constant value entry can be interpreted as a float.
-        """
-                             
-        if (action == '1'):
-            if text in '0123456789.-+':
-                try:
-                    value = float(value_if_allowed)
-                    if value <= MAX_VOLTAGE_VALUE:
-                        return True
-                    else:
-                        return False
-
-                except ValueError:
-                    return False
-            else:
-                return False
-        else:
-            return True
-
-    def change_template_file(self):
-        """
-        Load the user specifed template file.
-        """
-        
-        # Ask the user for the template file
-        main_page = self.controller.frames[MainPage]
-        start_dir = os.path.join(main_dir, "templates")
-        template_file = filedialog.askopenfilename(initialdir=start_dir,
-                                                   filetypes=(("csv file","*.csv"),
-                                                              ("All files","*.*")))
-        # logger.info("Loading template file [{}]...".format(template_file))
-        
-        # Retrieve and check template
-        template_dir, template_name = os.path.split(template_file)
-        template = retrieve_template(template_dir, template_name)
-        is_okay = check_template_values(template, [5.0, 1.5]) # <--TODO: replace these
-        
-        # Give template to the Helmholtz Cage
-        if is_okay:
-            cage.template = template
-            cage.has_template = True
-            cage.data.template_file = template_file
-        
-            # Put template file name into GUI entry
-            main_page.template_file_entry.configure(state=tk.NORMAL)
-            main_page.template_file_entry.delete(0, 'end')
-            main_page.template_file_entry.insert(0, template_file)
-            main_page.template_file_entry.configure(state="readonly")
-        else:
-            print("ERROR: Unable to load selected template file")
     
-    def change_calibration_file(self):
-        """
-        Load the user specifed calibration file.
-        
-        TODO: Test
-        """
-        
-        # Ask the user for the calibration file
-        main_page = self.controller.frames[MainPage]
-        start_dir = os.path.join(main_dir, "calibrations")
-        calibration_file = filedialog.askopenfilename(initialdir=start_dir,
-                                                      filetypes=(("csv file","*.csv"),
-                                                                 ("All files","*.*")))
-        # logger.info("Loading calibration file [{}]".format(calibration_file))
-        
-        # Retrieve and check the calibration
-        calibration_dir, calibration_name = os.path.split(calibration_file)
-        calibration = Calibration(calibration_dir, calibration_name)
-        success = calibration.load_calibration_file()
-        
-        # Give calibration to the Helmholtz Cage
-        if success:
-            cage.calibration = calibration
-            cage.has_calibration = True
-            cage.data.calibration_file = calibration_file
-            
-            # Put calibration file name into GUI entry
-            main_page.calibration_file_entry.configure(state=tk.NORMAL)
-            main_page.calibration_file_entry.delete(0, 'end')
-            main_page.calibration_file_entry.insert(0, calibration_file)
-            main_page.calibration_file_entry.configure(state="readonly")
-        else:
-            print("ERROR: Unable to load selected calibration file")
-
     def start_cage_update_buttons(self):
         """
         Update the status of buttons after the cage has started.
@@ -905,7 +848,7 @@ class MainPage(tk.Frame):
         self.refresh_connections_button.config(state=tk.DISABLED)
         self.change_template_file_button.config(state=tk.DISABLED)
         self.change_calibration_file_button.config(state=tk.DISABLED)
-
+    
     def stop_cage_update_buttons(self):
         """
         Update the status of buttons after the cage has been stopped.
@@ -916,15 +859,37 @@ class MainPage(tk.Frame):
         self.refresh_connections_button.config(state=tk.NORMAL)
         self.change_template_file_button.config(state=tk.NORMAL)
         self.change_calibration_file_button.config(state=tk.NORMAL)
-
+        
+    def update_calibration_entry(self, file_name):
+        """
+        Update the calibration file name entry
+        """
+        
+        self.calibration_file_entry.configure(state=tk.NORMAL)
+        self.calibration_file_entry.delete(0, 'end')
+        self.calibration_file_entry.insert(0, file_name)
+        self.calibration_file_entry.configure(state="readonly")
+        
+    def update_template_entry(self, file_name):
+        """
+        Update the template file name entry
+        """
+        
+        self.template_file_entry.configure(state=tk.NORMAL)
+        self.template_file_entry.delete(0, 'end')
+        self.template_file_entry.insert(0, file_name)
+        self.template_file_entry.configure(state="readonly")
+    
     def update_typable_entries(self):
         """
         Determine, based on the selected radiobutton in the static test 
         bar, if column should be enabled/disabled.
         """
         
-        field_or_voltage = self.field_or_voltage.get()
+        # Get desired static control type
+        field_or_voltage = self.ctrl_type.get()
         
+        # Set up for voltage control
         if field_or_voltage == "voltage":
             self.x_voltage_entry.configure(state=tk.NORMAL)
             self.y_voltage_entry.configure(state=tk.NORMAL)
@@ -935,7 +900,8 @@ class MainPage(tk.Frame):
             self.x_field_entry.configure(state=tk.DISABLED)
             self.y_field_entry.configure(state=tk.DISABLED)
             self.z_field_entry.configure(state=tk.DISABLED)
-
+        
+        # Set up for magnetic field control
         elif field_or_voltage == "field":
             self.x_field_entry.configure(state=tk.NORMAL)
             self.y_field_entry.configure(state=tk.NORMAL)
@@ -946,15 +912,17 @@ class MainPage(tk.Frame):
             self.x_voltage_entry.configure(state=tk.DISABLED)
             self.y_voltage_entry.configure(state=tk.DISABLED)
             self.z_voltage_entry.configure(state=tk.DISABLED)
-
+    
     def update_static_dynamic_buttons(self):
         """
         Determine based on the selected radiobutton if the static frame,
         or dynamic frame should be enabled/disabled.
         """
-
-        static_or_dynamic = self.static_or_dynamic.get()
         
+        # Get desired test type
+        static_or_dynamic = self.test_type.get()
+        
+        # Set up for static test
         if static_or_dynamic == "static":
             self.template_file_entry.configure(state=tk.NORMAL)
             self.template_file_entry.delete(0, 'end')
@@ -963,6 +931,7 @@ class MainPage(tk.Frame):
             self.select_calibration.deselect()
             self.select_calibration.configure(state=tk.DISABLED)
         
+        # Setup for dynamic test
         if static_or_dynamic == "dynamic":
             self.select_field.deselect()
             self.select_voltage.deselect()
@@ -980,3 +949,49 @@ class MainPage(tk.Frame):
             self.x_field_entry.configure(state=tk.DISABLED)
             self.y_field_entry.configure(state=tk.DISABLED)
             self.z_field_entry.configure(state=tk.DISABLED)
+            
+    def validate_field(self, action, index, value_if_allowed,
+                       prior_value, text, validation_type, trigger_type,
+                       widget_name):
+        """
+        Check that constant value entry can be interpreted as a float.
+        """
+        
+        if (action == '1'):
+            if text in '0123456789.-+':
+                try:
+                    value = float(value_if_allowed)
+                    if value <= MAX_FIELD_VALUE:
+                        return True
+                    else:
+                        return False
+                
+                except ValueError:
+                    return False
+            else:
+                return False
+        else:
+            return True
+    
+    def validate_voltage(self, action, index, value_if_allowed,
+                         prior_value, text, validation_type, trigger_type,
+                         widget_name):
+        """
+        Check that constant value entry can be interpreted as a float.
+        """
+                             
+        if (action == '1'):
+            if text in '0123456789.-+':
+                try:
+                    value = float(value_if_allowed)
+                    if value <= MAX_VOLTAGE_VALUE:
+                        return True
+                    else:
+                        return False
+                
+                except ValueError:
+                    return False
+            else:
+                return False
+        else:
+            return True

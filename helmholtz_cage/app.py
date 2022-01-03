@@ -17,11 +17,14 @@ import datetime
 import os
 import threading
 import tkinter as tk
+from tkinter import filedialog
 import traceback
 
+from data.calibration import Calibration
 from hardware.helmholtz_cage import HelmholtzCage
 from interface.main_page import MainPage
 from interface.help_page import HelpPage
+from utilities.template import retrieve_template, check_template_values
 
 
 # Global constants
@@ -58,7 +61,8 @@ class CageApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         
         # Get important directories
-        main_path = os.getcwd()
+        self.cur_path = os.getcwd()
+        self.main_path = os.path.abspath(os.path.join(self.cur_path, os.pardir))
         
         # Initialize frame
         tk.Tk.__init__(self, *args, **kwargs)
@@ -77,7 +81,7 @@ class CageApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         
         # Initialize Helmholtz Cage interface
-        self.cage = HelmholtzCage(main_path)
+        self.cage = HelmholtzCage(self.main_path)
 
         # Intialize frames top of each other
         self.frames = {}
@@ -165,7 +169,63 @@ class CageApp(tk.Tk):
         # Warn user if the cage isn't shutting down
         else:
             print("ERROR: Unable to command cage to stop")
+    
+    def change_calibration_file(self):
+        """
+        Load the user specifed calibration file.
         
+        TODO: Test
+        """
+        
+        # Ask the user for the calibration file
+        search_dir = os.path.join(self.main_path, "calibrations")
+        file_name = filedialog.askopenfilename(initialdir=search_dir,
+                                               filetypes=(("csv file","*.csv"),
+                                                          ("All files","*.*")))
+        
+        # Retrieve and check the calibration
+        calibration_dir, calibration_name = os.path.split(file_name)
+        calibration = Calibration(calibration_dir, calibration_name)
+        success = calibration.load_calibration_file()
+        
+        # Give calibration to the Helmholtz Cage
+        if success:
+            self.cage.calibration = calibration
+            self.cage.has_calibration = True
+            self.cage.data.calibration_file = file_name
+            
+            # Put calibration file name into GUI entry
+            self.frames[MainPage].update_calibration_entry(file_name)
+        else:
+            print("ERROR: Unable to load selected calibration file")
+    
+    def change_template_file(self):
+        """
+        Load the user specifed template file.
+        """
+        
+        # Ask the user for the template file
+        search_dir = os.path.join(self.main_path, "templates")
+        file_name = filedialog.askopenfilename(initialdir=search_dir,
+                                               filetypes=(("csv file","*.csv"),
+                                                          ("All files","*.*")))
+        
+        # Retrieve and check template
+        template_dir, template_name = os.path.split(file_name)
+        template = retrieve_template(template_dir, template_name)
+        is_okay = check_template_values(template, [5.0, 1.5]) # <--TODO: replace these
+        
+        # Give template to the Helmholtz Cage
+        if is_okay:
+            self.cage.template = template
+            self.cage.has_template = True
+            self.cage.data.template_file = file_name
+        
+            # Put template file name into GUI entry
+            self.frames[MainPage].update_template_entry(file_name)
+        else:
+            print("ERROR: Unable to load selected template file")
+
     def show_frame(self, cont):
         """
         Switch to another frame.
