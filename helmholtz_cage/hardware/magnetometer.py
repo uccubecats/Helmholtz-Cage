@@ -32,8 +32,6 @@ class SerialMagnetometer(object):
     def connect_to_device(self):
         """
         Attempt to connect to the magnetometer using Serial.
-        
-        TODO: Test
         """
         
         try:
