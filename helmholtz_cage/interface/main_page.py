@@ -686,7 +686,7 @@ class MainPage(tk.Frame):
         Fill in the main plot subframe.
         """
         
-        print("Filling plot frame...")
+        print("Filling plot frame")
         
         # Create figure and initialize plots
         if not self.controller.cage.data.plots_created:
@@ -696,7 +696,7 @@ class MainPage(tk.Frame):
             self.mag_field_plot = plt.subplot(212) # Magnetic field plot
         
         # Separated for easy recreation when making new plots after hitting stop
-        self.update_plot_info()
+        self.update_plot_info(self.controller.cage.data)
         
         # Add to frame
         if not self.controller.cage.data.plots_created:
@@ -745,50 +745,50 @@ class MainPage(tk.Frame):
         main_page.z_ps_status_entry.configure(state="readonly")
         main_page.mag_status_entry.configure(state="readonly")
     
-    def update_plot_info(self):
+    def update_plot_info(self, data):
         """
         Update the data subplots.
         
                 
         TODO: Update and Test
         """
-        return
+        
         #print("Updating plot info...")
         
         # Logic to make check lists are equal length in order to be plotted
-        max_entries = len(self.controller.cage.data.time)
+        max_entries = len(data.time)
         #print("Max entries is {}".format(max_entries))
         if max_entries == 0:
             max_entries = 1
-        if len(cage.data.time) != max_entries:
-            cage.data.time = [0] * max_entries
-        if len(cage.data.Vx) != max_entries:
-            cage.data.x_out = [0]*max_entries
-        if len(cage.data.Vy) != max_entries:
-            cage.data.y_out = [0]*max_entries
-        if len(cage.data.Vz) != max_entries:
-            cage.data.z_out = [0]*max_entries
-        if len(cage.data.x_req) != max_entries:
-            cage.data.x_req = [0]*max_entries
-        if len(cage.data.y_req) != max_entries:
-            cage.data.y_req = [0]*max_entries
-        if len(cage.data.z_req) != max_entries:
-            cage.data.z_req = [0]*max_entries
-        if len(cage.data.Bx) != max_entries:
-            cage.data.Bx = [0]*max_entries
-        if len(cage.data.By) != max_entries:
-            cage.data.By = [0]*max_entries
-        if len(cage.data.Bz) != max_entries:
-            cage.data.Bz = [0]*max_entries
+        if len(data.time) != max_entries:
+            data.time = [0] * max_entries
+        if len(data.Vx) != max_entries:
+            data.x_out = [0]*max_entries
+        if len(data.Vy) != max_entries:
+            data.y_out = [0]*max_entries
+        if len(data.Vz) != max_entries:
+            data.z_out = [0]*max_entries
+        if len(data.x_req) != max_entries:
+            data.x_req = [0]*max_entries
+        if len(data.y_req) != max_entries:
+            data.y_req = [0]*max_entries
+        if len(data.z_req) != max_entries:
+            data.z_req = [0]*max_entries
+        if len(data.Bx) != max_entries:
+            data.Bx = [0]*max_entries
+        if len(data.By) != max_entries:
+            data.By = [0]*max_entries
+        if len(data.Bz) != max_entries:
+            data.Bz = [0]*max_entries
         
         # Get voltage graph axis limits
-        power_supplies_list = (cage.data.Vx +
-                               cage.data.Vy + 
-                               cage.data.Vz)
-        if cage.data.req_type == "voltage":
-             power_supplies_list.append(cage.data.x_req +
-                                        cage.data.y_req +
-                                        cage.data.z_req)
+        power_supplies_list = (data.Vx +
+                               data.Vy + 
+                               data.Vz)
+        if data.req_type == "voltage":
+             power_supplies_list.append(data.x_req +
+                                        data.y_req +
+                                        data.z_req)
         
         max_y_plot_one = 1.2*max(power_supplies_list)
         if max_y_plot_one < 1:
@@ -796,13 +796,13 @@ class MainPage(tk.Frame):
         min_y_plot_one = min(power_supplies_list)
         
         # Get magnetic field graph axis limits
-        mag_field_list = (cage.data.Bx +
-                                 cage.data.By +
-                                 cage.data.Bz)
-        if cage.data.req_type == "field":
-            mag_field_list = (cage.data.x_req +
-                              cage.data.y_req +
-                              cage.data.z_req)
+        mag_field_list = (data.Bx +
+                          data.By +
+                          data.Bz)
+        if data.req_type == "field":
+            mag_field_list = (data.x_req +
+                              data.y_req +
+                              data.z_req)
                                      
         max_y_plot_two = 1.2*max(mag_field_list)
         if max_y_plot_two < 1:
@@ -811,25 +811,25 @@ class MainPage(tk.Frame):
         
         # Plot
         # Power supply voltage graph
-        self.power_supplies_plot.plot(cage.data.time, cage.data.Vx, 'r', label='x_ps_output')
-        self.power_supplies_plot.plot(cage.data.time, cage.data.Vy, 'g', label='y_ps_output')
-        self.power_supplies_plot.plot(cage.data.time, cage.data.Vz, 'b', label='z_ps_output')
-        if cage.data.req_type == "voltage":
-            self.power_supplies_plot.plot(cage.data.time, cage.data.x_req, 'r--', label='x_ps_requested')
-            self.power_supplies_plot.plot(cage.data.time, cage.data.y_req, 'g--', label='y_ps_requested')
-            self.power_supplies_plot.plot(cage.data.time, cage.data.z_req, 'b--', label='z_ps_requested')
+        self.power_supplies_plot.plot(data.time, data.Vx, 'r', label='x_ps_output')
+        self.power_supplies_plot.plot(data.time, data.Vy, 'g', label='y_ps_output')
+        self.power_supplies_plot.plot(data.time, data.Vz, 'b', label='z_ps_output')
+        if data.req_type == "voltage":
+            self.power_supplies_plot.plot(data.time, data.x_req, 'r--', label='x_ps_requested')
+            self.power_supplies_plot.plot(data.time, data.y_req, 'g--', label='y_ps_requested')
+            self.power_supplies_plot.plot(data.time, data.z_req, 'b--', label='z_ps_requested')
         
         self.plot_1_axes = self.power_supplies_plot.axes
         self.plot_1_axes.set_ylim(min_y_plot_one, max_y_plot_one)
         
         # Magnetic field graph
-        self.mag_field_plot.plot(cage.data.time, cage.data.Bx, 'r', label='x_mag_field_actual')
-        self.mag_field_plot.plot(cage.data.time, cage.data.By, 'g', label='y_mag_field_actual')
-        self.mag_field_plot.plot(cage.data.time, cage.data.Bz, 'b', label='z_mag_field_actual')
-        if cage.data.req_type == "field":
-            self.mag_field_plot.plot(cage.data.time, cage.data.x_req, 'r--', label='x_mag_field_requested')
-            self.mag_field_plot.plot(cage.data.time, cage.data.y_req, 'g--', label='y_mag_field_requested')
-            self.mag_field_plot.plot(cage.data.time, cage.data.z_req, 'b--', label='z_mag_field_requested')
+        self.mag_field_plot.plot(data.time, data.Bx, 'r', label='x_mag_field_actual')
+        self.mag_field_plot.plot(data.time, data.By, 'g', label='y_mag_field_actual')
+        self.mag_field_plot.plot(data.time, data.Bz, 'b', label='z_mag_field_actual')
+        if data.req_type == "field":
+            self.mag_field_plot.plot(data.time, data.x_req, 'r--', label='x_mag_field_requested')
+            self.mag_field_plot.plot(data.time, data.y_req, 'g--', label='y_mag_field_requested')
+            self.mag_field_plot.plot(data.time, data.z_req, 'b--', label='z_mag_field_requested')
         
         self.plot_2_axes = self.mag_field_plot.axes
         self.plot_2_axes.set_ylim(min_y_plot_two, max_y_plot_two)
@@ -848,12 +848,12 @@ class MainPage(tk.Frame):
         self.mag_field_plot.set_ylabel("Gauss")
         
         # Create plot titles (only needs to be run once)
-        if cage.data.plot_titles == "None": # only need to do this once for the plots
+        if data.plot_titles == "None": # only need to do this once for the plots
             self.power_supplies_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.00),
                                             ncol=3, fancybox=True, prop={'size': 7})
             self.mag_field_plot.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0),
                                        ncol=3, fancybox=True, prop={'size': 7})
-            cage.data.plot_titles = "Exist"
+            data.plot_titles = "Exist"
     
     def start_cage_update_buttons(self):
         """
@@ -862,7 +862,7 @@ class MainPage(tk.Frame):
         
         self.start_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
-        self.refresh_connections_button.config(state=tk.DISABLED)
+        self.refresh_cxns_button.config(state=tk.DISABLED)
         self.change_template_file_button.config(state=tk.DISABLED)
         self.change_calibration_file_button.config(state=tk.DISABLED)
     
@@ -873,7 +873,7 @@ class MainPage(tk.Frame):
         
         self.start_button.config(state=tk.NORMAL)
         self.stop_button.configure(state=tk.DISABLED)
-        self.refresh_connections_button.config(state=tk.NORMAL)
+        self.refresh_cxns_button.config(state=tk.NORMAL)
         self.change_template_file_button.config(state=tk.NORMAL)
         self.change_calibration_file_button.config(state=tk.NORMAL)
         

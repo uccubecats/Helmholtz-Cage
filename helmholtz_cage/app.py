@@ -36,24 +36,24 @@ UPDATE_PLOT_TIME = 1  # secs
 def update_plots_runtime():
     """
     Threaded function to update the GUI plots at runtime for the cage.
+    
+    TODO: figure out why it won't update.
     """
     
     # Check that cage is still running
     if app.cage.is_running:
         
         # Setup next update of plots
-        threading.Timer(UPDATE_PLOT_TIME, update_plot_runtime).start()
+        threading.Timer(UPDATE_PLOT_TIME, update_plots_runtime).start()
         
         # Get current data from the cage
-        data_now = app.cage.data.get_current_data()
+        data_now = app.cage.update_data()
         
         # Give to plot to update
-        app.frame[MainPage].update_plot_info(data)
+        app.frames[MainPage].update_plot_info(data_now)
     
-    # Notify the user when done
     else:
-        print("Stopping plot updates")
-
+        pass
 
 class CageApp(tk.Tk):
     """
@@ -107,8 +107,6 @@ class CageApp(tk.Tk):
         """
         Refresh the connections to the connected instruments (activated 
         by the "Check Connenctions" button).
-        
-        TODO: Test
         """
         
         # Attempt connection to intstrumentation
@@ -125,8 +123,6 @@ class CageApp(tk.Tk):
         """
         Start a Helmholz Cage test run (activated by the "Start Cage" 
         button).
-        
-        TODO: Test
         """
         
         # Retrieve test options
@@ -138,41 +134,44 @@ class CageApp(tk.Tk):
         
         # Start tracking plots
         if success:
-            self.frames[MainPage].power_supplies_plot.cla()
-            self.frames[MainPage].mag_field_plot.cla()
-            
-            # Update plots
-            self.cage.data.plot_titles = "None"
-            self.frames[MainPage].update_plot_info()
-            
-            # Record start time
-            self.cage.data.start_time = datetime.datetime.now()
+            try:
+                self.frames[MainPage].power_supplies_plot.cla()
+                self.frames[MainPage].mag_field_plot.cla()
+                self.cage.data.plot_titles = "None"
+                #data_now = self.cage.data
+                #self.frames[MainPage].update_plot_info(data_now)
+                
+                # Record start time
+                self.cage.data.start_time = datetime.datetime.now()
 
-            # Start updating plot with live data
-            update_plots_runtime()
+                # Start updating plot with live data
+                update_plots_runtime()
 
-            # Update buttons
-            self.frames[MainPage].start_cage_update_buttons()
+                # Update buttons
+                self.frames[MainPage].start_cage_update_buttons()
+                print("Session starting")
+                
+            except Exception as err:
+                print("ERROR: Session failed to start | {}".format(err))
+                self.cage.is_running = False
         
     def stop_cage(self):
         """
         Stop the current run of the Helmholtz Cage (activated by the 
         "Stop Cage" button).
-        
-        TODO: Test
         """
         
         # Command the cage to stop
-        success = cage.stop_cage()
+        success = self.cage.stop_cage()
         
         # Reset GUI and data
         if success:
-            
+            print("Session ended successfully")
             # If cage is started again in current session, new log file is created
             # TODO
             
             # Update buttons
-            self.stop_cage_update_buttons()
+            self.frames[MainPage].stop_cage_update_buttons()
             
         # Warn user if the cage isn't shutting down
         else:
@@ -259,6 +258,7 @@ class CageApp(tk.Tk):
         """
         
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
+            print("Shutting down program")
             self.quit()
 
 

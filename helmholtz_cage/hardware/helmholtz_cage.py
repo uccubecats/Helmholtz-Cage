@@ -43,8 +43,8 @@ class HelmholtzCage(object):
         self.is_calibrating = False
         self.has_calibration = False
         self.has_template = False
-        self.static_or_dynamic = ""
-        self.field_or_voltage = ""
+        self.run_type = ""
+        self.ctrl_type = ""
         self.template = None
         self.calibration = None
         
@@ -81,23 +81,34 @@ class HelmholtzCage(object):
     def start_cage(self, run_type, ctrl_type):
         """
         Start the Helmholtz Cage
-        
-        TODO: Test
         """
         
         is_okay = True
         
         # Store test parameters
-        self.static_or_dynamic = run_type
-        self.field_or_voltage = ctrl_type
+        self.run_type = run_type
+        self.ctrl_type = ctrl_type
         
         # Check that all instruments are connected
         if not self.all_connected:
             is_okay = False
+            print("WARN: Not starting session | Not all instruments are connected")
+        
+        # Make sure a run type is selected
+        elif self.run_type == "":
+            is_okay = False
+            print("WARN: Not starting session | No test type selected")
+        
+        # For static tests, make sure a control type is selected
+        elif self.run_type == "static" and self.ctrl_type == "":
+            is_okay = False
+            print("WARN: Not starting session | No control type selected for static test")
         
         # For dynamic tests, make sure we have the parameters we need
-        if self.static_or_dynamic == "dynamic":
-            pass # TODO
+        #TODO
+        elif self.run_type == "dynamic":
+            is_okay = False
+            print("WARN: Not starting session | Dynamic runs not programmed yet")
         
         # Set the flag
         if is_okay:
@@ -108,8 +119,6 @@ class HelmholtzCage(object):
     def stop_cage(self):
         """
         Stop the Helmholtz Cage.
-        
-        TODO: Test
         """
         
         # Set voltages on the coils to zero
@@ -130,14 +139,13 @@ class HelmholtzCage(object):
         
         # Get time
         time_now = datetime.datetime.now()
-        time_elapse = int((time_now - self.data.start_time).total_seconds())
-        self.data.time.append(time_elapse)
+        time_elapsed = int((time_now - self.data.start_time).total_seconds())
+        self.data.time.append(time_elapsed)
         
         # Store requested values
         self.data.x_req.append(self.x_req)
         self.data.y_req.append(self.y_req)
         self.data.z_req.append(self.z_req)
-        self.data.req_type.append(self.field_or_voltage)
         
         # Get power supply voltage and currents
         power_data = self.power_supplies.get_power_data()
@@ -153,6 +161,8 @@ class HelmholtzCage(object):
         self.data.Bx.append(mag_data[0])
         self.data.By.append(mag_data[1])
         self.data.Bz.append(mag_data[2])
+        
+        return self.data
     
     def calibrate_cage(self):
         """
