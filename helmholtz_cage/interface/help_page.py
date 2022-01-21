@@ -32,3 +32,6 @@ class HelpPage(tk.Frame):
         # Main container to hold all subframes
         container = tk.Frame(self, bg="black")
         container.grid(sticky="nsew")
+        
+        # Store the actual name of frame
+        self.name = "HelpPage"

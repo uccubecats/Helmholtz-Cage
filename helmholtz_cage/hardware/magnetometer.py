@@ -22,11 +22,11 @@ class SerialMagnetometer(object):
     interface.
     """
     
-    def __init__(self, address, baudrate):
+    def __init__(self, config):
         
         # Initialize state variables
-        self.address = address
-        self.baudrate = baudrate
+        self.address = config["address"]
+        self.baudrate = config["baudrate"]
         self.connected = False
         
     def connect_to_device(self):

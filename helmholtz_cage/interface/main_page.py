@@ -25,9 +25,9 @@ import matplotlib.pyplot as plt
 
 
 # Setup logging
-logging.getLogger("visa").setLevel(logging.WARNING)
-logger = logging.getLogger("main.py")
-logging.basicConfig(filename='helmholtz-gui.log', level=logging.DEBUG)
+# logging.getLogger("visa").setLevel(logging.WARNING)
+# logger = logging.getLogger("main.py")
+# logging.basicConfig(filename='helmholtz-gui.log', level=logging.DEBUG)
 
 # Global constants
 MAX_FIELD_VALUE = 20
@@ -240,47 +240,57 @@ class MainPage(tk.Frame):
         container = tk.Frame(self, bg="silver")
         container.grid(sticky="nsew")
         
+        # Store the actual name of frame
+        self.name = "MainPage"
+        
         # Create subframes for main frame
         self.connections_frame = tk.Frame(container,
                                           bg="lightgray",
                                           height=50,
                                           highlightbackground="silver",
+                                          highlightcolor="silver",
                                           highlightthickness=2)
         
         self.calibrate_frame = tk.Frame(container,
                                         bg="lightgray",
                                         height=50,
                                         highlightbackground="silver",
+                                        highlightcolor="silver",
                                         highlightthickness=2)
         
         self.static_buttons_frame = tk.Frame(container,
                                              bg="lightgray",
                                              height=50,
                                              highlightbackground="silver",
+                                             highlightcolor="silver",
                                              highlightthickness=2)
         
         self.dynamic_buttons_frame = tk.Frame(container,
                                               bg="lightgray",
                                               height=50,
                                               highlightbackground="silver",
+                                              highlightcolor="silver",
                                               highlightthickness=2)
         
         self.main_buttons_frame = tk.Frame(container,
                                            bg="lightgray",
                                            height=50,
                                            highlightbackground="silver",
+                                           highlightcolor="silver",
                                            highlightthickness=2)
         
-        self.help_frame = tk.Frame(container,
-                                   bg="lightgray",
-                                   height=50,
-                                   highlightbackground="silver",
-                                   highlightthickness=2)
+        self.other_buttons_frame = tk.Frame(container,
+                                            bg="lightgray",
+                                            height=50,
+                                            highlightbackground="silver",
+                                            highlightcolor="silver",
+                                            highlightthickness=2)
         
         self.plots_frame = tk.Frame(container,
                                     bg="lightgray",
                                     width=500,
                                     highlightbackground="silver",
+                                    highlightcolor="silver",
                                     highlightthickness=4)
         
         # Position subframes
@@ -289,7 +299,7 @@ class MainPage(tk.Frame):
         self.static_buttons_frame.grid(row=3, sticky="nsew")
         self.dynamic_buttons_frame.grid(row=4, sticky="nsew")
         self.main_buttons_frame.grid(row=5, sticky="nsew")
-        self.help_frame.grid(row=6, sticky="nsew")
+        self.other_buttons_frame.grid(row=6, sticky="nsew")
         self.plots_frame.grid(row=0, column=1, sticky="nsew", rowspan=7)
         
         # Set weights for expansion
@@ -302,7 +312,7 @@ class MainPage(tk.Frame):
         self.fill_static_buttons_frame(parent)
         self.fill_dynamic_buttons_frame()
         self.fill_main_buttons_frame()
-        self.fill_help_frame()
+        self.fill_other_buttons_frame()
         self.fill_plot_frame()
     
     def fill_connections_frame(self):
@@ -658,11 +668,18 @@ class MainPage(tk.Frame):
         self.start_button.grid(row=0, column=0, sticky='nsew')
         self.stop_button.grid(row=0, column=1, sticky='nsew')
     
-    def fill_help_frame(self):
+    def fill_other_buttons_frame(self):
         """
-        Fill in the help menu frame (TODO).
+        Fill in the other menu frame (TODO).
         """
-        pass
+        
+        # # Create buttons
+        # self.config_button = tk.Button(self.other_buttons_frame,
+                                       # text='Options',
+                                       # command=lambda: self.controller.show_config_page())
+        
+        # # Position widgets
+        # self.config_button.grid(row=0, column=0, sticky='nsew')
     
     def fill_plot_frame(self):
         """

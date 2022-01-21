@@ -82,6 +82,8 @@ class GPIBDaisyChainPS(object):
         TODO: Test
         """
         
+        self.is_connected = [False, False, False]
+        
         # Get a list of connected devices
         try:
             connected_devices = rm.list_resources()

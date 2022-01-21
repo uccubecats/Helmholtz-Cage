@@ -14,7 +14,9 @@ import logging
 
 from data.calibration import Calibration
 from data.data import Data
-from hardware.instruments import GPIBDaisyChainPS, SerialMagnetometer
+from hardware.instruments import GPIBDaisyChainPS
+from hardware.fake_power_supply import FakePowerSupplyManager
+from hardware.magnetometer import SerialMagnetometer
 from utilities.template import retrieve_template, check_template_values
 
 
@@ -23,10 +25,14 @@ class HelmholtzCage(object):
     A class object for the Helmholtz Cage.
     """
     
-    def __init__(self, main_dir):
+    def __init__(self, main_dir, ps_config, mag_config):
         
         # Store main directory location
         self.main_dir = main_dir
+        
+        # Store hardware configuration information
+        self.ps_config = ps_config
+        self.mag_config = mag_config
         
         # Data storage/logging class
         self.data = Data(main_dir)
@@ -51,18 +57,17 @@ class HelmholtzCage(object):
         self.y_req = 0.0
         self.z_req = 0.0
         
-    def make_connections(self):
+    def connect_to_instruments(self):
         """ 
         Refresh the connections to the connected instruments (power 
         supplies, magnetometer, etc.)
-        
-        TODO: Test
         """
         
         # Instantiate interface objects for each instrument
-        self.power_supplies = GPIBDaisyChainPS()
-        self.magnetometer = SerialMagnetometer("") #<--TODO
-        
+        #TODO: handle other types of managers
+        self.power_supplies = FakePowerSupplyManager(self.ps_config)
+        self.magnetometer = SerialMagnetometer(self.mag_config) 
+
         # Check each connection
         ps_connected = self.power_supplies.connect_to_device()
         mag_connected = self.magnetometer.connect_to_device()
@@ -87,11 +92,7 @@ class HelmholtzCage(object):
         self.field_or_voltage = ctrl_type
         
         # Check that all instruments are connected
-        if not all(self.power_supplies.connected):
-            print("")
-            is_okay = False
-        if not self.magnetometer.connected:
-            print("")
+        if not self.all_connected:
             is_okay = False
         
         # For dynamic tests, make sure we have the parameters we need

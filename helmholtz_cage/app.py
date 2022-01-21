@@ -23,10 +23,11 @@ import traceback
 
 from data.calibration import Calibration
 from hardware.helmholtz_cage import HelmholtzCage
+from interface.config_page import ConfigurationPage
 from interface.main_page import MainPage
 from interface.help_page import HelpPage
 from utilities.template import retrieve_template, check_template_values
-
+from utilities.config import retrieve_configuration_info
 
 # Global constants
 UPDATE_PLOT_TIME = 1  # secs
@@ -41,7 +42,7 @@ def update_plots_runtime():
     if app.cage.is_running:
         
         # Setup next update of plots
-        threading.Timer(UPDATE_PLOT_TIME, update_plot_at_runtime).start()
+        threading.Timer(UPDATE_PLOT_TIME, update_plot_runtime).start()
         
         # Get current data from the cage
         data_now = app.cage.data.get_current_data()
@@ -64,6 +65,12 @@ class CageApp(tk.Tk):
         # Get important directories
         self.cur_path = os.getcwd()
         self.main_path = os.path.abspath(os.path.join(self.cur_path, os.pardir))
+        self.config_path = os.path.join(self.main_path, "helmholtz_cage")
+        
+        # Retrieve system configuration information
+        configs = retrieve_configuration_info(self.config_path)
+        ps_config = configs["power_supplies"]
+        mag_config = configs["magnetometer"]
         
         # Initialize frame
         tk.Tk.__init__(self, *args, **kwargs)
@@ -82,7 +89,7 @@ class CageApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         
         # Initialize Helmholtz Cage interface
-        self.cage = HelmholtzCage(self.main_path)
+        self.cage = HelmholtzCage(self.main_path, ps_config, mag_config)
 
         # Intialize frames top of each other
         self.frames = {}
@@ -92,7 +99,7 @@ class CageApp(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
             frame.columnconfigure(0, weight=1)
             frame.rowconfigure(0, weight=1)
-            
+        
         # Show the main page
         self.show_frame(MainPage)
     
@@ -107,12 +114,12 @@ class CageApp(tk.Tk):
         # Attempt connection to intstrumentation
         # NOTE: Must be done in try/except to set text back to readonly
         try:
-            ps_status, mag_status = cage.connect_to_instruments() #TODO: update name of this function in helmholtz cage code
+            ps_status, mag_status = self.cage.connect_to_instruments()
         except Exception as err:
             print("Could not connect instruments | {}".format(err))
             
         # Update the GUI connection fields
-        self.frames[MainPage].update_connections_entries(ps_status, mag_status)
+        self.frames[MainPage].update_connection_entries(ps_status, mag_status)
         
     def start_cage(self):
         """
@@ -123,20 +130,19 @@ class CageApp(tk.Tk):
         """
         
         # Retrieve test options
-        static_or_dynamic = self.frames[MainPage].static_or_dynamic.get()
-        field_or_voltage = self.frames[MainPage].field_or_voltage.get()
+        static_or_dynamic = self.frames[MainPage].test_type.get()
+        field_or_voltage = self.frames[MainPage].ctrl_type.get()
         
         # Command the cage to start
-        success = cage.start_cage(static_or_dynamic, field_or_voltage)
+        success = self.cage.start_cage(static_or_dynamic, field_or_voltage)
         
         # Start tracking plots
         if success:
-            # print("found Start Cage text on start button")
             self.frames[MainPage].power_supplies_plot.cla()
             self.frames[MainPage].mag_field_plot.cla()
             
             # Update plots
-            cage.data.plot_titles = "None"
+            self.cage.data.plot_titles = "None"
             self.frames[MainPage].update_plot_info()
             
             # Record start time
@@ -161,6 +167,7 @@ class CageApp(tk.Tk):
         
         # Reset GUI and data
         if success:
+            
             # If cage is started again in current session, new log file is created
             # TODO
             
@@ -221,7 +228,7 @@ class CageApp(tk.Tk):
             self.cage.template = template
             self.cage.has_template = True
             self.cage.data.template_file = file_name
-        
+            
             # Put template file name into GUI entry
             self.frames[MainPage].update_template_entry(file_name)
         else:
@@ -232,15 +239,26 @@ class CageApp(tk.Tk):
         Switch to another frame.
         """
         
-        frame = self.frames[cont]
+        # Determine which page needs to come up
+        frame = self.frames[MainPage]
+        
+        # Show the frame
         frame.tkraise()
+        
+    def show_config_page(self):
+        """
+        
+        """
+        
+        self.config_page = ConfigurationPage(self)
+        
         
     def close_app(self):
         """
         Close the app when exiting from the main window.
         """
         
-        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.quit()
 
 
