@@ -686,7 +686,7 @@ class MainPage(tk.Frame):
         Fill in the main plot subframe.
         """
         
-        print("Filling plot frame")
+        #print("Filling plot frame")
         
         # Create figure and initialize plots
         if not self.controller.cage.data.plots_created:
@@ -752,8 +752,6 @@ class MainPage(tk.Frame):
                 
         TODO: Update and Test
         """
-        
-        #print("Updating plot info...")
         
         # Logic to make check lists are equal length in order to be plotted
         max_entries = len(data.time)

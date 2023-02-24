@@ -15,8 +15,8 @@ import logging
 from data.calibration import Calibration
 from data.data import Data
 from hardware.instruments import GPIBDaisyChainPS
-from hardware.fake_power_supply import FakePowerSupplyManager
-from hardware.magnetometer import SerialMagnetometer
+from hardware.fake_power_supply import FakePowerSupplyManager #TODO: Change back
+from hardware.fake_magnetometer import FakeMagnetometer # TODO: Change back
 from utilities.template import retrieve_template, check_template_values
 
 
@@ -66,7 +66,7 @@ class HelmholtzCage(object):
         # Instantiate interface objects for each instrument
         #TODO: handle other types of managers
         self.power_supplies = FakePowerSupplyManager(self.ps_config)
-        self.magnetometer = SerialMagnetometer(self.mag_config) 
+        self.magnetometer = FakeMagnetometer(self.mag_config) 
 
         # Check each connection
         ps_connected = self.power_supplies.connect_to_device()

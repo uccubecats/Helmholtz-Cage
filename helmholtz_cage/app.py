@@ -3,7 +3,7 @@
 """
   Main application program for the UC Helmholtz Cage.
   
-  Copyright 2022 UC CubeCats
+  Copyright 2022-2023 UC CubeCats
   All rights reserved. See LICENSE file at:
   https://github.com/uccubecats/Helmholtz-Cage/LICENSE
   Additional copyright may be held by others, as reflected in the commit
@@ -29,31 +29,10 @@ from interface.help_page import HelpPage
 from utilities.template import retrieve_template, check_template_values
 from utilities.config import retrieve_configuration_info
 
+
 # Global constants
 UPDATE_PLOT_TIME = 1  # secs
 
-
-def update_plots_runtime():
-    """
-    Threaded function to update the GUI plots at runtime for the cage.
-    
-    TODO: figure out why it won't update.
-    """
-    
-    # Check that cage is still running
-    if app.cage.is_running:
-        
-        # Setup next update of plots
-        threading.Timer(UPDATE_PLOT_TIME, update_plots_runtime).start()
-        
-        # Get current data from the cage
-        data_now = app.cage.update_data()
-        
-        # Give to plot to update
-        app.frames[MainPage].update_plot_info(data_now)
-    
-    else:
-        pass
 
 class CageApp(tk.Tk):
     """
@@ -143,9 +122,9 @@ class CageApp(tk.Tk):
                 
                 # Record start time
                 self.cage.data.start_time = datetime.datetime.now()
-
+                
                 # Start updating plot with live data
-                update_plots_runtime()
+                self.update_plots_at_runtime()
 
                 # Update buttons
                 self.frames[MainPage].start_cage_update_buttons()
@@ -154,7 +133,27 @@ class CageApp(tk.Tk):
             except Exception as err:
                 print("ERROR: Session failed to start | {}".format(err))
                 self.cage.is_running = False
+    
+    def update_plots_at_runtime(self):
+        """
+        Update the GUI plots at runtime for the cage, using the tk.after
+        method.
+        """
         
+        # Only run function if cage is still running
+        if self.cage.is_running:
+            
+            # Retrieve current data 
+            data_now = self.cage.update_data()
+        
+            # Redraw plots with newest data
+            self.frames[MainPage].update_plot_info(data_now)
+            self.frames[MainPage].fill_plot_frame()
+            
+            # Set next update loop
+            self.frames[MainPage].after(UPDATE_PLOT_TIME*1000,
+                                        self.update_plots_at_runtime)
+    
     def stop_cage(self):
         """
         Stop the current run of the Helmholtz Cage (activated by the 
