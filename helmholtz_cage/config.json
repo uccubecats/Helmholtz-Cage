@@ -1,0 +1,11 @@
+{
+    "power_supplies":{
+        "manager": "fake",
+        "addresses": []
+    },
+    "magnetometer":{
+        "manager": "serial",
+        "address": "",
+        "baudrate": 
+    }
+}
