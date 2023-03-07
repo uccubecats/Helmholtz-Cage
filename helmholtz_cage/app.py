@@ -117,8 +117,6 @@ class CageApp(tk.Tk):
                 self.frames[MainPage].power_supplies_plot.cla()
                 self.frames[MainPage].mag_field_plot.cla()
                 self.cage.data.plot_titles = "None"
-                #data_now = self.cage.data
-                #self.frames[MainPage].update_plot_info(data_now)
                 
                 # Record start time
                 self.cage.data.start_time = datetime.datetime.now()

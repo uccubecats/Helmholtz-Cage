@@ -6,6 +6,6 @@
     "magnetometer":{
         "manager": "serial",
         "address": "",
-        "baudrate": 
+        "baudrate": ""
     }
 }
