@@ -16,6 +16,7 @@
 import datetime
 import os
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
@@ -114,8 +115,8 @@ class CageApp(tk.Tk):
         # Start tracking plots
         if success:
             try:
-                self.frames[MainPage].power_supplies_plot.cla()
-                self.frames[MainPage].mag_field_plot.cla()
+                self.frames[MainPage].power_supplies_plot.clear()
+                self.frames[MainPage].mag_field_plot.clear()
                 self.cage.data.plot_titles = "None"
                 
                 # Record start time
@@ -164,11 +165,14 @@ class CageApp(tk.Tk):
         # Reset GUI and data
         if success:
             print("Session ended successfully")
-            # If cage is started again in current session, new log file is created
-            # TODO
+            # TODO: If cage is started again in current session, new log file is created
+            self.cage.data.clear_data()
             
             # Update buttons
             self.frames[MainPage].stop_cage_update_buttons()
+            
+            # Clear the figure off and recreate plot titles
+            self.frames[MainPage].clear_plot_frame()
             
         # Warn user if the cage isn't shutting down
         else:

@@ -3,7 +3,7 @@
 """
   Main GUI code for the UC Helmholtz Cage
 
-  Copyright 2018-2022 UC CubeCats
+  Copyright 2018-2023 UC CubeCats
   All rights reserved. See LICENSE file at:
   https://github.com/uccubecats/Helmholtz-Cage/LICENSE
   Additional copyright may be held by others, as reflected in the commit
@@ -22,8 +22,9 @@ import matplotlib.pyplot as plt
 
 
 # Global constants
-MAX_FIELD = 20
-MAX_VOLTAGE = 20
+MAX_FIELD = 1.5 # Gauss
+MAX_VOLTAGE = 18 # Volts
+PLOT_TIMESPAN = 60 # secs
 UPDATE_PLOT_TIME = 1  # secs
 UPDATE_LOG_TIME = 5  # secs
 UPDATE_CALIBRATE_TIME = 5  # secs
@@ -585,6 +586,7 @@ class MainPage(tk.Frame):
         """
         
         # Logic to make check lists are equal length in order to be plotted
+        # TODO: Move to 'Data' Class
         max_entries = len(data.time)
         if max_entries == 0:
             max_entries = 1
@@ -610,6 +612,7 @@ class MainPage(tk.Frame):
             data.Bz = [0]*max_entries
         
         # Get voltage graph axis limits
+        # TODO: Change
         power_supplies_list = (data.Vx + data.Vy + data.Vz)
         if data.req_type == "voltage":
              power_supplies_list.append(data.x_req + data.y_req + data.z_req)
@@ -695,6 +698,19 @@ class MainPage(tk.Frame):
                 fancybox=True,
                 prop={'size': 7})
             data.plot_titles = "Exist"
+            
+    def clear_plot_frame(self):
+        """
+        When stopping the current run, clear the plot frame and reset it
+        to run again.
+        """
+        
+        # Clear both plots in plot frame
+        self.power_supplies_plot.clear()
+        self.mag_field_plot.clear()
+        
+        # Recreate titles and axis information
+        self.fill_plot_frame()
     
     def start_cage_update_buttons(self):
         """

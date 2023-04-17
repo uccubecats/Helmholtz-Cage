@@ -110,3 +110,25 @@ class Data(object):
                
         # Write to session log file
         write_to_csv(self.session_dir, self.session_file, row, 'a')
+        
+    def clear_data(self):
+        """
+        Delete all data and reset the data object.
+        """
+        
+        self.session_file = ""
+        self.start_time = None
+        self.time = [0]
+        self.Vx = [0]
+        self.Vy = [0]
+        self.Vz = [0]
+        self.Ix = [0]
+        self.Iy = [0]
+        self.Iz = [0]
+        self.Bx = [0]
+        self.By = [0]
+        self.Bz = [0]
+        self.x_req = [0]
+        self.y_req = [0]
+        self.z_req = [0]
+        self.req_type = ""
