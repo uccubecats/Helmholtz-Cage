@@ -6,8 +6,25 @@ This is the repository for the UC Helmholtz Cage project. The designed cage is c
 This project is currently a WIP. We are currently in the progress of getting the software up and running on Linux.  While this is happening, the most recent commits are likely broken. The "[Initial Function](https://github.com/uccubecats/Helmholtz-Cage/releases/tag/v0.9)" release is the last "working" (albeit disorganized) version, which implimented basic cage functionality under Windows 10.
 
 ## Requirements
-Coming soon
-(exact versioning will be updated once the system is running on Linux)
+This software was developed and tested in:
+
+ - Ubuntu 22.04 LTS
+ - ROS Noetic
+ - Python 3.8
+
+The following python packages need to be installed:
+
+ - scipy
+ - pyserial
+ - pyvisa
+ - pyvisa-py
+ - matplotlib
+ - PIL
+
+Additionally the following items must be installed:
+
+ - python3-tk
+ - python3-pil.image
 
 ## Status
 High priority "todo" items: 
