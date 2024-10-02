@@ -41,19 +41,19 @@ class Data(object):
         # Session logging data
         self.session_file = ""
         self.start_time = None
-        self.time = [0]
-        self.Vx = [0]
-        self.Vy = [0]
-        self.Vz = [0]
-        self.Ix = [0]
-        self.Iy = [0]
-        self.Iz = [0]
-        self.Bx = [0]
-        self.By = [0]
-        self.Bz = [0]
-        self.x_req = [0]
-        self.y_req = [0]
-        self.z_req = [0]
+        self.time = []
+        self.Vx = []
+        self.Vy = []
+        self.Vz = []
+        self.Ix = []
+        self.Iy = []
+        self.Iz = []
+        self.Bx = []
+        self.By = []
+        self.Bz = []
+        self.x_req = []
+        self.y_req = []
+        self.z_req = []
         self.req_type = "" # i.e. field vs. volt
         
     def start_new_log_file(self):

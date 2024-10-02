@@ -124,11 +124,11 @@ class CageApp(tk.Tk):
                 
                 # Start updating plot with live data
                 self.update_plots_at_runtime()
-
+                
                 # Update buttons
                 self.frames[MainPage].start_cage_update_buttons()
                 print("Session starting")
-                
+                    
             except Exception as err:
                 print("ERROR: Session failed to start | {}".format(err))
                 self.cage.is_running = False
@@ -146,7 +146,6 @@ class CageApp(tk.Tk):
             data_now = self.cage.update_data()
         
             # Redraw plots with newest data
-            self.frames[MainPage].update_plot_info(data_now)
             self.frames[MainPage].fill_plot_frame()
             
             # Set next update loop

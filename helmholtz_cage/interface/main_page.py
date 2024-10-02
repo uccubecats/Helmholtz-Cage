@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 # Global constants
 MAX_FIELD = 1.5 # Gauss
 MAX_VOLTAGE = 18 # Volts
-PLOT_TIMESPAN = 60 # secs
+PLOT_TIMESPAN = 30 # secs
 UPDATE_PLOT_TIME = 1  # secs
 UPDATE_LOG_TIME = 5  # secs
 UPDATE_CALIBRATE_TIME = 5  # secs
@@ -101,7 +101,7 @@ class MainPage(tk.Frame):
                                     width=500,
                                     highlightbackground="silver",
                                     highlightcolor="silver",
-                                    highlightthickness=4)
+                                    highlightthickness=2)
         
         # Position subframes
         self.connect_frame.grid(row=1, sticky="nsew")
@@ -579,92 +579,111 @@ class MainPage(tk.Frame):
     
     def update_plot_info(self, data):
         """
-        Update the data subplots.
-        
-                
-        TODO: Rework
+        Update the data subplots, within data displayed limited to the 
+        'PLOT_TIMESPAN' from the current time.
         """
         
-        # Logic to make check lists are equal length in order to be plotted
-        # TODO: Move to 'Data' Class
-        max_entries = len(data.time)
-        if max_entries == 0:
-            max_entries = 1
-        if len(data.time) != max_entries:
-            data.time = [0] * max_entries
-        if len(data.Vx) != max_entries:
-            data.x_out = [0]*max_entries
-        if len(data.Vy) != max_entries:
-            data.y_out = [0]*max_entries
-        if len(data.Vz) != max_entries:
-            data.z_out = [0]*max_entries
-        if len(data.x_req) != max_entries:
-            data.x_req = [0]*max_entries
-        if len(data.y_req) != max_entries:
-            data.y_req = [0]*max_entries
-        if len(data.z_req) != max_entries:
-            data.z_req = [0]*max_entries
-        if len(data.Bx) != max_entries:
-            data.Bx = [0]*max_entries
-        if len(data.By) != max_entries:
-            data.By = [0]*max_entries
-        if len(data.Bz) != max_entries:
-            data.Bz = [0]*max_entries
-        
-        # Get voltage graph axis limits
-        # TODO: Change
-        power_supplies_list = (data.Vx + data.Vy + data.Vz)
-        if data.req_type == "voltage":
-             power_supplies_list.append(data.x_req + data.y_req + data.z_req)
+        # Clear both plots in plot frame
+        self.power_supplies_plot.cla()
+        self.mag_field_plot.cla()
 
-        max_y_plot_one = 1.2*max(power_supplies_list)
-        if max_y_plot_one < 1:
-            max_y_plot_one = 1
-        min_y_plot_one = min(power_supplies_list)
+        # Get/Set some basic parameters
+        field_or_voltage = self.ctrl_type.get()
+        max_entries = len(data.time)
+        power_legend_ncol = 3
+        mag_legend_ncol = 3
         
-        # Get magnetic field graph axis limits
-        mag_field_list = (data.Bx + data.By + data.Bz)
-        if data.req_type == "field":
-            mag_field_list = (data.x_req + data.y_req + data.z_req)
-                                     
-        max_y_plot_two = 1.2*max(mag_field_list)
-        if max_y_plot_two < 1:
-            max_y_plot_two = 1
-        min_y_plot_two = min(mag_field_list)
+        # If not enough data collected yet, plot fake zero values
+        if max_entries <= 1:
+            time = [0]
+            Vx = [0]
+            Vy = [0]
+            Vz = [0]
+            x_req = [0]
+            y_req = [0]
+            z_req = [0]
+            Bx = [0]
+            By = [0]
+            Bz = [0]
         
-        # Plot
-        # Power supply voltage graph
-        self.power_supplies_plot.plot(data.time, data.Vx, 'r',
-                                      label='x_ps_output')
-        self.power_supplies_plot.plot(data.time, data.Vy, 'g',
-                                      label='y_ps_output')
-        self.power_supplies_plot.plot(data.time, data.Vz, 'b',
-                                      label='z_ps_output')
-        if data.req_type == "voltage":
-            self.power_supplies_plot.plot(data.time, data.x_req, 'r--',
-                                          label='x_ps_requested')
-            self.power_supplies_plot.plot(data.time, data.y_req, 'g--',
-                                          label='y_ps_requested')
-            self.power_supplies_plot.plot(data.time, data.z_req, 'b--',
-                                          label='z_ps_requested')
+        # Determine updated start time for plot
+        else: 
+            plot_start = data.time[-1] - PLOT_TIMESPAN
+            if plot_start <= 0.0:
+                plot_start = 0.0
+            start_i = max_entries - 1
+            for i in range(0,max_entries):
+                start_i -= 1
+                if data.time[start_i] <= plot_start or start_i == 0:
+                    break
+        
+            # Retrieve data within time frame
+            time = data.time[start_i: max_entries] 
+            Vx = data.Vx[start_i: max_entries]
+            Vy = data.Vy[start_i: max_entries]
+            Vz = data.Vz[start_i: max_entries]
+            x_req = data.x_req[start_i: max_entries]
+            y_req = data.y_req[start_i: max_entries]
+            z_req = data.z_req[start_i: max_entries]
+            Bx = data.Bx[start_i: max_entries]
+            By = data.By[start_i: max_entries]
+            Bz = data.Bz[start_i: max_entries]
+        
+        # Find maximum and minimum values for each data set
+        V_max = max(Vx + Vy + Vz + [0.0])
+        V_min = min(Vx + Vy + Vz + [0.0])
+        req_max = max(x_req + y_req + z_req + [0.0])
+        req_min = min(x_req + y_req + z_req + [0.0])
+        B_max = max(Bx + By + Bz + [0.0])
+        B_min = min(Bx + By + Bz + [0.0])
+        
+        # Find plot axis limits from data
+        if field_or_voltage == "voltage":
+            max_y_plot_one = 1.2*max(V_max, req_max)
+            min_y_plot_one = 1.2*min(V_min, req_min)
+            max_y_plot_two = 1.2*B_max
+            min_y_plot_two = 1.2*B_min
+        elif field_or_voltage == "field":
+            max_y_plot_one = 1.2*V_max
+            min_y_plot_one = 1.2*V_min
+            max_y_plot_two = 1.2*max(B_max, req_max)
+            min_y_plot_two = 1.2*min(B_min, req_min)
+        else:
+            max_y_plot_one = 1.0
+            min_y_plot_one = 0.0
+            max_y_plot_two = 1.0
+            min_y_plot_two = 0.0
+        
+        # Set bare minimum plot range if required
+        if max_y_plot_one < 1.0:
+            max_y_plot_one = 1.0
+        if max_y_plot_two < 1.0:
+            max_y_plot_two = 1.0
+        
+        # Plot power supply voltage graph
+        self.power_supplies_plot.plot(time, Vx, 'r', label="Vx")
+        self.power_supplies_plot.plot(time, Vy, 'g', label="Vy")
+        self.power_supplies_plot.plot(time, Vz, 'b', label="Vz")
+        if field_or_voltage == "voltage":
+            self.power_supplies_plot.plot(time, x_req, 'r--', label="Vx request")
+            self.power_supplies_plot.plot(time, y_req, 'g--', label="Vy request")
+            self.power_supplies_plot.plot(time, z_req, 'b--', label="Vz request")
+            power_legend_ncol = 6
+            mag_legend_ncol = 3
         
         self.plot_1_axes = self.power_supplies_plot.axes
         self.plot_1_axes.set_ylim(min_y_plot_one, max_y_plot_one)
         
-        # Magnetic field graph
-        self.mag_field_plot.plot(data.time, data.Bx, 'r',
-                                 label='x_mag_field_actual')
-        self.mag_field_plot.plot(data.time, data.By, 'g',
-                                 label='y_mag_field_actual')
-        self.mag_field_plot.plot(data.time, data.Bz, 'b',
-                                 label='z_mag_field_actual')
-        if data.req_type == "field":
-            self.mag_field_plot.plot(data.time, data.x_req, 'r--',
-                                     label='x_mag_field_requested')
-            self.mag_field_plot.plot(data.time, data.y_req, 'g--',
-                                     label='y_mag_field_requested')
-            self.mag_field_plot.plot(data.time, data.z_req, 'b--',
-                                     label='z_mag_field_requested')
+        # Plot magnetic field graph
+        self.mag_field_plot.plot(time, Bx, 'r', label="Bx")
+        self.mag_field_plot.plot(time, By, 'g', label="By")
+        self.mag_field_plot.plot(time, Bz, 'b', label="Bz")
+        if field_or_voltage == "field":
+            self.mag_field_plot.plot(time, x_req, 'r--', label="Bx request")
+            self.mag_field_plot.plot(time, y_req, 'g--', label="By request")
+            self.mag_field_plot.plot(time, z_req, 'b--', label="Bz request")
+            power_legend_ncol = 3
+            mag_legend_ncol = 6
         
         self.plot_2_axes = self.mag_field_plot.axes
         self.plot_2_axes.set_ylim(min_y_plot_two, max_y_plot_two)
@@ -683,21 +702,17 @@ class MainPage(tk.Frame):
         self.mag_field_plot.set_xlabel("Seconds")
         self.mag_field_plot.set_ylabel("Gauss")
         
-        # Create plot titles (only needs to be run once)
-        if data.plot_titles == "None": # only need to do this once for plots
-            self.power_supplies_plot.legend(
-                loc='upper center',
-                bbox_to_anchor=(0.5, 1.00),
-                ncol=3,
-                fancybox=True,
-                prop={'size': 7})
-            self.mag_field_plot.legend(
-                loc='upper center',
-                bbox_to_anchor=(0.5, 1.0),
-                ncol=3,
-                fancybox=True,
-                prop={'size': 7})
-            data.plot_titles = "Exist"
+        # Create plot legends
+        self.power_supplies_plot.legend(loc='upper center',
+                                        bbox_to_anchor=(0.5, 1.00),
+                                        ncol=power_legend_ncol,
+                                        fancybox=True,
+                                        prop={'size': 7})
+        self.mag_field_plot.legend(loc='upper center',
+                                   bbox_to_anchor=(0.5, 1.0),
+                                   ncol=mag_legend_ncol,
+                                   fancybox=True,
+                                   prop={'size': 7})
             
     def clear_plot_frame(self):
         """
