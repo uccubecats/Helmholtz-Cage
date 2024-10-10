@@ -3,7 +3,7 @@
 """
   HP603xA series power supply interface object source code.
   
-  Copyright 2024 UC CubeCats
+  Copyright 2018-2024 UC CubeCats
   All rights reserved. See LICENSE file at:
   https://github.com/uccubecats/Helmholtz-Cage/LICENSE
   Additional copyright may be held by others, as reflected in the commit
@@ -46,13 +46,13 @@ class HP603xAInterface(object):
     TODO: Add more functionality if needed.
     """
     
-    def __init__(self, axis, id_str, resource):
+    def __init__(self, axis, id_str, resource, params):
         
         # Store main parameters
         self.axis = axis
         self.id = id_str
-        self.v_max = 0.0
-        self.i_max = 0.0
+        self.v_lim = params["max_voltage"]
+        self.i_lim = params["max_current"]
         
         # Store PyVISA interface
         self.resource = resource
@@ -63,10 +63,10 @@ class HP603xAInterface(object):
         # Initialize other variables/parameters
         self.is_connected = False
         self.v_set = 0.0
-        self.v_lim = 0.0
-        self.i_lim = 0.0
+        self.v_max = 0.0
+        self.i_max = 0.0
         self.model = None
-        
+    
     def test_connection(self):
         """
         Check to see if the device is connected and responding to
@@ -85,6 +85,10 @@ class HP603xAInterface(object):
                 self.model = self.format_query_resp(out, "ID", "str")
                 self.v_max = MODELS[self.model]["V_limit"]
                 self.i_max = MODELS[self.model]["I_limit"]
+            
+            # Write important parameters to device
+            self.set_voltage_limit(self.v_lim)
+            self.set_current_limit(self.i_lim)
         
         # Otherwise, set connection variable to False
         else:
@@ -114,7 +118,7 @@ class HP603xAInterface(object):
             self.v_lim = v_lim
         
         return okay
-        
+    
     def set_current_limit(self, i_lim):
         """
         Set the device's maximum current limit.
@@ -137,7 +141,7 @@ class HP603xAInterface(object):
             self.i_lim = i_lim
             
         return okay
-        
+    
     def set_voltage(self, v):
         """
         Set the device's command voltage.
@@ -157,7 +161,7 @@ class HP603xAInterface(object):
             self.v_set = v
             
         return okay
-        
+    
     def get_voltage_output(self):
         """
         Get the device's measured (actual) voltage output.
@@ -167,7 +171,7 @@ class HP603xAInterface(object):
         v_out = self.format_query_resp(out, "VOUT", "float")
         
         return v_out
-        
+    
     def get_current_output(self):
         """
         Get the device's measured (actual) current output.
@@ -177,7 +181,7 @@ class HP603xAInterface(object):
         i_out = self.format_query_resp(out, "IOUT", "float")
         
         return i_out
-        
+    
     def reset(self):
         """
         Reset the device if it has been disabled by onboard processes 
@@ -189,7 +193,7 @@ class HP603xAInterface(object):
         
         # Write reset command
         self.resource.write("RST")
-        
+    
     def get_error(self):
         """
         Ask the device for the current error code, and return an 
