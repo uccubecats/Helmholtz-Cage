@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
   Helmholtz Cage object module source code
   
@@ -10,7 +12,6 @@
 
 
 import datetime
-import logging
 
 from data.calibration import Calibration
 from data.data import Data
@@ -122,6 +123,10 @@ class HelmholtzCage(object):
         # Set flag
         if is_okay:
             self.is_running = True
+            
+        # Store request type if different
+        if self.data.req_type != ctrl_type:
+            self.data.req_type = ctrl_type
         
         return is_okay
     
@@ -142,8 +147,6 @@ class HelmholtzCage(object):
     def update_data(self):
         """
         Store all current data from attached sensors and devices.
-        
-        TODO: Test
         """
         
         # Get time

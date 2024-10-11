@@ -60,7 +60,7 @@ def write_to_csv(file_path, file_name, content, mode):
         # Write content to file
         with open(file_name, mode, newline='') as csv_file:
             csv_writer = csv.writer(csv_file)
-            for row in csv_file:
+            for row in content:
                 csv_writer.writerow(row)
         
     finally:

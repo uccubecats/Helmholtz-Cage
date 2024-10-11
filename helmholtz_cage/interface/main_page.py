@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
   Main GUI code for the UC Helmholtz Cage
@@ -482,6 +482,9 @@ class MainPage(tk.Frame):
         Fill in the main functions subframe.
         """
         
+        # Create Tk entry variables
+        self.log_data_option = tk.BooleanVar()
+        
         # Create buttons
         self.start_button = tk.Button(
             self.run_frame,
@@ -493,10 +496,20 @@ class MainPage(tk.Frame):
             text='Stop Cage',
             state=tk.DISABLED,
             command=lambda: self.controller.stop_cage())
+            
+        # Create logging checkbox
+        self.log_checkbox = tk.Checkbutton(
+            self.run_frame,
+            text='Log Data',
+            variable=self.log_data_option,
+            onvalue=1,
+            offvalue=0, 
+            command=lambda: self.controller.set_logging_option())
         
         # Position widgets
         self.start_button.grid(row=0, column=0, sticky='nsew')
         self.stop_button.grid(row=0, column=1, sticky='nsew')
+        self.log_checkbox.grid(row=0, column=2, sticky='nsew')
     
     def fill_others_frame(self):
         """

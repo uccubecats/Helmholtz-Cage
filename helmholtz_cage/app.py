@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
   Main application program for the UC Helmholtz Cage.
@@ -103,6 +103,14 @@ class CageApp(tk.Tk):
         
         # Update the GUI connection fields
         self.frames[MainPage].update_connection_entries(ps_status, mag_status)
+        
+    def set_logging_option(self):
+        """
+        Set data logging option, enabling/disabling writing data from a
+        run to storage.
+        """
+        
+        self.log_data = self.frames[MainPage].log_data_option.get()
     
     def start_cage(self):
         """
@@ -193,7 +201,10 @@ class CageApp(tk.Tk):
         # Reset GUI and data
         if success:
             print("Session ended successfully")
-            # TODO: If cage is started again in current session, new log file is created
+            
+            # Log data if requested
+            if self.log_data:
+                self.cage.data.write_to_file()
             
             # Clear data for next run
             self.cage.data.clear_data()
