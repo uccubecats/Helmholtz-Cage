@@ -104,7 +104,7 @@ class PowerSupplyManager(object):
                 print("Device interface not specified for {}".format(key))
         
         # Convert connections status to list
-        connect_list = self.dict_to_list(connection_status)
+        connect_list = self.dict_to_list(is_connected)
         
         # Set overall is connected flag
         self.is_connected = all(connect_list)
@@ -138,18 +138,18 @@ class PowerSupplyManager(object):
         # Attempt to retrieve each device output voltage
         for key in self.devices.keys(): 
             try:
-                v = self.devices[key].get_voltage_output(cmd[key])
+                v = self.devices[key].get_voltage_output()
                 v_data.update({key: v})
             except Exception as err:
-                print("Could not get {} voltage | {}".format(key, err)
+                print("Could not get {} voltage | {}".format(key, err))
         
         # Attempt to retireve each device output current
         for key in self.devices.keys(): 
             try:
-                i = self.devices[key].get_voltage_output(cmd[key])
+                i = self.devices[key].get_voltage_output()
                 i_data.update({key: i})
             except Exception as err:
-                print("Could not get {} current | {}".format(key, err)
+                print("Could not get {} current | {}".format(key, err))
         
         # Package both voltage and current data into list
         v_list = self.dict_to_list(v_data)
@@ -232,7 +232,7 @@ class MagnetometerManager(object):
         # Attempt to connect to Magnetometer
         if self.interface is not None:
             try:
-                self.connected = self.interface.test_connection()
+                self.is_connected = self.interface.test_connection()
             except Exception as err:
                 print("Error in connecting to magnetometer device | {}"
                         .format(err))
@@ -241,7 +241,7 @@ class MagnetometerManager(object):
         else:
             print("Device interface not specified for magnetometer")
         
-        return self.connected
+        return self.is_connected
     
     def get_field_strength(self):
         """
@@ -250,7 +250,7 @@ class MagnetometerManager(object):
         
         try:
             data = self.interface.read_sensor()
-        except Exception as err
+        except Exception as err:
             print("Could not read field values | {}". format(err))
         
         return data

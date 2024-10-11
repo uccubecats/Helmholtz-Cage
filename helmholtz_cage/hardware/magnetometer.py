@@ -15,7 +15,10 @@
 
 import serial
 
-from mlx90393 import MLX90393Interface
+from hardware.instruments import MagnetometerManager
+from hardware.mlx90393 import MLX90393Interface
+from hardware.fake_magnetometer import FakeMagnetometer
+
 
 
 class SerialMagnetometerManager(MagnetometerManager):
@@ -26,6 +29,7 @@ class SerialMagnetometerManager(MagnetometerManager):
     
     def __init__(self, config):
         
+        # Initialize parent class
         super().__init__(config)
         
         # Retrieve parameters from config
@@ -56,3 +60,17 @@ class SerialMagnetometerManager(MagnetometerManager):
         #    ...
         else:
             print("'{}' interface object not found".format(interface))
+
+
+class FakeMagnetometerManager(MagnetometerManager):
+    """
+    A manager object to simulate interfacing with a magnetometer.
+    """
+    
+    def __init__(self, config):
+        
+        # Initialize parent class
+        super().__init__(config)
+        
+        # Initialize fake magnetometer object
+        self.interface = FakeMagnetometer()

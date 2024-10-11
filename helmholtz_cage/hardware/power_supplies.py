@@ -13,8 +13,9 @@
 
 import pyvisa as visa
 
-from instruments import PowerSupplyManager
-from hp603xa import HP603xAInterface
+from hardware.fake_power_supply import FakePowerSupply
+from hardware.hp603xa import HP603xAInterface
+from hardware.instruments import PowerSupplyManager
 
 
 class GPIBPowerSupplyManager(PowerSupplyManager):
@@ -78,3 +79,19 @@ class GPIBPowerSupplyManager(PowerSupplyManager):
             print("'{}' not found in VISA resource list".format(address))
             
         return device
+
+class FakePowerSupplyManager(PowerSupplyManager):
+    """
+    A power supply manager object to simulate controlling an array of 
+    power supplies.
+    """
+    
+    def __init__(self, config):
+        
+        # Initialize parent class
+        super().__init__(config)
+        
+        # Setup fake power supply objects
+        for key in self.devices.keys():
+            self.devices[key] = FakePowerSupply(key)
+    
