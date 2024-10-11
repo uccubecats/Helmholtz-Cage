@@ -54,7 +54,7 @@ class CageApp(tk.Tk):
         
         # Initialize frame
         tk.Tk.__init__(self, *args, **kwargs)
-
+        
         # Set title
         self.title = "Helmholtz Cage"
         tk.Tk.wm_title(self, self.title)
@@ -70,7 +70,10 @@ class CageApp(tk.Tk):
         
         # Initialize Helmholtz Cage interface
         self.cage = HelmholtzCage(self.main_path, ps_config, mag_config)
-
+        
+        # Set parameters
+        self.log_data = False
+        
         # Intialize frames top of each other
         self.frames = {}
         for Frame in (MainPage, HelpPage):
@@ -95,10 +98,12 @@ class CageApp(tk.Tk):
             ps_status, mag_status = self.cage.connect_to_instruments()
         except Exception as err:
             print("Could not connect instruments | {}".format(err))
-            
+            ps_status = [False, False, False]
+            mag_status = False
+        
         # Update the GUI connection fields
         self.frames[MainPage].update_connection_entries(ps_status, mag_status)
-        
+    
     def start_cage(self):
         """
         Start a Helmholz Cage test run (activated by the "Start Cage" 
@@ -128,7 +133,7 @@ class CageApp(tk.Tk):
                 # Update buttons
                 self.frames[MainPage].start_cage_update_buttons()
                 print("Session starting")
-                    
+            
             except Exception as err:
                 print("ERROR: Session failed to start | {}".format(err))
                 self.cage.is_running = False
@@ -151,6 +156,30 @@ class CageApp(tk.Tk):
             # Set next update loop
             self.frames[MainPage].after(UPDATE_PLOT_TIME*1000,
                                         self.update_plots_at_runtime)
+                                        
+    def command_static_value(self):
+        """
+        Based on the type of control send an appropriate static value
+        command (based on user input) to the cage.
+        """
+        
+        # Get control type
+        field_or_voltage = self.frames[MainPage].ctrl_type.get()
+        
+        # If field control, send desired flux density (3-axis)
+        # WARN: 'set_field_strenght' not implimented yet
+        if field_or_voltage == "field":
+            Bx = float(self.frames[MainPage].x_field.get())
+            By = float(self.frames[MainPage].y_field.get())
+            Bz = float(self.frames[MainPage].z_field.get())
+            self.cage.set_field_strength(Bx, By, Bz)
+        
+        # If voltage control, send desired voltages
+        else:
+            Vx = float(self.frames[MainPage].x_voltage.get())
+            Vy = float(self.frames[MainPage].y_voltage.get())
+            Vz = float(self.frames[MainPage].z_voltage.get())
+            self.cage.set_coil_voltages(Vx, Vy, Vz)
     
     def stop_cage(self):
         """
@@ -165,6 +194,8 @@ class CageApp(tk.Tk):
         if success:
             print("Session ended successfully")
             # TODO: If cage is started again in current session, new log file is created
+            
+            # Clear data for next run
             self.cage.data.clear_data()
             
             # Update buttons
@@ -172,7 +203,7 @@ class CageApp(tk.Tk):
             
             # Clear the figure off and recreate plot titles
             self.frames[MainPage].clear_plot_frame()
-            
+        
         # Warn user if the cage isn't shutting down
         else:
             print("ERROR: Unable to command cage to stop")
@@ -232,7 +263,7 @@ class CageApp(tk.Tk):
             self.frames[MainPage].update_template_entry(file_name)
         else:
             print("ERROR: Unable to load selected template file")
-
+    
     def show_frame(self, cont):
         """
         Switch to another frame.
@@ -243,15 +274,14 @@ class CageApp(tk.Tk):
         
         # Show the frame
         frame.tkraise()
-        
+    
     def show_config_page(self):
         """
         
         """
         
         self.config_page = ConfigurationPage(self)
-        
-        
+    
     def close_app(self):
         """
         Close the app when exiting from the main window.
@@ -269,9 +299,9 @@ if __name__ == "__main__":
         app.minsize(width=250, height=600)
         app.protocol("WM_DELETE_WINDOW", app.close_app)
         app.mainloop()
-        
+    
     except Exception:
         traceback.print_exc()
-        
+    
     except KeyboardInterrupt:
         print("")
