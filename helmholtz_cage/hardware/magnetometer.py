@@ -36,9 +36,9 @@ class SerialMagnetometerManager(MagnetometerManager):
         interface_type = self.config["interface"]
         
         # Configure device interface
-        self.interface = self.configure_device(self, interface)
+        self.interface = self.configure_device(interface_type)
     
-    def configure_device(self, interface):
+    def configure_device(self, interface_type):
         
         # Retrieve important parameters
         port = self.config["port"]
@@ -55,11 +55,14 @@ class SerialMagnetometerManager(MagnetometerManager):
         
         # Find desired device interface
         if interface_type == "MLX90393":
-            self.interface = MLX90393Interface(serial_port)
-        #elif interface == ...: ADD MORE DEVICE TYPES HERE
+            interface = MLX90393Interface(serial_port)
+        #elif interface_type == ...: ADD MORE DEVICE TYPES HERE
         #    ...
         else:
             print("'{}' interface object not found".format(interface))
+            interface = None
+        
+        return interface
 
 
 class FakeMagnetometerManager(MagnetometerManager):

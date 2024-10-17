@@ -27,8 +27,8 @@ class MLX90393Interface(object):
         
         # Store important char lists
         self.keys = ["X", "Y", "Z"]
-        self.valid_char = ["0", "1", "2", "3", "4", "5",
-                           "6", "7", "8", "9", ".", "-"]
+        self.valid_chars = ["0", "1", "2", "3", "4", "5",
+                            "6", "7", "8", "9", ".", "-"]
         
         # Intialize serial port object
         self.serial_port = serial_obj
@@ -59,15 +59,14 @@ class MLX90393Interface(object):
         the serial port.
         """
         
-        try:        
-            # Reset serial buffer to pervent it from growing too large.
-            self.serial_port.reset_input_buffer()
-            time.sleep(self.wait_time)
-            
-            # Read in data
+        # Read in data
+        try:
             field_str = self.serial_port.readline().decode("utf-8")
             x_str, y_str, z_str = "", "", ""
             currently_reading = None
+            
+            # Reset serial buffer to pervent it from growing too large.
+            self.serial_port.reset_input_buffer()
             
             # If currently reading for float, add character if it's valid
             for char in field_str:
@@ -85,6 +84,8 @@ class MLX90393Interface(object):
                     currently_reading = "Y"
                 elif char == "Z":
                     currently_reading = "Z"
+                elif char == "E":
+                    break
             
             # Convert the string chunks to floats
             try:

@@ -66,12 +66,14 @@ class HelmholtzCage(object):
             self.power_supplies = FakePowerSupplyManager(ps_config)
         elif ps_manager == "gpib":
             self.power_supplies = GPIBPowerSupplyManager(ps_config)
+        #TODO: Catch interface not being found
         
         if mag_manager == "fake":
             self.magnetometer = FakeMagnetometerManager(mag_config)
         elif mag_manager == "serial":
             self.magnetometer = SerialMagnetometerManager(mag_config)
-        
+        #TODO: Catch interface not being found
+    
     def connect_to_instruments(self):
         """ 
         Refresh the connections to the connected instruments (power 
