@@ -11,6 +11,8 @@
 """
 
 
+import os
+
 import pyvisa as visa
 
 from hardware.fake_power_supply import FakePowerSupply
@@ -38,11 +40,11 @@ class GPIBPowerSupplyManager(PowerSupplyManager):
         self.rm = visa.ResourceManager(visa_src)
         
         # Get all currently available visa resources
-        try:
-            self.resources = self.rm.list_resources()
-        except Exception as err:
-            print("Could not get resource manager resources | {}".format(err))
-            self.resources = None
+        #try:
+        self.resources = self.rm.list_resources()
+        #except Exception as err:
+        #    print("WARN: Could not get resource manager resources | {}".format(err))
+        #    self.resources = None
         
         # Configure each GPIB power supply
         if self.resources is not None:
@@ -73,10 +75,11 @@ class GPIBPowerSupplyManager(PowerSupplyManager):
             #elif interface == ...: ADD MORE DEVICE TYPES HERE
             #    ...
             else:
-                print("'{}' interface object not found".format(interface))
+                msg = "'{}' interface object not found".format(interface)
+                raise NotImplementedError(msg)
         
         else:
-            print("'{}' not found in VISA resource list".format(address))
+            print("WARN: '{}' not found in VISA resource list".format(address))
             
         return device
 

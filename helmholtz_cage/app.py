@@ -96,8 +96,7 @@ class CageApp(tk.Tk):
         # NOTE: Must be done in try/except to set text back to readonly
         try:
             ps_status, mag_status = self.cage.connect_to_instruments()
-        except Exception as err:
-            print("Could not connect instruments | {}".format(err))
+        except:
             ps_status = [False, False, False]
             mag_status = False
         
@@ -127,25 +126,24 @@ class CageApp(tk.Tk):
         
         # Start tracking plots
         if success:
-            try:
-                self.frames[MainPage].power_supplies_plot.clear()
-                self.frames[MainPage].mag_field_plot.clear()
-                self.cage.data.plot_titles = "None"
+            self.frames[MainPage].power_supplies_plot.clear()
+            self.frames[MainPage].mag_field_plot.clear()
+            self.cage.data.plot_titles = "None"
                 
-                # Record start time
-                self.cage.data.start_time = datetime.datetime.now()
+            # Record start time
+            self.cage.data.start_time = datetime.datetime.now()
                 
-                # Start updating plot with live data
-                self.update_plots_at_runtime()
+            # Start updating plot with live data
+            self.update_plots_at_runtime()
                 
-                # Update buttons
-                self.frames[MainPage].start_cage_update_buttons()
-                print("Session starting")
+            # Update buttons
+            self.frames[MainPage].start_cage_update_buttons()
+            print("Session starting")
             
-            except Exception as err:
-                print("ERROR: Session failed to start | {}".format(err))
-                self.cage.is_running = False
-    
+        # Notify user that session is not started
+        else:
+            print("Session start aborted")
+        
     def update_plots_at_runtime(self):
         """
         Update the GUI plots at runtime for the cage, using the tk.after
@@ -175,7 +173,6 @@ class CageApp(tk.Tk):
         field_or_voltage = self.frames[MainPage].ctrl_type.get()
         
         # If field control, send desired flux density (3-axis)
-        # WARN: 'set_field_strenght' not implimented yet
         if field_or_voltage == "field":
             Bx = float(self.frames[MainPage].x_field.get())
             By = float(self.frames[MainPage].y_field.get())
@@ -246,7 +243,7 @@ class CageApp(tk.Tk):
             # Put calibration file name into GUI entry
             self.frames[MainPage].update_calibration_entry(file_name)
         else:
-            print("ERROR: Unable to load selected calibration file")
+            print("ERROR: Unable to load the selected calibration file")
     
     def change_template_file(self):
         """
@@ -273,7 +270,7 @@ class CageApp(tk.Tk):
             # Put template file name into GUI entry
             self.frames[MainPage].update_template_entry(file_name)
         else:
-            print("ERROR: Unable to load selected template file")
+            print("ERROR: Unable to load the selected template file")
     
     def show_frame(self, cont):
         """
@@ -311,8 +308,11 @@ if __name__ == "__main__":
         app.protocol("WM_DELETE_WINDOW", app.close_app)
         app.mainloop()
     
-    except Exception:
-        traceback.print_exc()
+    except NotImplementedError as err:
+        print("ERROR: {}".format(err))
     
     except KeyboardInterrupt:
         print("")
+    
+    except Exception:
+        traceback.print_exc()

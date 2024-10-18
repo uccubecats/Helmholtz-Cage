@@ -66,13 +66,23 @@ class HelmholtzCage(object):
             self.power_supplies = FakePowerSupplyManager(ps_config)
         elif ps_manager == "gpib":
             self.power_supplies = GPIBPowerSupplyManager(ps_config)
-        #TODO: Catch interface not being found
+        #elif ps_manager == ... #ADD YOUR MANAGER HERE
+        #   ...
+        else:
+            msg = "Power supply manager of type '{}' not implemented".format(
+                ps_manager)
+            raise NotImplementedError(msg)
         
         if mag_manager == "fake":
             self.magnetometer = FakeMagnetometerManager(mag_config)
         elif mag_manager == "serial":
             self.magnetometer = SerialMagnetometerManager(mag_config)
-        #TODO: Catch interface not being found
+        #elif mag_manager == ... #ADD YOUR MANAGER HERE
+        #   ...
+        else:
+            msg = "Magnetometer manager of type '{}' not implemented".format(
+                mag_manager)
+            raise NotImplementedError(msg)
     
     def connect_to_instruments(self):
         """ 
@@ -87,6 +97,8 @@ class HelmholtzCage(object):
         # Update flag variable
         if all(ps_connected) and mag_connected:
             self.all_connected = True
+        else:
+            self.all_connected = False
         
         return ps_connected, mag_connected
         
@@ -117,7 +129,7 @@ class HelmholtzCage(object):
             print("WARN: No control type selected for static test")
         
         # For dynamic tests, make sure we have all relevant parameters
-        #TODO
+        #TODO: Remove once implemented
         elif self.run_type == "dynamic":
             is_okay = False
             print("WARN: Dynamic runs not programmed yet")
@@ -153,7 +165,7 @@ class HelmholtzCage(object):
         
         # Get time
         time_now = datetime.datetime.now()
-        time_elapsed = int((time_now - self.data.start_time).total_seconds())
+        time_elapsed = float((time_now - self.data.start_time).total_seconds())
         self.data.time.append(time_elapsed)
         
         # Store requested values
@@ -192,17 +204,19 @@ class HelmholtzCage(object):
         # Ensure the cage is running
         if not self.is_running:
             print("ERROR: Cage is not currently running")
-            return False
+            success = False
         
         # Send voltages to the cages
-        self.power_supplies.send_voltages([Vx, Vy, Vz])
+        else:
+            success = self.power_supplies.send_voltages([Vx, Vy, Vz])
+            
+            # Store commanded values
+            if success:
+                self.x_req = Vx
+                self.y_req = Vy
+                self.z_req = Vz
         
-        # Store commanded values
-        self.x_req = Vx
-        self.y_req = Vy
-        self.z_req = Vz
-        
-        return True
+        return success
         
     def set_field_strength(self, Bx, By, Bz):
         """

@@ -79,8 +79,9 @@ class PowerSupplyManager(object):
               properly after initilization.
         """
         
-        print("No method override specified for 'configure_axis'")
-        return None
+        msg = "No 'configure_axis' method override specified for '{}'".format(
+            type(self).__name__)
+        raise NotImplementedError(msg)
     
     def connect_to_device(self):
         """
@@ -91,17 +92,12 @@ class PowerSupplyManager(object):
         
         # Attempt to connect to each power supply interface
         for key in self.devices.keys():
-            if self.devices[key] is not None:
-                try:
-                    device_connected = self.devices[key].test_connection()
-                    is_connected.update({key: device_connected})
-                except Exception as err:
-                    print("Error in connecting to {} device | {}"
-                        .format(key, err))
-            
-            # Catch interface objects not being initialized
-            else:
-                print("Device interface not specified for {}".format(key))
+            #try:
+            device_connected = self.devices[key].test_connection()
+            is_connected.update({key: device_connected})
+            #except Exception as err:
+            #    print("Error in connecting to {} device | {}"
+            #        .format(key, err))
         
         # Convert connections status to list
         connect_list = self.dict_to_list(is_connected)
@@ -123,9 +119,17 @@ class PowerSupplyManager(object):
         for key in self.devices.keys(): 
             try: 
                 self.devices[key].set_voltage(cmds[key])
-            except Exception as err:
-                print("Could not send {} voltage | {}".format(key, err))
-    
+                success = True
+            except ValueError:
+                print("WARN: Commanded voltage for {} higher than set limit".format(
+                    key))
+                success = False
+                # TODO: more to handle this?
+            #except Exception as err:
+            #    print("Could not send {} voltage | {}".format(key, err))
+        
+        return success
+        
     def get_power_data(self):
         """
         Get the actual measured voltage and current on the power 
@@ -137,19 +141,19 @@ class PowerSupplyManager(object):
         
         # Attempt to retrieve each device output voltage
         for key in self.devices.keys(): 
-            try:
-                v = self.devices[key].get_voltage_output()
-                v_data.update({key: v})
-            except Exception as err:
-                print("Could not get {} voltage | {}".format(key, err))
+            #try:
+            v = self.devices[key].get_voltage_output()
+            v_data.update({key: v})
+            #except Exception as err:
+            #    print("Could not get {} voltage | {}".format(key, err))
         
         # Attempt to retireve each device output current
         for key in self.devices.keys(): 
-            try:
-                i = self.devices[key].get_voltage_output()
-                i_data.update({key: i})
-            except Exception as err:
-                print("Could not get {} current | {}".format(key, err))
+            #try:
+            i = self.devices[key].get_voltage_output()
+            i_data.update({key: i})
+            #except Exception as err:
+            #    print("Could not get {} current | {}".format(key, err))
         
         # Package both voltage and current data into list
         v_list = self.dict_to_list(v_data)
@@ -157,15 +161,6 @@ class PowerSupplyManager(object):
         data_list = v_list + i_list
         
         return data_list
-    
-    def stop_field(self):
-        """
-        Order the power supplies to power down to zero volts.
-        
-        TODO: Have manager confirm it?
-        """
-        
-        self.send_voltage([0.0, 0.0, 0.0])
     
     def dict_to_list(self, dict_in):
         """
@@ -221,8 +216,9 @@ class MagnetometerManager(object):
               properly after initilization.
         """
         
-        print("No method override specified for 'configure_device'")
-        return None
+        msg = "No 'configure_device' method override specified for {}".format(
+            type(self).__name__)
+        raise NotImplementedError(msg)
     
     def connect_to_device(self):
         """
@@ -230,16 +226,11 @@ class MagnetometerManager(object):
         """
         
         # Attempt to connect to Magnetometer
-        if self.interface is not None:
-            try:
-                self.is_connected = self.interface.test_connection()
-            except Exception as err:
-                print("Error in connecting to magnetometer device | {}"
-                        .format(err))
-                        
-        # Catch interface objects not being initialized
-        else:
-            print("Device interface not specified for magnetometer")
+        #try:
+        self.is_connected = self.interface.test_connection()
+        #except Exception as err:
+        #    print("Error in connecting to magnetometer device | {}"
+        #            .format(err))
         
         return self.is_connected
     
@@ -248,9 +239,9 @@ class MagnetometerManager(object):
         Read the current magnetic field values from the magnetometer.
         """
         
-        try:
-            data = self.interface.read_sensor()
-        except Exception as err:
-            print("Could not read field values | {}". format(err))
+        #try:
+        data = self.interface.read_sensor()
+        #except Exception as err:
+        #    print("Could not read field values | {}". format(err))
         
         return data

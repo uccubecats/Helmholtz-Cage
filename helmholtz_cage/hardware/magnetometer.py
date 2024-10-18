@@ -59,8 +59,8 @@ class SerialMagnetometerManager(MagnetometerManager):
         #elif interface_type == ...: ADD MORE DEVICE TYPES HERE
         #    ...
         else:
-            print("'{}' interface object not found".format(interface))
-            interface = None
+            msg = "'{}' interface object not found".format(interface)
+            raise NotImplementedError(msg)
         
         return interface
 
