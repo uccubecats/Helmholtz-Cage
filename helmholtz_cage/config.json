@@ -2,7 +2,7 @@
   "power_supplies": {
     "manager": "fake",
     "x-axis": {
-      "interface": " ",
+      "interface": "",
       "id": "",
       "params": {
         "max_current": 0.0,
@@ -10,16 +10,16 @@
       }
     },
     "y-axis":{ 
-      "interface": " ",
-      "id": " ",
+      "interface": "",
+      "id": "",
       "params": {
-      "max_current": 0.0,
-      "max_voltage": 0.0
+        "max_current": 0.0,
+        "max_voltage": 0.0
       }
     },
     "z-axis":{
-      "interface": " ",
-      "id": " ",
+      "interface": "",
+      "id": "",
       "params":{
         "max_current": 0.0,
         "max_voltage": 0.0
@@ -28,7 +28,9 @@
   },
   "magnetometer":{
     "manager": "fake",
-    "id": " ",
-    "baudrate": " "
+    "interface": "",
+    "id": "",
+    "baudrate": "",
+    "timeout": 0.0
   }
 }
