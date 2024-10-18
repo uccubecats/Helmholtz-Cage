@@ -17,7 +17,7 @@ import os
 
 def retrieve_configuration_info(main_path):
     """
-    
+    Read in the 'config.json' file.
     """
     
     # Get path-file name
@@ -26,7 +26,5 @@ def retrieve_configuration_info(main_path):
     # Retrieve config file contents
     with open(config_path) as json_file:
         content = json.load(json_file)
-    
-    #TODO: add some sanity checks?
     
     return content

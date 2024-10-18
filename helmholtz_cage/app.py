@@ -285,19 +285,30 @@ class CageApp(tk.Tk):
     
     def show_config_page(self):
         """
-        
+        TODO
         """
         
         self.config_page = ConfigurationPage(self)
     
     def close_app(self):
         """
-        Close the app when exiting from the main window.
+        Close the app when the user exits via the GUI window.
         """
         
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
-            print("Shutting down program")
             self.quit()
+            
+    def cleanup(self):
+        """
+        Perform any cleanup activities needed before shutting down.
+        """
+        
+        # If cage is still running, stop current session
+        if self.cage.is_running:
+            self.stop_cage()
+            
+        # Shutdown cage
+        self.cage.shutdown()
 
 
 if __name__ == "__main__":
@@ -316,3 +327,10 @@ if __name__ == "__main__":
     
     except Exception:
         traceback.print_exc()
+        
+    finally:
+        print("Shutting down program")
+        try:
+            app.cleanup()
+        except NameError:
+            pass

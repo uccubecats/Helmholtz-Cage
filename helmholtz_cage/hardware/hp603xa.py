@@ -108,9 +108,7 @@ class HP603xAInterface(object):
         
         # Prevent voltage limit being set over device maximum
         if v_lim > self.v_max:
-            print("Voltage limit request for {} higher than device limit".format(
-                self.name))
-            okay = False
+            raise ValueError
         
         # Write limit value if not same as current value
         elif v_lim != self.v_lim:
@@ -131,9 +129,7 @@ class HP603xAInterface(object):
         
         # Prevent current limit being set over device maximum
         if i_lim > self.i_max:
-            print("Current limit request for {} higher than device limit".format(
-                self.name))
-            okay = False
+            raise ValueError
                 
         # Write limit value if not same as current value
         elif i_lim != self.i_lim:
@@ -151,16 +147,12 @@ class HP603xAInterface(object):
         
         # Prevent commands larger than device maximum
         if v > self.v_lim:
-            print("Commanded voltage for {} higher than device limit".format(
-                self.name))
-            okay = False
+            raise ValueError
         
         # Write voltage cmd if not same as current cmd
         elif v != self.v_set:
             self.resource.write("VSET {} V".format(v))
             self.v_set = v
-            
-        return okay
     
     def get_voltage_output(self):
         """
@@ -256,3 +248,10 @@ class HP603xAInterface(object):
             resp_out = float(resp)
         
         return resp_out
+        
+    def close(self):
+        """
+        Close the PyVISA resource (interface).
+        """
+        
+        self.resource.close()

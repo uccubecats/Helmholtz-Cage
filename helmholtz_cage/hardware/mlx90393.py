@@ -91,19 +91,19 @@ class MLX90393Interface(object):
             try:
                 x_field = float(x_str)
             except Exception as err:
-                x_field = None
+                x_field = 999.0
                 print("Could not determine x field from string {} | {}"
                       .format(x_str, err))
             try:
                 y_field = float(y_str)
             except Exception as err:
-                y_field = None
+                y_field = 999.0
                 print("Could not determine y field from string {} | {}"
                       .format(y_string, err))
             try:
                 z_field = float(z_string)
             except Exception as err:
-                z_field = None
+                z_field = 999.0
                 print("Could not determine z field from string {} | {}"
                       .format(z_str, err))
             
@@ -111,4 +111,11 @@ class MLX90393Interface(object):
         
         # Print 999 so that it is not confused with 0.0
         except AttributeError:
-            return (999, 999, 999)
+            return (999.0, 999.0, 999.0)
+            
+    def close(self):
+        """
+        Shutdown the serial port.
+        """
+        
+        self.serial_port.close()

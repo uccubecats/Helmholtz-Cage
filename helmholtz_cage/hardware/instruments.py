@@ -161,6 +161,16 @@ class PowerSupplyManager(object):
         data_list = v_list + i_list
         
         return data_list
+        
+    def close(self):
+        """
+        Close the manager and perform any cleanup activities required by
+        the power supply interface(s).
+        
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        pass
     
     def dict_to_list(self, dict_in):
         """
@@ -245,3 +255,13 @@ class MagnetometerManager(object):
         #    print("Could not read field values | {}". format(err))
         
         return data
+        
+    def close(self):
+        """
+        Close the manager and perform any cleanup activities required by
+        the magnetometer interface.
+        
+        Note: Inherited class should implement this function only if
+              needed.
+        """
+        pass

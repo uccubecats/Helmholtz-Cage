@@ -63,7 +63,11 @@ class SerialMagnetometerManager(MagnetometerManager):
             raise NotImplementedError(msg)
         
         return interface
-
+        
+    def close(self):
+        
+        self.interface.close()
+        
 
 class FakeMagnetometerManager(MagnetometerManager):
     """

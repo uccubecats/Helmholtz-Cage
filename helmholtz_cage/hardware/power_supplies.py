@@ -82,6 +82,20 @@ class GPIBPowerSupplyManager(PowerSupplyManager):
             print("WARN: '{}' not found in VISA resource list".format(address))
             
         return device
+        
+    def close(self):
+        """
+        Close each power supply connection resource, and then close the
+        PyVISA resource manager.
+        """
+        
+        # Shutdown each device interface
+        for key in self.devices:
+            self.devices.close()
+            
+        # Shutdown VISA resource manager
+        self.rm.close()
+        
 
 class FakePowerSupplyManager(PowerSupplyManager):
     """

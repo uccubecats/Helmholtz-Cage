@@ -28,7 +28,8 @@ from hardware.magnetometer import (
 
 class HelmholtzCage(object):
     """
-    A class object for the overall Helmholtz Cage.
+    A class object for interfacing and controlling with the overall
+    Helmholtz Cage, including it's power supplies and magnetometer
     """
     
     def __init__(self, main_dir, ps_config, mag_config):
@@ -198,7 +199,7 @@ class HelmholtzCage(object):
         
     def set_coil_voltages(self, Vx, Vy, Vz):
         """
-        Send a set of axis coil voltages.
+        Command a set of desired coil voltages for each axis.
         """
         
         # Ensure the cage is running
@@ -235,3 +236,14 @@ class HelmholtzCage(object):
         TODO
         """
         pass
+        
+    def shutdown(self):
+        """
+        Close down hardware interfaces.
+        
+        NOTE: Depending on your hardware, further action(s) may be
+              required to completely turn off the cage.
+        """
+        
+        self.power_supplies.close()
+        self.magnetometer.close()
