@@ -92,12 +92,11 @@ class PowerSupplyManager(object):
         
         # Attempt to connect to each power supply interface
         for key in self.devices.keys():
-            #try:
-            device_connected = self.devices[key].test_connection()
-            is_connected.update({key: device_connected})
-            #except Exception as err:
-            #    print("Error in connecting to {} device | {}"
-            #        .format(key, err))
+            try:
+                device_connected = self.devices[key].test_connection()
+                is_connected.update({key: device_connected})
+            except Exception as err:
+                self.handle_error(err)
         
         # Convert connections status to list
         connect_list = self.dict_to_list(is_connected)
@@ -161,7 +160,17 @@ class PowerSupplyManager(object):
         data_list = v_list + i_list
         
         return data_list
+    
+    def handle_error(self, error_obj):
+        """
+        Indicate that error has occured and handle it if necessary.
         
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        
+        print("ERROR: {}".format(err))
+    
     def close(self):
         """
         Close the manager and perform any cleanup activities required by
@@ -236,11 +245,10 @@ class MagnetometerManager(object):
         """
         
         # Attempt to connect to Magnetometer
-        #try:
-        self.is_connected = self.interface.test_connection()
-        #except Exception as err:
-        #    print("Error in connecting to magnetometer device | {}"
-        #            .format(err))
+        try:
+            self.is_connected = self.interface.test_connection()
+        except Exception as err:
+            self.handle_error(err)
         
         return self.is_connected
     
@@ -255,7 +263,17 @@ class MagnetometerManager(object):
         #    print("Could not read field values | {}". format(err))
         
         return data
+    
+    def handle_error(self, error_obj):
+        """
+        Indicate that error has occured and handle it if necessary.
         
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        
+        print("ERROR: {}".format(err))
+    
     def close(self):
         """
         Close the manager and perform any cleanup activities required by
