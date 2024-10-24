@@ -150,7 +150,7 @@ class PowerSupplyManager(object):
         # Attempt to retireve each device output current
         for key in self.devices.keys(): 
             #try:
-            i = self.devices[key].get_voltage_output()
+            i = self.devices[key].get_current_output()
             i_data.update({key: i})
             #except Exception as err:
             #    print("Could not get {} current | {}".format(key, err))

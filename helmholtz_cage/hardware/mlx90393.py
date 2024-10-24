@@ -101,7 +101,7 @@ class MLX90393Interface(object):
                 print("Could not determine y field from string {} | {}"
                       .format(y_string, err))
             try:
-                z_field = float(z_string)
+                z_field = float(z_str)
             except Exception as err:
                 z_field = 999.0
                 print("Could not determine z field from string {} | {}"

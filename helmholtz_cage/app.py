@@ -96,7 +96,8 @@ class CageApp(tk.Tk):
         # NOTE: Must be done in try/except to set text back to readonly
         try:
             ps_status, mag_status = self.cage.connect_to_instruments()
-        except:
+        except Exception as err: #TODO: Improve error handling here
+            print("ERROR: {}".format(err))
             ps_status = [False, False, False]
             mag_status = False
         

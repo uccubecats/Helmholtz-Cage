@@ -63,6 +63,7 @@ class HP603xAInterface(object):
         # Initialize other variables/parameters
         self.is_connected = False
         self.v_set = 0.0
+        self.i_set = 0.0
         self.v_max = 0.0
         self.i_max = 0.0
         self.model = None
@@ -72,6 +73,10 @@ class HP603xAInterface(object):
         Check to see if the device is connected and responding to
         queries.
         """
+        
+        # Check for errors
+        # NOTE: This will clear errors that currently exist on device
+        has_err = self.get_error()
         
         # Ask for ID
         out = self.resource.query("ID?")
@@ -89,6 +94,12 @@ class HP603xAInterface(object):
             # Write important parameters to device
             self.set_voltage_limit(self.v_lim)
             self.set_current_limit(self.i_lim)
+            
+            # Set current upper limit
+            # NOTE: Must be set here, otherwise when voltage is 
+            #       increased, power supply will reset it to zero for 
+            #       violating current set point
+            self.set_current(self.i_lim)
         
         # Otherwise, set connection variable to False
         else:
@@ -98,7 +109,7 @@ class HP603xAInterface(object):
     
     def set_voltage_limit(self, v_lim):
         """
-        Set the device's maximum voltage limit.
+        Set the device's maximum voltage limit in volts.
         
         NOTE: this is a 'soft' limit due to most likely being lower than
         the device's maximum output limit.
@@ -119,7 +130,7 @@ class HP603xAInterface(object):
     
     def set_current_limit(self, i_lim):
         """
-        Set the device's maximum current limit.
+        Set the device's maximum current limit in amps.
         
         NOTE: this is a 'soft' limit due to most likely being lower than
         the device's maximum output limit.
@@ -140,7 +151,7 @@ class HP603xAInterface(object):
     
     def set_voltage(self, v):
         """
-        Set the device's command voltage.
+        Set the device's command voltage in volts.
         """
         
         okay = True
@@ -149,14 +160,28 @@ class HP603xAInterface(object):
         if v > self.v_lim:
             raise ValueError
         
-        # Write voltage cmd if not same as current cmd
+        # Write voltage cmd if not same as stored value
         elif v != self.v_set:
             self.resource.write("VSET {} V".format(v))
             self.v_set = v
-    
+            
+    def set_current(self, i):
+        """
+        Set the device's command current in amps.
+        """
+        
+        # Prevent inputs larger than device maximum
+        if i > self.i_lim:
+            raise ValueError
+            
+        # Write current cmd if not same as stored value 
+        elif i != self.i_set:
+            self.resource.write("ISET {} A".format(i))
+            self.i_set = i
+        
     def get_voltage_output(self):
         """
-        Get the device's measured (actual) voltage output.
+        Get the device's measured (actual) voltage output in volts.
         """
         
         out = self.resource.query("VOUT?")
@@ -166,7 +191,7 @@ class HP603xAInterface(object):
     
     def get_current_output(self):
         """
-        Get the device's measured (actual) current output.
+        Get the device's measured (actual) current output in amps.
         """
         
         out = self.resource.query("IOUT?")

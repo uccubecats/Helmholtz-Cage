@@ -91,11 +91,11 @@ class GPIBPowerSupplyManager(PowerSupplyManager):
         
         # Shutdown each device interface
         for key in self.devices:
-            self.devices.close()
+            self.devices[key].close()
             
         # Shutdown VISA resource manager
         self.rm.close()
-        
+
 
 class FakePowerSupplyManager(PowerSupplyManager):
     """
