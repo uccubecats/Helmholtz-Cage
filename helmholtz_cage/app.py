@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
   Main application program for the UC Helmholtz Cage.
@@ -16,6 +16,7 @@
 import datetime
 import os
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
@@ -53,7 +54,7 @@ class CageApp(tk.Tk):
         
         # Initialize frame
         tk.Tk.__init__(self, *args, **kwargs)
-
+        
         # Set title
         self.title = "Helmholtz Cage"
         tk.Tk.wm_title(self, self.title)
@@ -69,7 +70,10 @@ class CageApp(tk.Tk):
         
         # Initialize Helmholtz Cage interface
         self.cage = HelmholtzCage(self.main_path, ps_config, mag_config)
-
+        
+        # Set parameters
+        self.log_data = False
+        
         # Intialize frames top of each other
         self.frames = {}
         for Frame in (MainPage, HelpPage):
@@ -92,12 +96,22 @@ class CageApp(tk.Tk):
         # NOTE: Must be done in try/except to set text back to readonly
         try:
             ps_status, mag_status = self.cage.connect_to_instruments()
-        except Exception as err:
-            print("Could not connect instruments | {}".format(err))
-            
+        except Exception as err: #TODO: Improve error handling here
+            print("ERROR: {}".format(err))
+            ps_status = [False, False, False]
+            mag_status = False
+        
         # Update the GUI connection fields
         self.frames[MainPage].update_connection_entries(ps_status, mag_status)
         
+    def set_logging_option(self):
+        """
+        Set data logging option, enabling/disabling writing data from a
+        run to storage.
+        """
+        
+        self.log_data = self.frames[MainPage].log_data_option.get()
+    
     def start_cage(self):
         """
         Start a Helmholz Cage test run (activated by the "Start Cage" 
@@ -113,27 +127,24 @@ class CageApp(tk.Tk):
         
         # Start tracking plots
         if success:
-            try:
-                self.frames[MainPage].power_supplies_plot.cla()
-                self.frames[MainPage].mag_field_plot.cla()
-                self.cage.data.plot_titles = "None"
-                #data_now = self.cage.data
-                #self.frames[MainPage].update_plot_info(data_now)
+            self.frames[MainPage].power_supplies_plot.clear()
+            self.frames[MainPage].mag_field_plot.clear()
+            self.cage.data.plot_titles = "None"
                 
-                # Record start time
-                self.cage.data.start_time = datetime.datetime.now()
+            # Record start time
+            self.cage.data.start_time = datetime.datetime.now()
                 
-                # Start updating plot with live data
-                self.update_plots_at_runtime()
-
-                # Update buttons
-                self.frames[MainPage].start_cage_update_buttons()
-                print("Session starting")
+            # Start updating plot with live data
+            self.update_plots_at_runtime()
                 
-            except Exception as err:
-                print("ERROR: Session failed to start | {}".format(err))
-                self.cage.is_running = False
-    
+            # Update buttons
+            self.frames[MainPage].start_cage_update_buttons()
+            print("Session starting")
+            
+        # Notify user that session is not started
+        else:
+            print("Session start aborted")
+        
     def update_plots_at_runtime(self):
         """
         Update the GUI plots at runtime for the cage, using the tk.after
@@ -147,12 +158,34 @@ class CageApp(tk.Tk):
             data_now = self.cage.update_data()
         
             # Redraw plots with newest data
-            self.frames[MainPage].update_plot_info(data_now)
             self.frames[MainPage].fill_plot_frame()
             
             # Set next update loop
             self.frames[MainPage].after(UPDATE_PLOT_TIME*1000,
                                         self.update_plots_at_runtime)
+                                        
+    def command_static_value(self):
+        """
+        Based on the type of control send an appropriate static value
+        command (based on user input) to the cage.
+        """
+        
+        # Get control type
+        field_or_voltage = self.frames[MainPage].ctrl_type.get()
+        
+        # If field control, send desired flux density (3-axis)
+        if field_or_voltage == "field":
+            Bx = float(self.frames[MainPage].x_field.get())
+            By = float(self.frames[MainPage].y_field.get())
+            Bz = float(self.frames[MainPage].z_field.get())
+            self.cage.set_field_strength(Bx, By, Bz)
+        
+        # If voltage control, send desired voltages
+        else:
+            Vx = float(self.frames[MainPage].x_voltage.get())
+            Vy = float(self.frames[MainPage].y_voltage.get())
+            Vz = float(self.frames[MainPage].z_voltage.get())
+            self.cage.set_coil_voltages(Vx, Vy, Vz)
     
     def stop_cage(self):
         """
@@ -166,12 +199,20 @@ class CageApp(tk.Tk):
         # Reset GUI and data
         if success:
             print("Session ended successfully")
-            # If cage is started again in current session, new log file is created
-            # TODO
+            
+            # Log data if requested
+            if self.log_data:
+                self.cage.data.write_to_file()
+            
+            # Clear data for next run
+            self.cage.data.clear_data()
             
             # Update buttons
             self.frames[MainPage].stop_cage_update_buttons()
             
+            # Clear the figure off and recreate plot titles
+            self.frames[MainPage].clear_plot_frame()
+        
         # Warn user if the cage isn't shutting down
         else:
             print("ERROR: Unable to command cage to stop")
@@ -203,7 +244,7 @@ class CageApp(tk.Tk):
             # Put calibration file name into GUI entry
             self.frames[MainPage].update_calibration_entry(file_name)
         else:
-            print("ERROR: Unable to load selected calibration file")
+            print("ERROR: Unable to load the selected calibration file")
     
     def change_template_file(self):
         """
@@ -230,8 +271,8 @@ class CageApp(tk.Tk):
             # Put template file name into GUI entry
             self.frames[MainPage].update_template_entry(file_name)
         else:
-            print("ERROR: Unable to load selected template file")
-
+            print("ERROR: Unable to load the selected template file")
+    
     def show_frame(self, cont):
         """
         Switch to another frame.
@@ -242,23 +283,33 @@ class CageApp(tk.Tk):
         
         # Show the frame
         frame.tkraise()
-        
+    
     def show_config_page(self):
         """
-        
+        TODO
         """
         
         self.config_page = ConfigurationPage(self)
-        
-        
+    
     def close_app(self):
         """
-        Close the app when exiting from the main window.
+        Close the app when the user exits via the GUI window.
         """
         
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
-            print("Shutting down program")
             self.quit()
+            
+    def cleanup(self):
+        """
+        Perform any cleanup activities needed before shutting down.
+        """
+        
+        # If cage is still running, stop current session
+        if self.cage.is_running:
+            self.stop_cage()
+            
+        # Shutdown cage
+        self.cage.shutdown()
 
 
 if __name__ == "__main__":
@@ -268,9 +319,19 @@ if __name__ == "__main__":
         app.minsize(width=250, height=600)
         app.protocol("WM_DELETE_WINDOW", app.close_app)
         app.mainloop()
-        
+    
+    except NotImplementedError as err:
+        print("ERROR: {}".format(err))
+    
+    except KeyboardInterrupt:
+        print("")
+    
     except Exception:
         traceback.print_exc()
         
-    except KeyboardInterrupt:
-        print("")
+    finally:
+        print("Shutting down program")
+        try:
+            app.cleanup()
+        except NameError:
+            pass

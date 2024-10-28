@@ -1,11 +1,13 @@
-"""
-Objects and functions for storing and logging Helmholtz Cage data. 
+#!/usr/bin/env python3
 
-Copyright 2021 UC CubeCats
-All rights reserved. See LICENSE file at:
-https://github.com/uccubecats/Helmholtz-Cage/LICENSE
-Additional copyright may be held by others, as reflected in the commit
-history.
+"""
+  Objects and functions for storing and logging Helmholtz Cage data. 
+  
+  Copyright 2024 UC CubeCats
+  All rights reserved. See LICENSE file at:
+  https://github.com/uccubecats/Helmholtz-Cage/LICENSE
+  Additional copyright may be held by others, as reflected in the commit
+  history.
 """
 
 
@@ -22,48 +24,51 @@ class Data(object):
     """
     
     def __init__(self, main_dir):
-
+        
         # Get session log file directory
         self.session_dir = os.path.join(main_dir, "sessions")
-
+        
         # Plot data
         self.plots_created = False # flag variable so plots are only created once
         self.plot_titles = "" # flag variable so titles are only added the first time data is logged
         
         # Template data
         self.template_file = None
-
+        
         # Calibration data
         self.calibration_file = None
         self.xy_cutoff = None
         self.yz_cutoff = None
-
+        
         # Session logging data
-        self.session_file = ""
         self.start_time = None
-        self.time = [0]
-        self.Vx = [0]
-        self.Vy = [0]
-        self.Vz = [0]
-        self.Ix = [0]
-        self.Iy = [0]
-        self.Iz = [0]
-        self.Bx = [0]
-        self.By = [0]
-        self.Bz = [0]
-        self.x_req = [0]
-        self.y_req = [0]
-        self.z_req = [0]
-        self.req_type = "" # i.e. field vs. volt
-        
-    def start_new_log_file(self):
+        self.time = []
+        self.Vx = []
+        self.Vy = []
+        self.Vz = []
+        self.Ix = []
+        self.Iy = []
+        self.Iz = []
+        self.Bx = []
+        self.By = []
+        self.Bz = []
+        self.x_req = []
+        self.y_req = []
+        self.z_req = []
+        self.req_type = "" # i.e. field vs. voltage
+    
+    def write_to_file(self):
         """
-        Create and write the first line of a session log file.
-        
-        TODO: Test
+        Write the current data set to a csv file.
         """
         
-        start = ["time",
+        # Add header information
+        header = [["request type", self.req_type],
+                  ["calibration_file", self.calibration_file],
+                  ["template_file", self.template_file]]
+        
+        # Add column lables
+        label = [["time",
                  "Vx",
                  "Vy",
                  "Vz",
@@ -73,40 +78,72 @@ class Data(object):
                  "Bx",
                  "By",
                  "Bz",
-                 "x_req",
-                 "y_req", 
-                 "z_req",
-                 "req_type"]
+                 "x request",
+                 "y request", 
+                 "z request"]]
         
-        # Create filename
-        date = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        self.session_file = "session_{}.csv".format(date)
-            
-        # Write initial line to file 
-        write_to_csv(self.session_dir, self.session_file, start, 'w')
+        # Add column units
+        if self.req_type == "voltage":
+            req_unit = "Volts"
+        elif self.req_type == "field":
+            req_unit = "Gauss"
+        units = [["secs",
+                  "Volts",
+                  "Volts",
+                  "Volts",
+                  "Amps",
+                  "Amps",
+                  "Amps",
+                  "Gauss",
+                  "Gauss",
+                  "Gauss",
+                  req_unit,
+                  req_unit,
+                  req_unit]]
         
-    def log_current_data(self):
+        # Add each time point as row in csv
+        data = []
+        for t in range(0, len(self.time)):
+            point = [self.time[t],
+                     self.Vx[t],
+                     self.Vy[t],
+                     self.Vz[t],
+                     self.Ix[t],
+                     self.Iy[t],
+                     self.Iz[t],
+                     self.Bx[t],
+                     self.By[t],
+                     self.Bz[t],
+                     self.x_req[t],
+                     self.y_req[t],
+                     self.z_req[t]]
+            data.append(point)
+        
+        # Create file name
+        start_t_str = self.start_time.strftime('%Y-%m-%d_%H-%M-%S')
+        session_file = "session_{}.csv".format(start_t_str)
+        
+        # Write data to file
+        content = header + label + units + data
+        write_to_csv(self.session_dir, session_file, content, 'w')
+    
+    def clear_data(self):
         """
-        Log the current data set to the session log file.
-        
-        TODO: Test
+        Delete all data and reset the data object.
         """
         
-        # Place elements into list
-        row = [self.time,
-               self.Vx,
-               self.Vy,
-               self.Vz,
-               self.Ix,
-               self.Iy,
-               self.Iz,
-               self.Bx,
-               self.By,
-               self.Bz,
-               self.x_req,
-               self.y_req,
-               self.z_req,
-               self.req_type]
-               
-        # Write to session log file
-        write_to_csv(self.session_dir, self.session_file, row, 'a')
+        self.start_time = None
+        self.time = []
+        self.Vx = []
+        self.Vy = []
+        self.Vz = []
+        self.Ix = []
+        self.Iy = []
+        self.Iz = []
+        self.Bx = []
+        self.By = []
+        self.Bz = []
+        self.x_req = []
+        self.y_req = []
+        self.z_req = []
+        self.req_type = ""

@@ -1,11 +1,36 @@
 {
-    "power_supplies":{
-        "manager": "fake",
-        "addresses": []
+  "power_supplies": {
+    "manager": "fake",
+    "x-axis": {
+      "interface": "",
+      "id": "",
+      "params": {
+        "max_current": 0.0,
+        "max_voltage": 0.0
+      }
     },
-    "magnetometer":{
-        "manager": "serial",
-        "address": "",
-        "baudrate": 
+    "y-axis":{ 
+      "interface": "",
+      "id": "",
+      "params": {
+        "max_current": 0.0,
+        "max_voltage": 0.0
+      }
+    },
+    "z-axis":{
+      "interface": "",
+      "id": "",
+      "params":{
+        "max_current": 0.0,
+        "max_voltage": 0.0
+      }
     }
+  },
+  "magnetometer":{
+    "manager": "fake",
+    "interface": "",
+    "id": "",
+    "baudrate": "",
+    "timeout": 0.0
+  }
 }

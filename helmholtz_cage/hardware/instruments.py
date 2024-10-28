@@ -1,26 +1,21 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
-Objects and functions to connect with power supplies and magnetometers.
+  Base classes and methods for connecting with power supply and 
+  magnetometer devices.
+  
+  Copyright 2018-2024 UC CubeCats
+  All rights reserved. See LICENSE file at:
+  https://github.com/uccubecats/Helmholtz-Cage/LICENSE
+  Additional copyright may be held by others, as reflected in the commit
+  history.
 
-Copyright 2018-2021 UC CubeCats
-All rights reserved. See LICENSE file at:
-https://github.com/uccubecats/Helmholtz-Cage/LICENSE
-Additional copyright may be held by others, as reflected in the commit history.
-
-Originally written by Jason Roll (rolljn@mail.uc.edu)
-
-TODO: run through it and check new classes/functions.
+  Originally written by Jason Roll (rolljn@mail.uc.edu)
 """
 
 
-import logging
 import re
 import serial
-import pyvisa as visa
-
-logger = logging.getLogger(__name__)
-# visa.log_to_screen()
 
 
 class ReadLine(object):
@@ -33,7 +28,7 @@ class ReadLine(object):
     def __init__(self, s):
         self.buf = bytearray()
         self.s = s
-
+    
     def readline(self):
         i = self.buf.find(b"\n")
         if i >= 0:
@@ -51,243 +46,240 @@ class ReadLine(object):
             else:
                 self.buf.extend(data)
 
-class GPIBDaisyChainPS(object):
+
+class PowerSupplyManager(object):
     """
-    An object for dealing with a set of three GPIB-capable power supplies 
-    connected using a GPIB daisy chain.
+    A base object for managing a set of power supplies controlling the
+    coils of a Helmholtz Cage.
+    
+    NOTE: Currently assumes three power supplies one driving a single 
+          coil pair
     """
     
-    def __init__(self):
+    def __init__(self, config):
         
-        # Note: Check these are correct for your setup
-        self.axes = ["X", "Y", "Z"]
-        self.id = ["GPIB0::3::INSTR","GPIB0::5::INSTR","GPIB0::4::INSTR"]
-        self.resources = 3*["no connection"]
-        self.log_data = "ON"
-        self.connections_checked = True
-        self.is_connected = [False, False, False]
+        # Store configuration
+        self.config = config       
         
-        # Create a VISA Resource Manager object
-        self.rm = visa.ResourceManager()
-
+        # Initialize device interface storage dict
+        self.devices = {"x-axis": None,
+                        "y-axis": None,
+                        "z-axis": None}
+        
+        # Initialize flag variables
+        self.is_connected = False
+        self.connections_checked = False
+    
+    def configure_axis(self, interface):
+        """
+        Placeholder method for inherited class device interface
+        configuration.
+        
+        NOTE: Inherited class must specify this method and call it 
+              properly after initilization.
+        """
+        
+        msg = "No 'configure_axis' method override specified for '{}'".format(
+            type(self).__name__)
+        raise NotImplementedError(msg)
+    
     def connect_to_device(self):
         """
-        Attempt connections to the power supplies and magnetometer.
-        
-        NOTE: The control computer may store the power supply addresses 
-              in memory, and show they have connected to them, even when
-              the cables are completely disconnected. A zero voltage 
-              command needs to be sent to confirm successful connection.
-              
-        TODO: Test
+        Attempt to connect to all system power supplies.
         """
         
-        self.is_connected = [False, False, False]
+        is_connected = {}
         
-        # Get a list of connected devices
-        try:
-            connected_devices = rm.list_resources()
-        except Exception as err:
-            print("Could not get resource manager resources | {}".format(err))
-            
-        # Send 0V commands to see if connections were actually made            
-        for connection in connected_devices:
-            for i in range(0,3):
-                if device == self.id[i]:
-                    self.resources[i] = rm.open_resource(connection)
-                    try:
-                        self.resources[i].write("VSET 0 V")
-                        self.is_connected[i] = True
-                    except:
-                        print("No connection established to {} | {}"
-                            .format(self.resource[i],err))
-            
-        return self.is_connected
+        # Attempt to connect to each power supply interface
+        for key in self.devices.keys():
+            try:
+                device_connected = self.devices[key].test_connection()
+                is_connected.update({key: device_connected})
+            except Exception as err:
+                self.handle_error(err)
         
-            # if connection == self.id[0]:
-                # self.x = rm.open_resource(connection)
-                # try:
-                    # self.x.write("VSET 0 V")
-                    # self.is_connected = True
-                # except Exception as err:
-                    # print(
-                        # "No X Power Supply connection established to {} | {}".format(
-                            # self.x, err))
-                    # self.x = "No connection"
-                    # self.is_connected[0] = False
-                    
-            # elif connection == self.y_id:
-                # self.y = rm.open_resource(connection)
-                # try:
-                    # self.y.write("VSET 0 V")
-                    # self.is_connected[1] = True
-                # except Exception as err:
-                    # print(
-                        # "No Y Power Supply connection established to {} | {}".format(
-                            # self.y, err))
-                    # self.y = "No connection"
-                    # self.is_connected[1] = False
-                    
-            # elif connection == self.z_id:
-                # self.z = rm.open_resource(connection)
-                # try:
-                    # self.z.write("VSET 0 V")
-                    # self.is_connected[2] = True
-                # except Exception as err:
-                    # print(
-                        # "No Z Power Supply connection established to {} | {}".format(
-                            # self.z, err))
-                    # self.z = "No connection"
-                    # self.is_connected[2] = False
-
-    def send_voltage(self, voltages):
+        # Convert connections status to list
+        connect_list = self.dict_to_list(is_connected)
+        
+        # Set overall is connected flag
+        self.is_connected = all(connect_list)
+        
+        return connect_list
+    
+    def send_voltages(self, voltages):
         """
         Send the commanded voltage values to the power supplies.
-        
-        TODO: Test
         """
         
-        for i in range(0,3):
-            try:
-                command = "VSET {} V".format(voltages[i])
-                self.resource[i].write(command)
-            except:
-                print("Could not send {} voltage | {}".format(
-                    self.axis[i], err))
+        # Convert command list to power supply dict
+        cmds = self.list_to_dict(voltages)
         
-        # try:
-            # self.x.write(("VSET {} V").format(x_voltage))
-        # except Exception as err:
-            # print("Could not send x voltage | {}".format(err))
-            
-        # try:
-            # self.y.write(("VSET {} V").format(y_voltage))
-        # except Exception as err:
-            # print("Could not send y voltage | {}".format(err))
-            
-        # try:
-            # self.z.write(("VSET {} V").format(z_voltage))
-        # except Exception as err:
-            # print("Could not send z voltage | {}".format(err))
-
-    def stop_field(self):
-        """
-        Kill all current to all power supplies.
+        # Attempt to set each device voltage
+        for key in self.devices.keys(): 
+            try: 
+                self.devices[key].set_voltage(cmds[key])
+                success = True
+            except ValueError:
+                print("WARN: Commanded voltage for {} higher than set limit".format(
+                    key))
+                success = False
+                # TODO: more to handle this?
+            #except Exception as err:
+            #    print("Could not send {} voltage | {}".format(key, err))
         
-        TODO: see if this is necessary
-        """
+        return success
         
-        pass
-        # print("field stopped)
-
-    def get_requested_voltage(self):
-        """
-        Get the currently commanded voltages on the power supplies.
-        
-        TODO: Test
-        """
-        
-        data = [None]*3
-        
-        # Query the setpoint voltages
-        for i in range(0,3):
-            try:
-                command = "VSET?"
-                data[i] = self.resource[i].query(command)
-            except:
-                "Could not get requested {} voltage, assumed to be zero | {}".format(
-                    self.axis[i], err)
-                data[i] = 0.0
-                
-        return data
-        
-        # try:
-            # x_req = self.x.query("VSET?")
-            # x_req = re.findall('\d+\.\d+', x_req)[0]
-        # except Exception as err:
-            # print(
-                # "Could not get requested x voltage, assumed to be zero | {}".format(
-                    # err))
-            # x_req = 0
-        # try:
-            # y_req = self.y.query("VSET?")
-            # y_req = re.findall('\d+\.\d+', y_req)[0]
-        # except Exception as err:
-            # print(
-                # "Could not get requested y voltage, assumed to be zero | {}".format(
-                    # err))
-            # y_req = 0
-            
-        # try:
-            # z_req = self.z.query("VSET?")
-            # z_req = re.findall('\d+\.\d+', z_req)[0]
-        # except Exception as err:
-            # print(
-                # "Could not get requested z voltage, assumed to be zero | {}".format(
-                    # err))
-            # z_req = 0
-            
-        # return (x_req, y_req, z_req)
-
     def get_power_data(self):
         """
-        Get the actual measured voltage and current on the power
+        Get the actual measured voltage and current on the power 
         supplies.
-        
-        TODO: Test
         """
         
-        data = [None]*3
+        v_data = {}
+        i_data = {}
         
-        for i in range(0,3):
-            
-            # Query the output voltages
-            try:
-                command = "VOUT?"
-                data[i] = self.resource[i].query(command)
-            except:
-                "Could not get {} voltage, assumed to be zero | {}".format(
-                    self.axis[i], err)
-                data[i] = 0.0
-                
-            # Query the output currents
-            try:
-                command = "IOUT?"
-                data[i+3] = self.resource[i].query(command)
-            except:
-                "Could not get {} current, assumed to be zero | {}".format(
-                    self.axis[i], err)
-                data[i+3] = 0.0
-                
+        # Attempt to retrieve each device output voltage
+        for key in self.devices.keys(): 
+            #try:
+            v = self.devices[key].get_voltage_output()
+            v_data.update({key: v})
+            #except Exception as err:
+            #    print("Could not get {} voltage | {}".format(key, err))
+        
+        # Attempt to retireve each device output current
+        for key in self.devices.keys(): 
+            #try:
+            i = self.devices[key].get_current_output()
+            i_data.update({key: i})
+            #except Exception as err:
+            #    print("Could not get {} current | {}".format(key, err))
+        
+        # Package both voltage and current data into list
+        v_list = self.dict_to_list(v_data)
+        i_list = self.dict_to_list(i_data)
+        data_list = v_list + i_list
+        
+        return data_list
+    
+    def handle_error(self, error_obj):
+        """
+        Indicate that error has occured and handle it if necessary.
+        
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        
+        print("ERROR: {}".format(err))
+    
+    def close(self):
+        """
+        Close the manager and perform any cleanup activities required by
+        the power supply interface(s).
+        
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        pass
+    
+    def dict_to_list(self, dict_in):
+        """
+        Convert a dictionary with power supply related information into 
+        a properly ordered list.
+        """
+        
+        list_out = [dict_in["x-axis"],
+                    dict_in["y-axis"],
+                    dict_in["z-axis"]]
+        
+        return list_out
+    
+    def list_to_dict(self, list_in):
+        """
+        Convert a list with power supply related information into a 
+        properly formatted dictionary.        
+        """
+        
+        dict_out = {"x-axis": list_in[0],
+                    "y-axis": list_in[1],
+                    "z-axis": list_in[2]}
+        
+        return dict_out
+
+
+class MagnetometerManager(object):
+    """
+    A base object for managing a control magnetometer for the Helmholtz
+    Cage.
+    
+    NOTE: Currently assumes a single magnetometer device; possibly
+    usable for 3x single axis magnetometers with proper interface.
+    """
+    
+    def __init__(self, config):
+        
+        # Store config information
+        self.config = config
+        
+        # Intialize interface object
+        self.interface = None
+        
+        # Initialize variables
+        self.is_connected = False
+        
+    def configure_device(self, interface):
+        """
+        Placeholder method for inherited class device interface
+        configuration.
+        
+        NOTE: Inherited class must specify this method and call it 
+              properly after initilization.
+        """
+        
+        msg = "No 'configure_device' method override specified for {}".format(
+            type(self).__name__)
+        raise NotImplementedError(msg)
+    
+    def connect_to_device(self):
+        """
+        Attempt to connect to the magnetometer.
+        """
+        
+        # Attempt to connect to Magnetometer
+        try:
+            self.is_connected = self.interface.test_connection()
+        except Exception as err:
+            self.handle_error(err)
+        
+        return self.is_connected
+    
+    def get_field_strength(self):
+        """
+        Read the current magnetic field values from the magnetometer.
+        """
+        
+        #try:
+        data = self.interface.read_sensor()
+        #except Exception as err:
+        #    print("Could not read field values | {}". format(err))
+        
         return data
+    
+    def handle_error(self, error_obj):
+        """
+        Indicate that error has occured and handle it if necessary.
         
-        # try:
-            # x_out = self.x.query("VOUT?")
-            # x_out = re.findall('\d+\.\d+', x_out)[0]
-        # except Exception as err:
-            # print(
-                # "Could not get x voltage, assumed to be zero | {}".format(err))
-            # x_out = 0
-            
-        # try:
-            # y_out = self.y.query("VOUT?")
-            # y_out = re.findall('\d+\.\d+', y_out)[0]
-        # except Exception as err:
-            # print(
-                # "Could not get y voltage, assumed to be zero | {}".format(err))
-            # y_out = 0
-            
-        # try:
-            # z_out = self.z.query("VOUT?")
-            # z_out = re.findall('\d+\.\d+', z_out)[0]
-        # except Exception as err:
-            # print(
-                # "Could not get z voltage, assumed to be zero | {}".format(err))
-            # z_out = 0
-            
-        # return (x_out, y_out, z_out)
-
-
-if __name__ == "__main__":
-    instruments = Instruments()
-    rm.list_resources()
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        
+        print("ERROR: {}".format(err))
+    
+    def close(self):
+        """
+        Close the manager and perform any cleanup activities required by
+        the magnetometer interface.
+        
+        Note: Inherited class should implement this function only if
+              needed.
+        """
+        pass

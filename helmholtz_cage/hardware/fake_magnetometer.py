@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 """
-Objects and functions to connect with magnetometers.
-
-Copyright 2023 UC CubeCats
-All rights reserved. See LICENSE file at:
-https://github.com/uccubecats/Helmholtz-Cage/LICENSE
-Additional copyright may be held by others, as reflected in the commit history.
+  Objects and functions to connect with fake 'placeholder' magneto-
+  meters.
+  
+  Copyright 2024 UC CubeCats
+  All rights reserved. See LICENSE file at:
+  https://github.com/uccubecats/Helmholtz-Cage/LICENSE
+  Additional copyright may be held by others, as reflected in the commit
+  history.
 """
 
 
@@ -19,12 +21,12 @@ class FakeMagnetometer(object):
     interface.
     """
     
-    def __init__(self, config):
+    def __init__(self):
         
         # Initialize state variables
         self.connected = False
         
-    def connect_to_device(self):
+    def test_connection(self):
         """
         Pretend to connect to a magnetometer.
         """
@@ -34,7 +36,7 @@ class FakeMagnetometer(object):
             
         return self.connected
     
-    def get_field_strength(self):
+    def read_sensor(self):
         """
         Pretend to get the actual measured magnetic field strength.
         """
