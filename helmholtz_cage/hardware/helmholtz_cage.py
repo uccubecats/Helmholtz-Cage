@@ -50,13 +50,14 @@ class HelmholtzCage(object):
         self.is_calibrating = False
         self.has_calibration = False
         self.has_template = False
-        self.run_type = ""
-        self.ctrl_type = ""
+        self.run_type = None
+        self.ctrl_type = None
         self.template = None
         self.calibration = None
         self.x_req = 0.0
         self.y_req = 0.0
         self.z_req = 0.0
+        self.iter = 0
         
         # Setup instrument interface managers
         # NOTE: replace 'elif' options with managers for your hardware
@@ -102,7 +103,7 @@ class HelmholtzCage(object):
             self.all_connected = False
         
         return ps_connected, mag_connected
-        
+    
     def start_cage(self, run_type, ctrl_type):
         """
         Start the Helmholtz Cage
@@ -110,35 +111,40 @@ class HelmholtzCage(object):
         
         is_okay = True
         
-        # Store test parameters
+        # Store test run type
         self.run_type = run_type
-        self.ctrl_type = ctrl_type
+        
+        # Make sure run type is actually selected
+        if self.run_type is None:
+            is_okay = False
+            print("WARN: No test type selected")
+        
+        # For static tests, make sure control type is selected
+        elif self.run_type == "static":
+            if self.ctrl_type is None:
+                is_okay = False
+                print("WARN: No control type selected for static test")
+            else:
+                self.ctrl_type = ctrl_type
+        
+        # For dynamic tests, make sure we have all relevant parameters
+        elif self.run_type == "dynamic":
+            if self.template is None:
+                is_okay = False
+                print("WARN: Dynamic runs not programmed yet")
+            else:
+                self.ctrl_type = self.template["type"]
+                self.iter = 0
         
         # Check that all instruments are connected
         if not self.all_connected:
             is_okay = False
             print("WARN: Not all instruments are connected")
         
-        # Make sure run type is selected
-        elif self.run_type == "":
-            is_okay = False
-            print("WARN: No test type selected")
-        
-        # For static tests, make sure control type is selected
-        elif self.run_type == "static" and self.ctrl_type == "":
-            is_okay = False
-            print("WARN: No control type selected for static test")
-        
-        # For dynamic tests, make sure we have all relevant parameters
-        #TODO: Remove once implemented
-        elif self.run_type == "dynamic":
-            is_okay = False
-            print("WARN: Dynamic runs not programmed yet")
-        
         # Set flag
         if is_okay:
             self.is_running = True
-            
+        
         # Store request type if different
         if self.data.req_type != ctrl_type:
             self.data.req_type = ctrl_type
@@ -153,9 +159,10 @@ class HelmholtzCage(object):
         # Set voltages on coils to zero
         success = self.set_coil_voltages(0.0, 0.0, 0.0)
         
-        # Reset flags
+        # Reset flags and variables
         self.is_running = False
         self.is_calibrating = False
+        self.iter = 0
         
         return success
         
@@ -191,12 +198,6 @@ class HelmholtzCage(object):
         
         return self.data
     
-    def calibrate_cage(self):
-        """
-        TODO
-        """
-        pass
-        
     def set_coil_voltages(self, Vx, Vy, Vz):
         """
         Command a set of desired coil voltages for each axis.
@@ -231,11 +232,38 @@ class HelmholtzCage(object):
         """
         pass
         
-    def run_template(self):
+    def run_once(self):
         """
-        TODO
+        Cycle through one command in the template file and determine 
+        the time for the next cycle to stop. Indicate the template is 
+        complete once out of points to iterate through.
         """
-        pass
+            
+        # Signal completion once out of points
+        if self.iter+1 >= len(self.template["time"]):
+            dt = -1.0
+            finished = True
+        
+        # Get current iteration command values
+        else:
+            time = self.template["time"][self.iter]
+            dt = self.template["time"][self.iter+1] - time
+            x_cmd = self.template["x_val"][self.iter]
+            y_cmd = self.template["y_val"][self.iter]
+            z_cmd = self.template["z_val"][self.iter]
+            
+            # Set commanded values
+            if self.ctrl_type == "voltage":
+                is_okay = self.set_coil_voltages(x_cmd, y_cmd, z_cmd)
+            elif self.ctrl_type == "field":
+                is_okay = self.set_field_strength(x_cmd, y_cmd, z_cmd)
+                
+            # Set next index
+            self.iter += 1
+            
+            finished = False
+        
+        return dt, finished
         
     def shutdown(self):
         """
