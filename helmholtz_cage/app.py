@@ -126,21 +126,26 @@ class CageApp(tk.Tk):
         success = self.cage.start_cage(static_or_dynamic, field_or_voltage)
         
         # Start tracking plots
+        # TODO: Rework?
         if success:
             self.frames[MainPage].power_supplies_plot.clear()
             self.frames[MainPage].mag_field_plot.clear()
             self.cage.data.plot_titles = "None"
-                
+            
             # Record start time
             self.cage.data.start_time = datetime.datetime.now()
                 
             # Start updating plot with live data
             self.update_plots_at_runtime()
-                
+            
+            # Start control looping for dynamic tests
+            if static_or_dynamic == "dynamic":
+                self.loop_dynamic_run()
+            
             # Update buttons
             self.frames[MainPage].start_cage_update_buttons()
             print("Session starting")
-            
+        
         # Notify user that session is not started
         else:
             print("Session start aborted")
@@ -156,7 +161,7 @@ class CageApp(tk.Tk):
             
             # Retrieve current data 
             data_now = self.cage.update_data()
-        
+            
             # Redraw plots with newest data
             self.frames[MainPage].fill_plot_frame()
             
@@ -164,6 +169,24 @@ class CageApp(tk.Tk):
             self.frames[MainPage].after(UPDATE_PLOT_TIME*1000,
                                         self.update_plots_at_runtime)
                                         
+    def loop_dynamic_run(self):
+        """
+        Loop once through a dynamic run of the Cage, with the next cycle
+        time being determined from template file times.
+        
+        TODO: Test under real conditions (will threading be necessary?)
+        """
+        
+        # Loop through one cycle of dynamic run
+        if self.cage.is_running:
+            dt, finished = self.cage.run_once()
+            
+            # Check if finished, otherwise prepare next loop
+            if not finished:
+                self.frames[MainPage].after(int(dt*1000), self.loop_dynamic_run)
+            else:
+                self.stop_cage()
+    
     def command_static_value(self):
         """
         Based on the type of control send an appropriate static value
@@ -186,7 +209,7 @@ class CageApp(tk.Tk):
             Vy = float(self.frames[MainPage].y_voltage.get())
             Vz = float(self.frames[MainPage].z_voltage.get())
             self.cage.set_coil_voltages(Vx, Vy, Vz)
-    
+            
     def stop_cage(self):
         """
         Stop the current run of the Helmholtz Cage (activated by the 
