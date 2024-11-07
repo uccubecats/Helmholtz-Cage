@@ -56,6 +56,33 @@ class Data(object):
         self.y_req = []
         self.z_req = []
         self.req_type = "" # i.e. field vs. voltage
+        
+    def retrieve_data_subset(self, indices):
+        """
+        Given a list of indices, strip them out of the data, and place
+        them into a new Data object.
+        """
+        
+        subset = Data("")
+        
+        # Retrieve all data from indices
+        for i in indicies:
+            subset.time.append(self.time[i])
+            subset.Vx.append(self.Vx[i])
+            subset.Vy.append(self.Vy[i])
+            subset.Vz.append(self.Vz[i])
+            subset.Ix.append(self.Ix[i])
+            subset.Iy.append(self.Iy[i])
+            subset.Iz.append(self.Iz[i])
+            subset.Bx.append(self.Bx[i])
+            subset.By.append(self.By[i])
+            subset.Bz.append(self.Bz[i])
+            subset.x_req.append(self.x_req[i])
+            subset.y_req.append(self.y_req[i])
+            subset.z_req.append(self.z_req[i])
+            subset.req_type = self.req_type
+            
+        return subset
     
     def write_to_file(self):
         """
