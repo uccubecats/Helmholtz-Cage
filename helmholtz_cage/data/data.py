@@ -66,7 +66,7 @@ class Data(object):
         subset = Data("")
         
         # Retrieve all data from indices
-        for i in indicies:
+        for i in indices:
             subset.time.append(self.time[i])
             subset.Vx.append(self.Vx[i])
             subset.Vy.append(self.Vy[i])

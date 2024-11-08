@@ -46,6 +46,8 @@ class CageApp(tk.Tk):
         self.cur_path = os.getcwd()
         self.main_path = os.path.abspath(os.path.join(self.cur_path, os.pardir))
         self.config_path = os.path.join(self.main_path, "helmholtz_cage")
+        self.calibration_path = os.path.join(self.main_path, "calibrations")
+        self.template_path = os.path.join(self.main_path, "templates")
         
         # Retrieve system configuration information
         configs = retrieve_configuration_info(self.config_path)
@@ -73,6 +75,7 @@ class CageApp(tk.Tk):
         
         # Set parameters
         self.log_data = False
+        self.is_calibration_run = False
         
         # Intialize frames top of each other
         self.frames = {}
@@ -111,6 +114,14 @@ class CageApp(tk.Tk):
         """
         
         self.log_data = self.frames[MainPage].log_data_option.get()
+        
+    def set_calibration_option(self):
+        """
+        Set the calibration option, indicating that this dynamic run 
+        should be used to calibrate the cage.
+        """
+        
+        self.is_calibration_run = self.frames[MainPage].is_calibration_run.get()
     
     def start_cage(self):
         """
@@ -123,7 +134,8 @@ class CageApp(tk.Tk):
         field_or_voltage = self.frames[MainPage].ctrl_type.get()
         
         # Command the cage to start
-        success = self.cage.start_cage(static_or_dynamic, field_or_voltage)
+        success = self.cage.start_cage(static_or_dynamic, field_or_voltage,
+                                       self.is_calibration_run)
         
         # Start tracking plots
         # TODO: Rework?
@@ -149,7 +161,7 @@ class CageApp(tk.Tk):
         # Notify user that session is not started
         else:
             print("Session start aborted")
-        
+    
     def update_plots_at_runtime(self):
         """
         Update the GUI plots at runtime for the cage, using the tk.after
@@ -168,7 +180,7 @@ class CageApp(tk.Tk):
             # Set next update loop
             self.frames[MainPage].after(UPDATE_PLOT_TIME*1000,
                                         self.update_plots_at_runtime)
-                                        
+    
     def loop_dynamic_run(self):
         """
         Loop once through a dynamic run of the Cage, with the next cycle
@@ -227,6 +239,16 @@ class CageApp(tk.Tk):
             if self.log_data:
                 self.cage.data.write_to_file()
             
+            # Calibarate cage from data if specified
+            if self.is_calibration_run:
+                calibration_output = self.cage.calibrate(self.calibration_path)
+                #TODO: Show calibration result frame
+                success = True
+                if success:
+                    self.cage.calibration.write_to_file()
+                else:
+                    self.cage.calibration = None
+            
             # Clear data for next run
             self.cage.data.clear_data()
             
@@ -248,15 +270,14 @@ class CageApp(tk.Tk):
         """
         
         # Ask the user for the calibration file
-        search_dir = os.path.join(self.main_path, "calibrations")
-        file_name = filedialog.askopenfilename(initialdir=search_dir,
+        file_name = filedialog.askopenfilename(initialdir=self.calibration_path,
                                                filetypes=(("csv file","*.csv"),
                                                           ("All files","*.*")))
         
         # Retrieve and check the calibration
-        calibration_dir, calibration_name = os.path.split(file_name)
-        calibration = Calibration(calibration_dir, calibration_name)
-        success = calibration.load_calibration_file()
+        calibration_name = os.path.basename(file_name)
+        calibration = Calibration(self.calibration_path, calibration_name)
+        success = calibration.load_from_file()
         
         # Give calibration to the Helmholtz Cage
         if success:
@@ -275,14 +296,13 @@ class CageApp(tk.Tk):
         """
         
         # Ask the user for the template file
-        search_dir = os.path.join(self.main_path, "templates")
-        file_name = filedialog.askopenfilename(initialdir=search_dir,
+        file_name = filedialog.askopenfilename(initialdir=self.template_path,
                                                filetypes=(("csv file","*.csv"),
                                                           ("All files","*.*")))
         
         # Retrieve and check template
-        template_dir, template_name = os.path.split(file_name)
-        template = retrieve_template(template_dir, template_name)
+        template_name = os.path.basename(file_name)
+        template = retrieve_template(self.template_path, template_name)
         is_okay = check_template_values(template, [5.0, 1.5]) # <--TODO: replace these
         
         # Give template to the Helmholtz Cage
@@ -321,7 +341,7 @@ class CageApp(tk.Tk):
         
         if messagebox.askokcancel("Quit", "Are you sure you want to quit?"):
             self.quit()
-            
+    
     def cleanup(self):
         """
         Perform any cleanup activities needed before shutting down.

@@ -466,6 +466,7 @@ class MainPage(tk.Frame):
             variable=self.is_calibration_run,
             bg="lightgray",
             highlightthickness=0,
+            command=lambda: self.controller.set_calibration_option(),
             state=tk.DISABLED)
         
         # Position widgets

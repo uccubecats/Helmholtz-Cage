@@ -104,7 +104,7 @@ class HelmholtzCage(object):
         
         return ps_connected, mag_connected
     
-    def start_cage(self, run_type, ctrl_type):
+    def start_cage(self, run_type, ctrl_type, is_calibration):
         """
         Start the Helmholtz Cage
         """
@@ -126,15 +126,21 @@ class HelmholtzCage(object):
                 print("WARN: No control type selected for static test")
             else:
                 self.ctrl_type = ctrl_type
+                
+                # Indicate that static tests can't be used to calibrate
+                if is_calibration:
+                    print("WARN: Can't calibrate from static runs")
         
         # For dynamic tests, make sure we have all relevant parameters
         elif self.run_type == "dynamic":
             if self.template is None:
                 is_okay = False
-                print("WARN: Dynamic runs not programmed yet")
+                print("WARN: No template provided for dynamic run")
             else:
                 self.ctrl_type = self.template["type"]
                 self.iter = 0
+                if is_calibration:
+                    self.is_calibrating = True
         
         # Check that all instruments are connected
         if not self.all_connected:
@@ -161,7 +167,6 @@ class HelmholtzCage(object):
         
         # Reset flags and variables
         self.is_running = False
-        self.is_calibrating = False
         self.iter = 0
         
         return success
@@ -265,6 +270,25 @@ class HelmholtzCage(object):
         
         return dt, finished
         
+    def calibrate(self, calibration_dir):
+        """
+        Call the calibration function on the data from the current run
+        should only be run at the end of the 
+        """
+        
+        # Create file name
+        start_t_str = self.data.start_time.strftime('%Y_%m_%d')
+        calibration_file = "calibration_{}.csv".format(start_t_str)
+        
+        # Initialize calibration object
+        self.calibration = Calibration(calibration_dir, calibration_file)
+        
+        # Run the calibration process
+        calibration_output = self.calibration.from_data(self.data)
+        self.is_calibrating = False
+        
+        return calibration_output
+    
     def shutdown(self):
         """
         Close down hardware interfaces.
