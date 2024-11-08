@@ -121,7 +121,7 @@ class HelmholtzCage(object):
         
         # For static tests, make sure control type is selected
         elif self.run_type == "static":
-            if self.ctrl_type is None:
+            if ctrl_type is None:
                 is_okay = False
                 print("WARN: No control type selected for static test")
             else:
