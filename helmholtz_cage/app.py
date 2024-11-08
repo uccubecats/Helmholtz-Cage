@@ -242,7 +242,9 @@ class CageApp(tk.Tk):
             # Calibarate cage from data if specified
             if self.is_calibration_run:
                 calibration_output = self.cage.calibrate(self.calibration_path)
-                #TODO: Show calibration result frame
+                print(self.cage.calibration)
+                #TODO: Show calibration result in gui frame
+                #TODO: Allow user rejection of calibraiton result
                 success = True
                 if success:
                     self.cage.calibration.write_to_file()
@@ -281,6 +283,7 @@ class CageApp(tk.Tk):
         
         # Give calibration to the Helmholtz Cage
         if success:
+            print(calibration)
             self.cage.calibration = calibration
             self.cage.has_calibration = True
             self.cage.data.calibration_file = file_name

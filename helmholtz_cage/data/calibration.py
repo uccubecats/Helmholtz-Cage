@@ -32,8 +32,8 @@ class LineEqn(object):
         self.zero = -1*self.intercept/self.slope
         
     def __str__(self):
-        return "y = {}*x + {} | r-value: {}".format(self.slope, self.intercept,
-                                                    self.r_value)
+        return "y = %.6f*x + %.6f | r-value: %.6f" % (self.slope, self.intercept,
+                                                      self.r_value)
     
     def solve_for_x(self, y):
         """
@@ -67,6 +67,30 @@ class Calibration(object):
         self.Rx = -1.0
         self.Ry = -1.0
         self.Rz = -1.0
+        
+    def __str__(self):
+                
+        output = "%==================================%\n" +\
+                 "CALIBRATION RESULTS\n\n" +\
+                 "X-COILS\n" +\
+                 "  Vx->Bx: " + self.x_equations["x"].__str__() + "\n" +\
+                 "  Vx->By: " + self.x_equations["y"].__str__() + "\n" +\
+                 "  Vx->Bz: " + self.x_equations["z"].__str__() + "\n\n" +\
+                 "Y-COILS\n" +\
+                 "  Vy->Bx: " + self.y_equations["x"].__str__() + "\n" +\
+                 "  Vy->By: " + self.y_equations["y"].__str__() + "\n" +\
+                 "  Vy->Bz: " + self.y_equations["z"].__str__() + "\n\n" +\
+                 "Z-COILS\n" +\
+                 "  Vz->Bx: " + self.z_equations["x"].__str__() + "\n" +\
+                 "  Vz->By: " + self.z_equations["y"].__str__() + "\n" +\
+                 "  Vz->Bz: " + self.z_equations["z"].__str__() + "\n\n" +\
+                 "RESISTANCE\n" +\
+                 "  Rx: %.6f \u03A9\n" % (self.Rx) +\
+                 "  Ry: %.6f \u03A9\n" % (self.Ry) +\
+                 "  Rz: %.6f \u03A9\n\n" % (self.Rz) +\
+                 "%==================================%"
+        
+        return output
     
     def from_data(self, data):
         """
@@ -224,8 +248,8 @@ class Calibration(object):
                             "z": zz_equation}
         
         # Store resistance values
-        self.Rx = content[1][6]
-        self.Ry = content[5][6]
-        self.Rz = content[9][6]
+        self.Rx = float(content[1][6])
+        self.Ry = float(content[5][6])
+        self.Rz = float(content[9][6])
         
         return success
