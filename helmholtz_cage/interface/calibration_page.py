@@ -32,7 +32,7 @@ class CalibrationPage(tk.Frame):
     results
     """
     
-    def __init__(self, controller, calibration_data):
+    def __init__(self, controller, calibration, data):
         
         # Create popup window
         self.popup = tk.Tk()
@@ -45,11 +45,13 @@ class CalibrationPage(tk.Frame):
         self.container = tk.Frame(self.popup)
         self.container.pack()
         
-        # Extract relevant calibration data
-        self.calibration = calibration_data
-        x_equations = self.calibration.x_equations
-        y_equations = self.calibration.y_equations
-        z_equations = self.calibration.z_equations
+        # Extract relevant calibration and run data
+        x_equations = calibration.x_equations
+        y_equations = calibration.y_equations
+        z_equations = calibration.z_equations
+        x_data = self.extract_axis_data_points("x", data)
+        y_data = self.extract_axis_data_points("y", data)
+        z_data = self.extract_axis_data_points("z", data)
         
         # Create subframes
         self.x_data_frame = tk.Frame(self.container,
@@ -83,12 +85,43 @@ class CalibrationPage(tk.Frame):
         self.exit_options_frame.grid(row=2, column=0, columnspan=3, sticky="nsew")
         
         # Fill subframes using method calls
-        self.fill_axis_data_display(self.x_data_frame, "x", x_equations)
-        self.fill_axis_data_display(self.y_data_frame, "y", y_equations)
-        self.fill_axis_data_display(self.z_data_frame, "z", z_equations)
+        self.fill_axis_data_display(self.x_data_frame, "x", x_equations, x_data)
+        self.fill_axis_data_display(self.y_data_frame, "y", y_equations, y_data)
+        self.fill_axis_data_display(self.z_data_frame, "z", z_equations, z_data)
         self.fill_exit_options_frame()
     
-    def fill_axis_data_display(self, axis_frame, axis, equations):
+    def extract_axis_data_points(self, axis, data):
+        """
+        Extract the relevant calibration data points for a particular
+        axis.
+        """
+        
+        V = []
+        Bx = []
+        By = []
+        Bz = []
+        
+        # Determine which axis calibration data points belong to
+        for i in range(0,len(data.time)):
+            if axis == "x" and data.x_req[i] != 0.0:
+                V.append(data.Vx[i])
+                Bx.append(data.Bx[i])
+                By.append(data.By[i])
+                Bz.append(data.Bz[i])
+            elif axis == "y" and data.y_req[i] != 0.0:
+                V.append(data.Vy[i])
+                Bx.append(data.Bx[i])
+                By.append(data.By[i])
+                Bz.append(data.Bz[i])
+            elif axis == "z" and data.z_req[i] != 0.0:
+                V.append(data.Vz[i])
+                Bx.append(data.Bx[i])
+                By.append(data.By[i])
+                Bz.append(data.Bz[i])
+        
+        return [V, Bx, By, Bz]
+    
+    def fill_axis_data_display(self, axis_frame, axis, equations, data):
         """
         Fill in an individual axis data frame.
         """
@@ -172,8 +205,7 @@ class CalibrationPage(tk.Frame):
         zR_entry.configure(state="readonly")
         
         # Fill data plot frame
-        #TODO: Retrieve and plot actual calibration run raw data
-        fig = self.create_axis_data_plot(axis, None, equations)
+        fig = self.create_axis_data_plot(axis, data, equations)
         canvas = FigureCanvasTkAgg(fig, master=data_frame)
         canvas.get_tk_widget().grid()
         canvas.draw()
@@ -224,6 +256,9 @@ class CalibrationPage(tk.Frame):
         ax = fig.add_subplot(111)
         
         # Put data into plot
+        ax.scatter(data[0], data[1], c="r")
+        ax.scatter(data[0], data[2], c="g")
+        ax.scatter(data[0], data[3], c="b")
         ax.plot(x, yx, "r", label="Bx")
         ax.plot(x, yy, "g", label="By")
         ax.plot(x, yz, "b", label="Bz")
@@ -283,7 +318,7 @@ class CalibrationPage(tk.Frame):
         calibration.
         """
         
-        self.controller.calibration_accepted = True
+        self.controller.handle_calibration_output(True)
         self.popup.destroy()
     
     def reject_calibration(self):
@@ -292,5 +327,5 @@ class CalibrationPage(tk.Frame):
         calibration.
         """
         
-        self.controller.calibration_accepted = False
+        self.controller.handle_calibration_output(False)
         self.popup.destroy()

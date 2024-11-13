@@ -284,10 +284,8 @@ class HelmholtzCage(object):
         self.calibration = Calibration(calibration_dir, calibration_file)
         
         # Run the calibration process
-        calibration_output = self.calibration.from_data(self.data)
+        self.calibration.from_data(self.data)
         self.is_calibrating = False
-        
-        return calibration_output
     
     def shutdown(self):
         """

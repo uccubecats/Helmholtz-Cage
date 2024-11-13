@@ -27,6 +27,7 @@ from hardware.helmholtz_cage import HelmholtzCage
 from interface.config_page import ConfigurationPage
 from interface.main_page import MainPage
 from interface.help_page import HelpPage
+from interface.calibration_page import CalibrationPage
 from utilities.template import retrieve_template, check_template_values
 from utilities.config import retrieve_configuration_info
 
@@ -241,28 +242,52 @@ class CageApp(tk.Tk):
             
             # Calibarate cage from data if specified
             if self.is_calibration_run:
-                calibration_output = self.cage.calibrate(self.calibration_path)
-                print(self.cage.calibration)
-                #TODO: Show calibration result in gui frame
-                #TODO: Allow user rejection of calibraiton result
-                success = True
-                if success:
-                    self.cage.calibration.write_to_file()
-                else:
-                    self.cage.calibration = None
-            
-            # Clear data for next run
-            self.cage.data.clear_data()
-            
-            # Update buttons
-            self.frames[MainPage].stop_cage_update_buttons()
-            
-            # Clear the figure off and recreate plot titles
-            self.frames[MainPage].clear_plot_frame()
+                self.cage.calibrate(self.calibration_path)
+                self.show_calibration_page()
+                
+            else:
+                # Clear data for next run
+                self.cage.data.clear_data()
+                
+                # Update buttons
+                self.frames[MainPage].stop_cage_update_buttons()
+                
+                # Clear the figure off and recreate plot titles
+                self.frames[MainPage].clear_plot_frame()
         
         # Warn user if the cage isn't shutting down
         else:
             print("ERROR: Unable to command cage to stop")
+            
+    def handle_calibration_output(self, accepted):
+        """
+        Deal with the calibration results based on user selection.
+        """
+        
+        # If accepted, write to file
+        if accepted:
+            self.cage.calibration.write_to_file()
+            self.cage.has_calibration = True
+            print("Calibration accepted")
+            
+            # Put calibration file name into GUI entry
+            file_name = self.cage.calibration.file_name
+            self.frames[MainPage].update_calibration_entry(file_name)
+        
+        # Otherwise, delete calibration
+        else:
+            self.cage.calibration = None
+            self.cage.has_calibration = False
+            print("Calibration rejected")
+            
+        # Clear data for next run
+        self.cage.data.clear_data()
+                
+        # Update buttons
+        self.frames[MainPage].stop_cage_update_buttons()
+        
+        # Clear the figure off and recreate plot titles
+        self.frames[MainPage].clear_plot_frame()
     
     def change_calibration_file(self):
         """
@@ -336,6 +361,14 @@ class CageApp(tk.Tk):
         """
         
         self.config_page = ConfigurationPage(self)
+    
+    def show_calibration_page(self):
+        """
+        Display calibration data within calibration page GUI.
+        """
+        
+        self.calibration_page = CalibrationPage(self, self.cage.calibration,
+                                                self.cage.data)
     
     def close_app(self):
         """
