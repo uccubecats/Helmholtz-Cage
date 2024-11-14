@@ -115,13 +115,13 @@ class HelmholtzCage(object):
         self.run_type = run_type
         
         # Make sure run type is actually selected
-        if self.run_type is None:
+        if self.run_type is None or self.run_type == "":
             is_okay = False
             print("WARN: No test type selected")
         
         # For static tests, make sure control type is selected
         elif self.run_type == "static":
-            if ctrl_type is None:
+            if ctrl_type is None or ctrl_type == "":
                 is_okay = False
                 print("WARN: No control type selected for static test")
             else:
@@ -129,7 +129,13 @@ class HelmholtzCage(object):
                 
                 # Indicate that static tests can't be used to calibrate
                 if is_calibration:
+                    is_okay = False
                     print("WARN: Can't calibrate from static runs")
+                
+                # Make sure calibration is given for feild control
+                elif self.ctrl_type == "field" and not self.has_calibration:
+                    is_okay = False
+                    print("WARN: No calibration provided for field control")
         
         # For dynamic tests, make sure we have all relevant parameters
         elif self.run_type == "dynamic":
@@ -141,6 +147,12 @@ class HelmholtzCage(object):
                 self.iter = 0
                 if is_calibration:
                     self.is_calibrating = True
+                
+                # Catch not having calibration for dynamic field control
+                else:
+                    if self.ctrl_type == "field" and not self.has_calibration:
+                        is_okay = False
+                        print("WARN: No calibration provided for field control")
         
         # Check that all instruments are connected
         if not self.all_connected:

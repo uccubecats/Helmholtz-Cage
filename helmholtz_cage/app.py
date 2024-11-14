@@ -3,13 +3,11 @@
 """
   Main application program for the UC Helmholtz Cage.
   
-  Copyright 2022-2023 UC CubeCats
+  Copyright 2024 UC CubeCats
   All rights reserved. See LICENSE file at:
   https://github.com/uccubecats/Helmholtz-Cage/LICENSE
   Additional copyright may be held by others, as reflected in the commit
   history.
-  
-  WARN: Very work in progress.
 """
 
 
@@ -258,7 +256,7 @@ class CageApp(tk.Tk):
         # Warn user if the cage isn't shutting down
         else:
             print("ERROR: Unable to command cage to stop")
-            
+    
     def handle_calibration_output(self, accepted):
         """
         Deal with the calibration results based on user selection.
@@ -314,7 +312,7 @@ class CageApp(tk.Tk):
             self.cage.data.calibration_file = file_name
             
             # Put calibration file name into GUI entry
-            self.frames[MainPage].update_calibration_entry(file_name)
+            self.frames[MainPage].update_calibration_entry(calibration_name)
         else:
             print("ERROR: Unable to load the selected calibration file")
     
@@ -340,7 +338,7 @@ class CageApp(tk.Tk):
             self.cage.data.template_file = file_name
             
             # Put template file name into GUI entry
-            self.frames[MainPage].update_template_entry(file_name)
+            self.frames[MainPage].update_template_entry(template_name)
         else:
             print("ERROR: Unable to load the selected template file")
     
