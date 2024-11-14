@@ -241,7 +241,7 @@ class MainPage(tk.Frame):
         self.calibration_file_entry = tk.Entry(
             self.calibrate_frame,
             textvariable=self.calibration_file_status,
-            width=10)
+            width=14)
         self.calibration_file_entry.configure(state="readonly")
         
         # Create change calibration file button
@@ -249,15 +249,14 @@ class MainPage(tk.Frame):
             self.calibrate_frame,
             text='Select',
             command=lambda: self.controller.change_calibration_file(),
-            width=10)
+            width=6)
         
         # Position widgets
         self.calibration_label.grid(row=0, column=0, columnspan=3, pady=5,
                                     sticky='nsew')
-        self.calibration_file_label.grid(row=2, column=0)
+        self.calibration_file_label.grid(row=2, column=0, padx=2)
         self.calibration_file_entry.grid(row=2, column=1)
-        self.change_calibration_file_button.grid(row=2, column=2,
-                                                 sticky='nsew')
+        self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
     
     def fill_static_frame(self, parent):
         """
@@ -276,8 +275,8 @@ class MainPage(tk.Frame):
         
         # Pre-create button text labels
         # TODO: update field text to find max field for max voltage
-        field_text = "Enter Magnetic Field \n (Gauss)".format(MAX_FIELD)
-        voltage_text = "Enter Voltage \n(Max {} volts)".format(MAX_VOLTAGE)
+        field_text = "Enter Mag. Field \n(Gauss)"
+        voltage_text = "Enter Voltage \n(Volts)"
         
         # Configure validate entry data types (must be float)
         vcmd_field = (parent.register(self.validate_field),
@@ -428,7 +427,7 @@ class MainPage(tk.Frame):
         self.is_calibration_run = tk.BooleanVar()
         
         # Create test type selection button (dynamic)
-        self.select_dynamic =  tk.Radiobutton(
+        self.select_dynamic = tk.Radiobutton(
             self.dynamic_frame,
             text="Dynamic Test",
             variable=self.test_type,
@@ -443,13 +442,13 @@ class MainPage(tk.Frame):
         self.template_file_label = tk.Label(self.dynamic_frame,
                                             text="Template file:",
                                             bg="lightgray",
-                                            width=12)
+                                            width=11)
         
         # Create and configure template file name entry
         self.template_file_entry = tk.Entry(
             self.dynamic_frame,
             textvariable=self.template_file_status_text,
-            width=10)
+            width=15)
         self.template_file_entry.configure(state="readonly")
         
         # Create change template file button
@@ -457,7 +456,7 @@ class MainPage(tk.Frame):
             self.dynamic_frame,
             text='Select',
             command=lambda: self.controller.change_template_file(),
-            width=10)
+            width=6)
         
         # Create button for calibrating from template file
         self.select_calibration = tk.Checkbutton(
@@ -472,7 +471,7 @@ class MainPage(tk.Frame):
         # Position widgets
         self.select_dynamic.grid(row=0, column=0, columnspan=4, pady=5,
             sticky='nsew')
-        self.template_file_label.grid(row=1, column=0)
+        self.template_file_label.grid(row=1, column=0, padx=2)
         self.template_file_entry.grid(row=1, column=1)
         self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
         self.select_calibration.grid(row=2, column=0, columnspan=3,
@@ -502,6 +501,8 @@ class MainPage(tk.Frame):
         self.log_checkbox = tk.Checkbutton(
             self.run_frame,
             text='Log Data',
+            bg="lightgray",
+            width=10,
             variable=self.log_data_option,
             onvalue=1,
             offvalue=0, 
@@ -727,7 +728,7 @@ class MainPage(tk.Frame):
                                    ncol=mag_legend_ncol,
                                    fancybox=True,
                                    prop={'size': 7})
-            
+        
     def clear_plot_frame(self):
         """
         When stopping the current run, clear the plot frame and reset it
