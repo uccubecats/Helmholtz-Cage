@@ -747,22 +747,48 @@ class MainPage(tk.Frame):
         Update the status of buttons after the cage has started.
         """
         
-        self.start_button.config(state=tk.DISABLED)
-        self.stop_button.config(state=tk.NORMAL)
-        self.refresh_cxns_button.config(state=tk.DISABLED)
-        self.change_template_file_button.config(state=tk.DISABLED)
-        self.change_calibration_file_button.config(state=tk.DISABLED)
+        # Get run configuration
+        field_or_voltage = self.ctrl_type.get()
+        static_or_dynamic = self.test_type.get()
+        
+        # Configure common widgets for run
+        self.start_button.configure(state=tk.DISABLED)
+        self.stop_button.configure(state=tk.NORMAL)
+        self.refresh_cxns_button.configure(state=tk.DISABLED)
+        self.change_template_file_button.configure(state=tk.DISABLED)
+        self.change_calibration_file_button.configure(state=tk.DISABLED)
+        self.log_checkbox.configure(state=tk.DISABLED)
+        
+        # Disable buttons based on configuration
+        if static_or_dynamic == "static":
+            self.select_dynamic.configure(state=tk.DISABLED)
+            if field_or_voltage == "field":
+                self.select_voltage.configure(state=tk.DISABLED)
+            elif field_or_voltage == "voltage":
+                self.select_field.configure(state=tk.DISABLED)
+        
+        elif static_or_dynamic == "dynamic":
+            self.select_static.configure(state=tk.DISABLED)
+            self.select_field.configure(state=tk.DISABLED)
+            self.select_voltage.configure(state=tk.DISABLED)
+            self.select_calibration.configure(state=tk.DISABLED)
     
     def stop_cage_update_buttons(self):
         """
         Update the status of buttons after the cage has been stopped.
         """
         
-        self.start_button.config(state=tk.NORMAL)
+        self.start_button.configure(state=tk.NORMAL)
         self.stop_button.configure(state=tk.DISABLED)
-        self.refresh_cxns_button.config(state=tk.NORMAL)
-        self.change_template_file_button.config(state=tk.NORMAL)
-        self.change_calibration_file_button.config(state=tk.NORMAL)
+        self.refresh_cxns_button.configure(state=tk.NORMAL)
+        self.change_template_file_button.configure(state=tk.NORMAL)
+        self.change_calibration_file_button.configure(state=tk.NORMAL)
+        self.select_static.configure(state=tk.NORMAL)
+        self.select_field.configure(state=tk.NORMAL)
+        self.select_voltage.configure(state=tk.NORMAL)
+        self.select_dynamic.configure(state=tk.NORMAL)
+        self.select_calibration.configure(state=tk.NORMAL)
+        self.log_checkbox.configure(state=tk.NORMAL)
         
     def update_calibration_entry(self, file_name):
         """
@@ -864,7 +890,7 @@ class MainPage(tk.Frame):
             self.x_field_entry.configure(state=tk.DISABLED)
             self.y_field_entry.configure(state=tk.DISABLED)
             self.z_field_entry.configure(state=tk.DISABLED)
-            
+    
     def validate_field(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type,
                        widget_name):
