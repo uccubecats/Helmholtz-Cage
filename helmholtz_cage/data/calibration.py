@@ -253,3 +253,22 @@ class Calibration(object):
         self.Rz = float(content[9][6])
         
         return success
+    
+    def get_voltage_for_desired_field(self, Bx, By, Bz):
+        """
+        For the desired magnetic field, determine voltages for each axis
+        coil pair.
+        
+        NOTE: Currently greatly simplified by ignoring influences of a
+              given coil voltage on other axis components of the
+              magnetic field.
+        TODO: Determine if corrections need to be added here to
+              compensate for these effects, or if they can be ignored if
+              calibration result is negligible.
+        """
+        
+        Vx = self.x_equations["x"].solve_for_x(Bx)
+        Vy = self.y_equations["y"].solve_for_x(By)
+        Vz = self.z_equations["z"].solve_for_x(Bz)
+        
+        return Vx, Vy, Vz

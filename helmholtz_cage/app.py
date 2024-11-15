@@ -213,13 +213,23 @@ class CageApp(tk.Tk):
             By = float(self.frames[MainPage].y_field.get())
             Bz = float(self.frames[MainPage].z_field.get())
             self.cage.set_field_strength(Bx, By, Bz)
+            
+            # Store requested values
+            self.cage.x_req = Bx
+            self.cage.y_req = By
+            self.cage.z_req = Bz
         
         # If voltage control, send desired voltages
-        else:
+        elif field_or_voltage == "voltage":
             Vx = float(self.frames[MainPage].x_voltage.get())
             Vy = float(self.frames[MainPage].y_voltage.get())
             Vz = float(self.frames[MainPage].z_voltage.get())
             self.cage.set_coil_voltages(Vx, Vy, Vz)
+            
+            # Store requested values
+            self.cage.x_req = Vx
+            self.cage.y_req = Vy
+            self.cage.z_req = Vz
             
     def stop_cage(self):
         """
@@ -290,8 +300,6 @@ class CageApp(tk.Tk):
     def change_calibration_file(self):
         """
         Load the user specifed calibration file.
-        
-        TODO: Test
         """
         
         # Ask the user for the calibration file

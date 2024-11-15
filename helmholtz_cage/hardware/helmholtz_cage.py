@@ -182,7 +182,7 @@ class HelmholtzCage(object):
         self.iter = 0
         
         return success
-        
+    
     def update_data(self):
         """
         Store all current data from attached sensors and devices.
@@ -228,27 +228,37 @@ class HelmholtzCage(object):
         # Send voltages to the cages
         else:
             success = self.power_supplies.send_voltages([Vx, Vy, Vz])
-            
-            # Store commanded values
-            if success:
-                self.x_req = Vx
-                self.y_req = Vy
-                self.z_req = Vz
         
         return success
-        
+    
     def set_field_strength(self, Bx, By, Bz):
         """
-        TODO
+        Command a desired magnetic field vector.
         """
-        pass
         
+        # Determine voltages to produce desired field
+        Vx, Vy, Vz = self.calibration.get_voltage_for_desired_field(Bx, By, Bz)
+        
+        # Command voltages to cage
+        success = self.set_coil_voltages(Vx, Vy, Vz)
+        
+        return success
+    
     def zero_field(self):
         """
-        TODO
+        Command the cage to zero out the ambient magnetic feild.
         """
-        pass
         
+        # Retrieve zero field voltages from calibration
+        Vx = self.calibration.x_equations["x"].zero
+        Vy = self.calibration.y_equations["y"].zero
+        Vz = self.calibration.z_equations["z"].zero
+        
+        # Command voltages to cage
+        success = self.set_coil_voltages(Vx, Vy, Vz)
+        
+        return success
+    
     def run_once(self):
         """
         Cycle through one command in the template file and determine 
@@ -281,7 +291,7 @@ class HelmholtzCage(object):
             finished = False
         
         return dt, finished
-        
+    
     def calibrate(self, calibration_dir):
         """
         Call the calibration function on the data from the current run
