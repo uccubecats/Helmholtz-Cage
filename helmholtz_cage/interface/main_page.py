@@ -389,12 +389,19 @@ class MainPage(tk.Frame):
                                         textvariable=self.z_voltage,
                                         width=10)
         
-        # Create static value command button
+        # Create buttons
         self.static_command_button = tk.Button(
             self.static_frame,
-            text='Command Values',
+            text='Command',
             command=lambda: self.controller.command_static_value(),
-            width=15,
+            width=10,
+            state=tk.DISABLED)
+        
+        self.zero_field_button = tk.Button(
+            self.static_frame,
+            text='Zero Field',
+            command=lambda: self.controller.cage.zero_field(),
+            width=10,
             state=tk.DISABLED)
         
         # Position widgets
@@ -414,9 +421,10 @@ class MainPage(tk.Frame):
         self.z_field_entry.grid(row=4, column=1)
         self.z_voltage_label.grid(row=4, column=2)
         self.z_voltage_entry.grid(row=4, column=3)
-        self.static_command_button.grid(row=5, column=0, columnspan=4,
-                                        sticky='ns')
-    
+        self.zero_field_button.grid(row=5, column=1, sticky='nse')
+        self.static_command_button.grid(row=5, column=2, columnspan=2,
+                                        sticky='nsw')
+        
     def fill_dynamic_frame(self):
         """
         Fill in the dynamic-test subframe.
@@ -762,6 +770,8 @@ class MainPage(tk.Frame):
         # Disable buttons based on configuration
         if static_or_dynamic == "static":
             self.select_dynamic.configure(state=tk.DISABLED)
+            self.static_command_button.configure(state=tk.NORMAL)
+            self.zero_field_button.configure(state=tk.NORMAL)
             if field_or_voltage == "field":
                 self.select_voltage.configure(state=tk.DISABLED)
             elif field_or_voltage == "voltage":
@@ -789,6 +799,8 @@ class MainPage(tk.Frame):
         self.select_dynamic.configure(state=tk.NORMAL)
         self.select_calibration.configure(state=tk.NORMAL)
         self.log_checkbox.configure(state=tk.NORMAL)
+        self.static_command_button.configure(state=tk.DISABLED)
+        self.zero_field_button.configure(state=tk.DISABLED)
         
     def update_calibration_entry(self, file_name):
         """
@@ -825,7 +837,6 @@ class MainPage(tk.Frame):
             self.template_file_entry.configure(state=tk.NORMAL)
             self.template_file_entry.delete(0, 'end')
             self.template_file_entry.configure(state="readonly")
-            self.static_command_button.configure(state=tk.NORMAL)
             self.select_calibration.deselect()
             self.select_calibration.configure(state=tk.DISABLED)
             self.select_static.select()
@@ -868,7 +879,6 @@ class MainPage(tk.Frame):
             self.template_file_entry.configure(state=tk.NORMAL)
             self.template_file_entry.delete(0, 'end')
             self.template_file_entry.configure(state="readonly")
-            self.static_command_button.configure(state=tk.NORMAL)
             self.select_calibration.deselect()
             self.select_calibration.configure(state=tk.DISABLED)
         
@@ -877,6 +887,7 @@ class MainPage(tk.Frame):
             self.select_field.deselect()
             self.select_voltage.deselect()
             self.static_command_button.configure(state=tk.DISABLED)
+            self.zero_field_button.configure(state=tk.DISABLED)
             self.select_calibration.configure(state=tk.NORMAL)
             self.x_voltage_entry.delete(0, 'end')
             self.y_voltage_entry.delete(0, 'end')
