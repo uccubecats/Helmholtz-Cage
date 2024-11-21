@@ -28,8 +28,11 @@ class LineEqn(object):
         self.intercept = float(intercept)
         self.r_value = float(r_value)
         
-        # Calculate x-intercept from equation
-        self.zero = -1*self.intercept/self.slope
+        # Calculate x-intercept from equation (if exists)
+        if self.slope != 0.0:
+            self.zero = -1*self.intercept/self.slope
+        else:
+            self.zero = None
         
     def __str__(self):
         return "y = %.6f*x + %.6f | r-value: %.6f" % (self.slope, self.intercept,
@@ -96,8 +99,6 @@ class Calibration(object):
         """
         Given a calibration data set, get relevant calibration data from
         each single-axis coil pair using linear regressions.
-        
-        TODO: Test
         """
         
         x_points = []
