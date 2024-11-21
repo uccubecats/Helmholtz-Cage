@@ -308,21 +308,25 @@ class CageApp(tk.Tk):
                                                           ("All files","*.*")))
         
         # Retrieve and check the calibration
-        calibration_name = os.path.basename(file_name)
-        calibration = Calibration(self.calibration_path, calibration_name)
-        success = calibration.load_from_file()
+        if type(file_name) == str and file_name != "":
+            calibration_name = os.path.basename(file_name)
+            calibration = Calibration(self.calibration_path, calibration_name)
+            success = calibration.load_from_file()
         
-        # Give calibration to the Helmholtz Cage
-        if success:
-            print(calibration)
-            self.cage.calibration = calibration
-            self.cage.has_calibration = True
-            self.cage.data.calibration_file = file_name
+            # Give calibration to the Helmholtz Cage
+            if success:
+                print(calibration)
+                self.cage.calibration = calibration
+                self.cage.has_calibration = True
+                self.cage.data.calibration_file = file_name
+                
+                # Put calibration file name into GUI entry
+                self.frames[MainPage].update_calibration_entry(calibration_name)
             
-            # Put calibration file name into GUI entry
-            self.frames[MainPage].update_calibration_entry(calibration_name)
+            else:
+                print("ERROR: Unable to load the selected calibration file")
         else:
-            print("ERROR: Unable to load the selected calibration file")
+            pass
     
     def change_template_file(self):
         """
@@ -335,20 +339,24 @@ class CageApp(tk.Tk):
                                                           ("All files","*.*")))
         
         # Retrieve and check template
-        template_name = os.path.basename(file_name)
-        template = retrieve_template(self.template_path, template_name)
-        is_okay = check_template_values(template, [5.0, 1.5]) # <--TODO: replace these
-        
-        # Give template to the Helmholtz Cage
-        if is_okay:
-            self.cage.template = template
-            self.cage.has_template = True
-            self.cage.data.template_file = file_name
+        if type(file_name) == str and file_name != "":
+            template_name = os.path.basename(file_name)
+            template = retrieve_template(self.template_path, template_name)
+            is_okay = check_template_values(template, [5.0, 1.5]) # <--TODO: replace these
             
-            # Put template file name into GUI entry
-            self.frames[MainPage].update_template_entry(template_name)
+            # Give template to the Helmholtz Cage
+            if is_okay:
+                self.cage.template = template
+                self.cage.has_template = True
+                self.cage.data.template_file = file_name
+            
+                # Put template file name into GUI entry
+                self.frames[MainPage].update_template_entry(template_name)
+            
+            else:
+                print("ERROR: Unable to load the selected template file")
         else:
-            print("ERROR: Unable to load the selected template file")
+            pass
     
     def show_frame(self, cont):
         """
