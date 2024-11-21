@@ -275,16 +275,18 @@ class HelmholtzCage(object):
         else:
             time = self.template["time"][self.iter]
             dt = self.template["time"][self.iter+1] - time
-            x_cmd = self.template["x_val"][self.iter]
-            y_cmd = self.template["y_val"][self.iter]
-            z_cmd = self.template["z_val"][self.iter]
+            self.x_req = self.template["x_val"][self.iter]
+            self.y_req = self.template["y_val"][self.iter]
+            self.z_req = self.template["z_val"][self.iter]
             
             # Set commanded values
             if self.ctrl_type == "voltage":
-                is_okay = self.set_coil_voltages(x_cmd, y_cmd, z_cmd)
+                is_okay = self.set_coil_voltages(self.x_req, self.y_req,
+                                                 self.z_req)
             elif self.ctrl_type == "field":
-                is_okay = self.set_field_strength(x_cmd, y_cmd, z_cmd)
-                
+                is_okay = self.set_field_strength(self.x_req, self.y_req,
+                                                  self.z_req)
+            
             # Set next index
             self.iter += 1
             
