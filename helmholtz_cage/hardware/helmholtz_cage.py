@@ -50,13 +50,14 @@ class HelmholtzCage(object):
         self.is_calibrating = False
         self.has_calibration = False
         self.has_template = False
-        self.run_type = ""
-        self.ctrl_type = ""
+        self.run_type = None
+        self.ctrl_type = None
         self.template = None
         self.calibration = None
         self.x_req = 0.0
         self.y_req = 0.0
         self.z_req = 0.0
+        self.iter = 0
         
         # Setup instrument interface managers
         # NOTE: replace 'elif' options with managers for your hardware
@@ -102,43 +103,66 @@ class HelmholtzCage(object):
             self.all_connected = False
         
         return ps_connected, mag_connected
-        
-    def start_cage(self, run_type, ctrl_type):
+    
+    def start_cage(self, run_type, ctrl_type, is_calibration):
         """
         Start the Helmholtz Cage
         """
         
         is_okay = True
         
-        # Store test parameters
+        # Store test run type
         self.run_type = run_type
-        self.ctrl_type = ctrl_type
+        
+        # Make sure run type is actually selected
+        if self.run_type is None or self.run_type == "":
+            is_okay = False
+            print("WARN: No test type selected")
+        
+        # For static tests, make sure control type is selected
+        elif self.run_type == "static":
+            if ctrl_type is None or ctrl_type == "":
+                is_okay = False
+                print("WARN: No control type selected for static test")
+            else:
+                self.ctrl_type = ctrl_type
+                
+                # Indicate that static tests can't be used to calibrate
+                if is_calibration:
+                    is_okay = False
+                    print("WARN: Can't calibrate from static runs")
+                
+                # Make sure calibration is given for feild control
+                elif self.ctrl_type == "field" and not self.has_calibration:
+                    is_okay = False
+                    print("WARN: No calibration provided for field control")
+        
+        # For dynamic tests, make sure we have all relevant parameters
+        elif self.run_type == "dynamic":
+            if self.template is None:
+                is_okay = False
+                print("WARN: No template provided for dynamic run")
+            else:
+                self.ctrl_type = self.template["type"]
+                self.iter = 0
+                if is_calibration:
+                    self.is_calibrating = True
+                
+                # Catch not having calibration for dynamic field control
+                else:
+                    if self.ctrl_type == "field" and not self.has_calibration:
+                        is_okay = False
+                        print("WARN: No calibration provided for field control")
         
         # Check that all instruments are connected
         if not self.all_connected:
             is_okay = False
             print("WARN: Not all instruments are connected")
         
-        # Make sure run type is selected
-        elif self.run_type == "":
-            is_okay = False
-            print("WARN: No test type selected")
-        
-        # For static tests, make sure control type is selected
-        elif self.run_type == "static" and self.ctrl_type == "":
-            is_okay = False
-            print("WARN: No control type selected for static test")
-        
-        # For dynamic tests, make sure we have all relevant parameters
-        #TODO: Remove once implemented
-        elif self.run_type == "dynamic":
-            is_okay = False
-            print("WARN: Dynamic runs not programmed yet")
-        
         # Set flag
         if is_okay:
             self.is_running = True
-            
+        
         # Store request type if different
         if self.data.req_type != ctrl_type:
             self.data.req_type = ctrl_type
@@ -153,12 +177,12 @@ class HelmholtzCage(object):
         # Set voltages on coils to zero
         success = self.set_coil_voltages(0.0, 0.0, 0.0)
         
-        # Reset flags
+        # Reset flags and variables
         self.is_running = False
-        self.is_calibrating = False
+        self.iter = 0
         
         return success
-        
+    
     def update_data(self):
         """
         Store all current data from attached sensors and devices.
@@ -191,12 +215,6 @@ class HelmholtzCage(object):
         
         return self.data
     
-    def calibrate_cage(self):
-        """
-        TODO
-        """
-        pass
-        
     def set_coil_voltages(self, Vx, Vy, Vz):
         """
         Command a set of desired coil voltages for each axis.
@@ -210,33 +228,89 @@ class HelmholtzCage(object):
         # Send voltages to the cages
         else:
             success = self.power_supplies.send_voltages([Vx, Vy, Vz])
-            
-            # Store commanded values
-            if success:
-                self.x_req = Vx
-                self.y_req = Vy
-                self.z_req = Vz
         
         return success
-        
+    
     def set_field_strength(self, Bx, By, Bz):
         """
-        TODO
+        Command a desired magnetic field vector.
         """
-        pass
         
+        # Determine voltages to produce desired field
+        Vx, Vy, Vz = self.calibration.get_voltage_for_desired_field(Bx, By, Bz)
+        
+        # Command voltages to cage
+        success = self.set_coil_voltages(Vx, Vy, Vz)
+        
+        return success
+    
     def zero_field(self):
         """
-        TODO
+        Command the cage to zero out the ambient magnetic feild.
         """
-        pass
         
-    def run_template(self):
-        """
-        TODO
-        """
-        pass
+        # Retrieve zero field voltages from calibration
+        Vx = self.calibration.x_equations["x"].zero
+        Vy = self.calibration.y_equations["y"].zero
+        Vz = self.calibration.z_equations["z"].zero
         
+        # Command voltages to cage
+        success = self.set_coil_voltages(Vx, Vy, Vz)
+        
+        return success
+    
+    def run_once(self):
+        """
+        Cycle through one command in the template file and determine 
+        the time for the next cycle to stop. Indicate the template is 
+        complete once out of points to iterate through.
+        """
+            
+        # Signal completion once out of points
+        if self.iter+1 >= len(self.template["time"]):
+            dt = -1.0
+            finished = True
+        
+        # Get current iteration command values
+        else:
+            time = self.template["time"][self.iter]
+            dt = self.template["time"][self.iter+1] - time
+            self.x_req = self.template["x_val"][self.iter]
+            self.y_req = self.template["y_val"][self.iter]
+            self.z_req = self.template["z_val"][self.iter]
+            
+            # Set commanded values
+            if self.ctrl_type == "voltage":
+                is_okay = self.set_coil_voltages(self.x_req, self.y_req,
+                                                 self.z_req)
+            elif self.ctrl_type == "field":
+                is_okay = self.set_field_strength(self.x_req, self.y_req,
+                                                  self.z_req)
+            
+            # Set next index
+            self.iter += 1
+            
+            finished = False
+        
+        return dt, finished
+    
+    def calibrate(self, calibration_dir):
+        """
+        Call the calibration function on the data from the current run
+        should only be run at the end of the 
+        """
+        
+        # Create file name
+        start_t_str = self.data.start_time.strftime('%Y_%m_%d')
+        calibration_file = "calibration_{}.csv".format(start_t_str)
+        
+        # Initialize calibration object
+        self.calibration = Calibration(calibration_dir, calibration_file)
+        
+        # Run the calibration process
+        self.calibration.from_data(self.data)
+        self.is_calibrating = False
+    
     def shutdown(self):
         """
         Close down hardware interfaces.

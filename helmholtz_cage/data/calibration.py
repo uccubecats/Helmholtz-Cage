@@ -1,7 +1,7 @@
 """
 Objects and functions for calibrating the Helmholtz Cage.
 
-Copyright 2021 UC CubeCats
+Copyright 2024 UC CubeCats
 All rights reserved. See LICENSE file at:
 https://github.com/uccubecats/Helmholtz-Cage/LICENSE
 Additional copyright may be held by others, as reflected in the commit
@@ -11,9 +11,44 @@ history.
 
 import os
 
-from scipy import stats
+import scipy
 
 from utilities.files import read_from_csv, write_to_csv
+
+
+class LineEqn(object):
+    """
+    An object to hold a linear equation.
+    """
+    
+    def __init__(self, slope, intercept, r_value):
+    
+        # Store main parameters of equations
+        self.slope = float(slope)
+        self.intercept = float(intercept)
+        self.r_value = float(r_value)
+        
+        # Calculate x-intercept from equation (if exists)
+        if self.slope != 0.0:
+            self.zero = -1*self.intercept/self.slope
+        else:
+            self.zero = None
+        
+    def __str__(self):
+        return "y = %.6f*x + %.6f | r-value: %.6f" % (self.slope, self.intercept,
+                                                      self.r_value)
+    
+    def solve_for_x(self, y):
+        """
+        Solve the linear equation for x.
+        """
+        return (y - self.intercept)/self.slope
+        
+    def solve_for_y(self, x):
+        """
+        solve the linear equation for y.
+        """
+        return self.slope*x - self.intercept
 
 
 class Calibration(object):
@@ -29,172 +64,212 @@ class Calibration(object):
         
         # Initialize calibration variables
         self.calibration_log_file = ""
-        self.x_slope = 0.0
-        self.x_intercept = 0.0
-        self.x_zero = 0.0
-        self.x_r = 0.0
-        self.x_resist = 0.0
-        self.y_slope = 0.0
-        self.y_intercept = 0.0
-        self.y_zero = 0.0
-        self.y_r = 0.0
-        self.y_resist = 0.0
-        self.z_slope = 0.0
-        self.z_intercept = 0.0
-        self.z_zero = 0.0
-        self.z_r = 0.0
-        self.z_resist = 0.0
+        self.x_equations = {}
+        self.y_equations = {}
+        self.z_equations = {}
+        self.Rx = -1.0
+        self.Ry = -1.0
+        self.Rz = -1.0
         
-    def calibrate_from_data(self, data):
+    def __str__(self):
+                
+        output = "%==================================%\n" +\
+                 "CALIBRATION RESULTS\n\n" +\
+                 "X-COILS\n" +\
+                 "  Vx->Bx: " + self.x_equations["x"].__str__() + "\n" +\
+                 "  Vx->By: " + self.x_equations["y"].__str__() + "\n" +\
+                 "  Vx->Bz: " + self.x_equations["z"].__str__() + "\n\n" +\
+                 "Y-COILS\n" +\
+                 "  Vy->Bx: " + self.y_equations["x"].__str__() + "\n" +\
+                 "  Vy->By: " + self.y_equations["y"].__str__() + "\n" +\
+                 "  Vy->Bz: " + self.y_equations["z"].__str__() + "\n\n" +\
+                 "Z-COILS\n" +\
+                 "  Vz->Bx: " + self.z_equations["x"].__str__() + "\n" +\
+                 "  Vz->By: " + self.z_equations["y"].__str__() + "\n" +\
+                 "  Vz->Bz: " + self.z_equations["z"].__str__() + "\n\n" +\
+                 "RESISTANCE\n" +\
+                 "  Rx: %.6f \u03A9\n" % (self.Rx) +\
+                 "  Ry: %.6f \u03A9\n" % (self.Ry) +\
+                 "  Rz: %.6f \u03A9\n\n" % (self.Rz) +\
+                 "%==================================%"
+        
+        return output
+    
+    def from_data(self, data):
         """
         Given a calibration data set, get relevant calibration data from
-        each single-axid coil pair using linear regressions.
-        
-        TODO: Test
+        each single-axis coil pair using linear regressions.
         """
         
-        # Split data between each axis
-        # NOTE: TODO description of cutoffs    
-        Vx_series = [data.Vx_out[:data.xy_cutoff]]
-        Vy_series = [data.Vy_out[data.xy_cutoff+1:data.yz_cutoff]]
-        Vz_series = [data.Vz_out[data.yz_cutoff+1:]]
-        Bx_series = [data.Bx_act[:data.xy_cutoff]]
-        By_series = [data.By_act[data.xy_cutoff+1:data.yz_cutoff]]
-        Bz_series = [data.Bz_act[data_yz_cutoff+1]]
+        x_points = []
+        y_points = []
+        z_points = []
         
-        # Perform linear regressions
-        x_values = self.perform_linear_regression(Vx_series, Bx_series)
-        y_values = self.perform_linear_regression(Vy_series, By_series)
-        z_values = self.perform_linear_regression(Vz_series, Bz_series)
+        # Determine which axis calibration data points belong to
+        for i in range(0,len(data.time)):
+            if data.x_req[i] == 0.0 and data.y_req[i] == 0.0 and data.z_req[i] == 0.0:
+                pass
+            elif data.x_req[i] != 0.0:
+                x_points.append(i)
+            elif data.y_req[i] != 0.0:
+                y_points.append(i)
+            elif data.z_req[i] != 0.0:
+                z_points.append(i)
         
-        # Estimate resistance
-        #TODO
+        # Package each axis points into new data object
+        x_data = data.retrieve_data_subset(x_points)
+        y_data = data.retrieve_data_subset(y_points)
+        z_data = data.retrieve_data_subset(z_points)
         
-        # Store values
-        self.x_slope = x_values[0]
-        self.x_intercept = x_values[1]
-        self.x_zero = x_values[2]
-        self.x_r = x_values[3]
-        self.y_slope = y_values[0]
-        self.y_intercept = y_values[1]
-        self.y_zero = y_values[2]
-        self.y_r = y_values[3]
-        self.z_slope = z_values[0]
-        self.z_intercept = z_values[1]
-        self.z_zero = z_values[2]
-        self.z_r = z_values[3]
+        # Determine equations for each axis as well as influence on other axes
+        xx_equation = self.perform_linear_regression(x_data.Vx, x_data.Bx)
+        xy_equation = self.perform_linear_regression(x_data.Vx, x_data.By)
+        xz_equation = self.perform_linear_regression(x_data.Vx, x_data.Bz)
+        yx_equation = self.perform_linear_regression(y_data.Vy, y_data.Bx)
+        yy_equation = self.perform_linear_regression(y_data.Vy, y_data.By)
+        yz_equation = self.perform_linear_regression(y_data.Vy, y_data.Bz)
+        zx_equation = self.perform_linear_regression(z_data.Vz, z_data.Bx)
+        zy_equation = self.perform_linear_regression(z_data.Vz, z_data.By)
+        zz_equation = self.perform_linear_regression(z_data.Vz, z_data.Bz)
+        
+        # package Equations
+        self.x_equations = {"x": xx_equation,
+                            "y": xy_equation,
+                            "z": xz_equation}
+        self.y_equations = {"x": yx_equation,
+                            "y": yy_equation,
+                            "z": yz_equation}
+        self.z_equations = {"x": zx_equation,
+                            "y": zy_equation,
+                            "z": zz_equation}
+        
+        # Determine resistance
+        x_iv = self.perform_linear_regression(x_data.Ix, x_data.Vx)
+        y_iv = self.perform_linear_regression(y_data.Iy, y_data.Vy)
+        z_iv = self.perform_linear_regression(z_data.Iz, z_data.Vz)
+        self.Rx = x_iv.slope
+        self.Ry = y_iv.slope
+        self.Rz = z_iv.slope
         
     def perform_linear_regression(self, X, Y):
         """
         Determine a linear regression of a data set, including a slope,
         x- and y-intercepts, and r-value.
-        
-        TODO: Test
         """
-    
+        
         # Perform linear regression
-        slope, intercept, r, p, std_err = stats.linregress(X, Y)
+        result = scipy.stats.linregress(X, Y)
         
-        # Find the zero field voltage
-        zero = -1*intercept/slope
+        # Package result into equation object
+        equation = LineEqn(result.slope, result.intercept, result.rvalue)
+              
+        return equation
         
-        # Return values
-        values = [slope, intercept, zero, r]
-            
-        return values
-        
-    def write_calibration_file(self):
+    def write_to_file(self):
         """
         Write calibration data to a csv file.
         
         TODO: Test
         """
         
-        content = []
-        row1 = ["axis",
-                "slope",
-                "intercept",
-                "zero",
-                "r_value", 
-                "resistance"]
-                
-        # Fill data for each row
-        row2 = ["x",
-                self.x_slope,
-                self.x_intercept,
-                self.x_zero,
-                self.x_r,
-                self.x_resist]
-        row3 = ["y",
-                self.y_slope,
-                self.y_intercept,
-                self.y_zero,
-                self.y_r,
-                self.y_resist]
-        row4 = ["z",
-                self.z_slope,
-                self.z_intercept,
-                self.z_zero,
-                self.z_r,
-                self.z_resist]
-                
-        # Put into content list
-        content = [row1, row2, row3, row4]
+        # Create lables
+        labels = [["coil",
+                   "measured axis",
+                   "slope",
+                   "intercept",
+                   "zero",
+                   "r_value",
+                   "resistance"]]
         
-        # Write to csv file        
-        write_to_csv(self.calibration_dir, self.filename, content, 'w')        
+        # Package equations for each axis
+        x_rows = self.package_axis_equations("x", self.x_equations)
+        y_rows = self.package_axis_equations("y", self.y_equations)
+        z_rows = self.package_axis_equations("z", self.z_equations)
+        
+        # Package coil resistance data
+        x_rows[0].append(self.Rx)
+        y_rows[1].append(self.Ry)
+        z_rows[2].append(self.Rz)
+                
+        # Pull contents together
+        content = labels + x_rows + y_rows + z_rows
+        
+        # Write to csv file
+        write_to_csv(self.file_dir, self.file_name, content, 'w')     
+        
+    def package_axis_equations(self, axis, equations):
+        """
+        Package important parameters of each equation for a certain axis
+        coil pair.
+        """
+        
+        content = []
+        for key,value in equations.items():
+            content.append([axis,
+                            key,
+                            value.slope,
+                            value.intercept,
+                            value.zero,
+                            value.r_value])
+                            
+        return content
     
-    def load_calibration_file(self):
+    def load_from_file(self):
         """
         Load an existing cage calibration from a file of the correct
         format.
         """
         
-        x_found = False
-        y_found = False
-        z_found = False
-        success = False
+        success = True #TODO: catch failures
         
         # Read in values from file
         content = read_from_csv(self.file_dir, self.file_name)
         
-        # Parse data into class variables
-        for row in content:
-            if str(row[0])=="axis":
-                pass
-            elif str(row[0])=="x":
-                self.x_slope = float(row[1])
-                self.x_intercept = float(row[2])
-                self.x_zero = float(row[3])
-                self.x_r = float(row[4])
-                self.x_resist = float(row[5])
-                x_found = True
-            elif str(row[0])=="y":
-                self.y_slope = float(row[1])
-                self.y_intercept = float(row[2])
-                self.y_zero = float(row[3])
-                self.y_r = float(row[4])
-                self.y_resist = float(row[5])
-                y_found = True
-            elif str(row[0])=="z":
-                self.z_slope = float(row[1])
-                self.z_intercept = float(row[2])
-                self.z_zero = float(row[3])
-                self.z_r = float(row[4])
-                self.z_resist = float(row[5])
-                z_found = True
-            else:
-                print ("WARN: Axis '{}' is not recognized".format(str(row[0])))
-                
-        # Warn about missing data
-        if x_found and y_found and z_found:
-            success = True
-        else:
-            if not x_found:
-                print ("ERROR: Calibration data for x-axis not found")
-            if not y_found:
-                print ("ERROR: Calibration data for y-axis not found")
-            if not z_found:
-                print ("ERROR: Calibration data for z-axis not found")
-                
+        # Parse data into equation holding objects
+        xx_equation = LineEqn(content[1][2], content[1][3], content[1][5])
+        xy_equation = LineEqn(content[2][2], content[2][3], content[2][5])
+        xz_equation = LineEqn(content[3][2], content[3][3], content[3][5])
+        yx_equation = LineEqn(content[4][2], content[4][3], content[4][5])
+        yy_equation = LineEqn(content[5][2], content[5][3], content[5][5])
+        yz_equation = LineEqn(content[6][2], content[6][3], content[6][5])
+        zx_equation = LineEqn(content[7][2], content[7][3], content[7][5])
+        zy_equation = LineEqn(content[8][2], content[8][3], content[8][5])
+        zz_equation = LineEqn(content[9][2], content[9][3], content[9][5])
+        #TODO: Handle failure to find some of these values?
+        
+        # Store equations
+        self.x_equations = {"x": xx_equation,
+                            "y": xy_equation,
+                            "z": xz_equation}
+        self.y_equations = {"x": yx_equation,
+                            "y": yy_equation,
+                            "z": yz_equation}
+        self.z_equations = {"x": zx_equation,
+                            "y": zy_equation,
+                            "z": zz_equation}
+        
+        # Store resistance values
+        self.Rx = float(content[1][6])
+        self.Ry = float(content[5][6])
+        self.Rz = float(content[9][6])
+        
         return success
+    
+    def get_voltage_for_desired_field(self, Bx, By, Bz):
+        """
+        For the desired magnetic field, determine voltages for each axis
+        coil pair.
+        
+        NOTE: Currently greatly simplified by ignoring influences of a
+              given coil voltage on other axis components of the
+              magnetic field.
+        TODO: Determine if corrections need to be added here to
+              compensate for these effects, or if they can be ignored if
+              calibration result is negligible.
+        """
+        
+        Vx = self.x_equations["x"].solve_for_x(Bx)
+        Vy = self.y_equations["y"].solve_for_x(By)
+        Vz = self.z_equations["z"].solve_for_x(Bz)
+        
+        return Vx, Vy, Vz

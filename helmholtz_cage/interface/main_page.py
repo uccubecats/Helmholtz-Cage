@@ -241,7 +241,7 @@ class MainPage(tk.Frame):
         self.calibration_file_entry = tk.Entry(
             self.calibrate_frame,
             textvariable=self.calibration_file_status,
-            width=10)
+            width=14)
         self.calibration_file_entry.configure(state="readonly")
         
         # Create change calibration file button
@@ -249,15 +249,14 @@ class MainPage(tk.Frame):
             self.calibrate_frame,
             text='Select',
             command=lambda: self.controller.change_calibration_file(),
-            width=10)
+            width=6)
         
         # Position widgets
         self.calibration_label.grid(row=0, column=0, columnspan=3, pady=5,
                                     sticky='nsew')
-        self.calibration_file_label.grid(row=2, column=0)
+        self.calibration_file_label.grid(row=2, column=0, padx=2)
         self.calibration_file_entry.grid(row=2, column=1)
-        self.change_calibration_file_button.grid(row=2, column=2,
-                                                 sticky='nsew')
+        self.change_calibration_file_button.grid(row=2, column=2, sticky='nsew')
     
     def fill_static_frame(self, parent):
         """
@@ -276,8 +275,8 @@ class MainPage(tk.Frame):
         
         # Pre-create button text labels
         # TODO: update field text to find max field for max voltage
-        field_text = "Enter Magnetic Field \n (Gauss)".format(MAX_FIELD)
-        voltage_text = "Enter Voltage \n(Max {} volts)".format(MAX_VOLTAGE)
+        field_text = "Enter Mag. Field \n(Gauss)"
+        voltage_text = "Enter Voltage \n(Volts)"
         
         # Configure validate entry data types (must be float)
         vcmd_field = (parent.register(self.validate_field),
@@ -390,12 +389,19 @@ class MainPage(tk.Frame):
                                         textvariable=self.z_voltage,
                                         width=10)
         
-        # Create static value command button
+        # Create buttons
         self.static_command_button = tk.Button(
             self.static_frame,
-            text='Command Values',
+            text='Command',
             command=lambda: self.controller.command_static_value(),
-            width=15,
+            width=10,
+            state=tk.DISABLED)
+        
+        self.zero_field_button = tk.Button(
+            self.static_frame,
+            text='Zero Field',
+            command=lambda: self.controller.cage.zero_field(),
+            width=10,
             state=tk.DISABLED)
         
         # Position widgets
@@ -415,9 +421,10 @@ class MainPage(tk.Frame):
         self.z_field_entry.grid(row=4, column=1)
         self.z_voltage_label.grid(row=4, column=2)
         self.z_voltage_entry.grid(row=4, column=3)
-        self.static_command_button.grid(row=5, column=0, columnspan=4,
-                                        sticky='ns')
-    
+        self.zero_field_button.grid(row=5, column=1, sticky='nse')
+        self.static_command_button.grid(row=5, column=2, columnspan=2,
+                                        sticky='nsw')
+        
     def fill_dynamic_frame(self):
         """
         Fill in the dynamic-test subframe.
@@ -428,7 +435,7 @@ class MainPage(tk.Frame):
         self.is_calibration_run = tk.BooleanVar()
         
         # Create test type selection button (dynamic)
-        self.select_dynamic =  tk.Radiobutton(
+        self.select_dynamic = tk.Radiobutton(
             self.dynamic_frame,
             text="Dynamic Test",
             variable=self.test_type,
@@ -443,13 +450,13 @@ class MainPage(tk.Frame):
         self.template_file_label = tk.Label(self.dynamic_frame,
                                             text="Template file:",
                                             bg="lightgray",
-                                            width=12)
+                                            width=11)
         
         # Create and configure template file name entry
         self.template_file_entry = tk.Entry(
             self.dynamic_frame,
             textvariable=self.template_file_status_text,
-            width=10)
+            width=15)
         self.template_file_entry.configure(state="readonly")
         
         # Create change template file button
@@ -457,7 +464,7 @@ class MainPage(tk.Frame):
             self.dynamic_frame,
             text='Select',
             command=lambda: self.controller.change_template_file(),
-            width=10)
+            width=6)
         
         # Create button for calibrating from template file
         self.select_calibration = tk.Checkbutton(
@@ -466,12 +473,13 @@ class MainPage(tk.Frame):
             variable=self.is_calibration_run,
             bg="lightgray",
             highlightthickness=0,
+            command=lambda: self.controller.set_calibration_option(),
             state=tk.DISABLED)
         
         # Position widgets
         self.select_dynamic.grid(row=0, column=0, columnspan=4, pady=5,
             sticky='nsew')
-        self.template_file_label.grid(row=1, column=0)
+        self.template_file_label.grid(row=1, column=0, padx=2)
         self.template_file_entry.grid(row=1, column=1)
         self.change_template_file_button.grid(row=1, column=2, sticky='nsew')
         self.select_calibration.grid(row=2, column=0, columnspan=3,
@@ -501,6 +509,8 @@ class MainPage(tk.Frame):
         self.log_checkbox = tk.Checkbutton(
             self.run_frame,
             text='Log Data',
+            bg="lightgray",
+            width=10,
             variable=self.log_data_option,
             onvalue=1,
             offvalue=0, 
@@ -662,10 +672,10 @@ class MainPage(tk.Frame):
             max_y_plot_two = 1.2*max(B_max, req_max)
             min_y_plot_two = 1.2*min(B_min, req_min)
         else:
-            max_y_plot_one = 1.0
-            min_y_plot_one = 0.0
-            max_y_plot_two = 1.0
-            min_y_plot_two = 0.0
+            max_y_plot_one = 1.2*V_max
+            min_y_plot_one = 1.2*V_min
+            max_y_plot_two = 1.2*B_max
+            min_y_plot_two = 1.2*B_min
         
         # Set bare minimum plot range if required
         if max_y_plot_one < 1.0:
@@ -726,7 +736,7 @@ class MainPage(tk.Frame):
                                    ncol=mag_legend_ncol,
                                    fancybox=True,
                                    prop={'size': 7})
-            
+        
     def clear_plot_frame(self):
         """
         When stopping the current run, clear the plot frame and reset it
@@ -745,22 +755,52 @@ class MainPage(tk.Frame):
         Update the status of buttons after the cage has started.
         """
         
-        self.start_button.config(state=tk.DISABLED)
-        self.stop_button.config(state=tk.NORMAL)
-        self.refresh_cxns_button.config(state=tk.DISABLED)
-        self.change_template_file_button.config(state=tk.DISABLED)
-        self.change_calibration_file_button.config(state=tk.DISABLED)
+        # Get run configuration
+        field_or_voltage = self.ctrl_type.get()
+        static_or_dynamic = self.test_type.get()
+        
+        # Configure common widgets for run
+        self.start_button.configure(state=tk.DISABLED)
+        self.stop_button.configure(state=tk.NORMAL)
+        self.refresh_cxns_button.configure(state=tk.DISABLED)
+        self.change_template_file_button.configure(state=tk.DISABLED)
+        self.change_calibration_file_button.configure(state=tk.DISABLED)
+        self.log_checkbox.configure(state=tk.DISABLED)
+        
+        # Disable buttons based on configuration
+        if static_or_dynamic == "static":
+            self.select_dynamic.configure(state=tk.DISABLED)
+            self.static_command_button.configure(state=tk.NORMAL)
+            self.zero_field_button.configure(state=tk.NORMAL)
+            if field_or_voltage == "field":
+                self.select_voltage.configure(state=tk.DISABLED)
+            elif field_or_voltage == "voltage":
+                self.select_field.configure(state=tk.DISABLED)
+        
+        elif static_or_dynamic == "dynamic":
+            self.select_static.configure(state=tk.DISABLED)
+            self.select_field.configure(state=tk.DISABLED)
+            self.select_voltage.configure(state=tk.DISABLED)
+            self.select_calibration.configure(state=tk.DISABLED)
     
     def stop_cage_update_buttons(self):
         """
         Update the status of buttons after the cage has been stopped.
         """
         
-        self.start_button.config(state=tk.NORMAL)
+        self.start_button.configure(state=tk.NORMAL)
         self.stop_button.configure(state=tk.DISABLED)
-        self.refresh_cxns_button.config(state=tk.NORMAL)
-        self.change_template_file_button.config(state=tk.NORMAL)
-        self.change_calibration_file_button.config(state=tk.NORMAL)
+        self.refresh_cxns_button.configure(state=tk.NORMAL)
+        self.change_template_file_button.configure(state=tk.NORMAL)
+        self.change_calibration_file_button.configure(state=tk.NORMAL)
+        self.select_static.configure(state=tk.NORMAL)
+        self.select_field.configure(state=tk.NORMAL)
+        self.select_voltage.configure(state=tk.NORMAL)
+        self.select_dynamic.configure(state=tk.NORMAL)
+        self.select_calibration.configure(state=tk.NORMAL)
+        self.log_checkbox.configure(state=tk.NORMAL)
+        self.static_command_button.configure(state=tk.DISABLED)
+        self.zero_field_button.configure(state=tk.DISABLED)
         
     def update_calibration_entry(self, file_name):
         """
@@ -797,7 +837,6 @@ class MainPage(tk.Frame):
             self.template_file_entry.configure(state=tk.NORMAL)
             self.template_file_entry.delete(0, 'end')
             self.template_file_entry.configure(state="readonly")
-            self.static_command_button.configure(state=tk.NORMAL)
             self.select_calibration.deselect()
             self.select_calibration.configure(state=tk.DISABLED)
             self.select_static.select()
@@ -840,7 +879,6 @@ class MainPage(tk.Frame):
             self.template_file_entry.configure(state=tk.NORMAL)
             self.template_file_entry.delete(0, 'end')
             self.template_file_entry.configure(state="readonly")
-            self.static_command_button.configure(state=tk.NORMAL)
             self.select_calibration.deselect()
             self.select_calibration.configure(state=tk.DISABLED)
         
@@ -849,6 +887,7 @@ class MainPage(tk.Frame):
             self.select_field.deselect()
             self.select_voltage.deselect()
             self.static_command_button.configure(state=tk.DISABLED)
+            self.zero_field_button.configure(state=tk.DISABLED)
             self.select_calibration.configure(state=tk.NORMAL)
             self.x_voltage_entry.delete(0, 'end')
             self.y_voltage_entry.delete(0, 'end')
@@ -862,7 +901,7 @@ class MainPage(tk.Frame):
             self.x_field_entry.configure(state=tk.DISABLED)
             self.y_field_entry.configure(state=tk.DISABLED)
             self.z_field_entry.configure(state=tk.DISABLED)
-            
+    
     def validate_field(self, action, index, value_if_allowed,
                        prior_value, text, validation_type, trigger_type,
                        widget_name):

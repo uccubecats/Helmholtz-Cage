@@ -14,6 +14,8 @@
 import datetime
 import os
 
+from tabulate import tabulate
+
 from utilities.files import write_to_csv
 
 
@@ -56,6 +58,51 @@ class Data(object):
         self.y_req = []
         self.z_req = []
         self.req_type = "" # i.e. field vs. voltage
+        
+        # Store common elements for display and storage
+        self.labels = ["time",
+                       "Vx",
+                       "Vy",
+                       "Vz",
+                       "Ix",
+                       "Iy",
+                       "Iz",
+                       "Bx",
+                       "By",
+                       "Bz",
+                       "x_req",
+                       "y_req", 
+                       "z_req"]
+                      
+        self.units = ["secs",
+                      "volts",
+                      "volts",
+                      "volts",
+                      "amps",
+                      "amps",
+                      "amps",
+                      "gauss",
+                      "gauss",
+                      "gauss"]
+    
+    def __str__(self):
+        
+        # Create table headers
+        output = "%==================================%\n" +\
+                 "SESSION DATA\n" +\
+                 self.start_time.strftime("%B %d, %Y %I:%M:%S %p") + "\n" +\
+                 "control type: " + self.req_type + "\n\n"
+        
+        # Retrieve data
+        points = []
+        for t in range(0, len(self.time)):
+            points.append(self.retrieve_data_point(t))
+        
+        # Put formatted data into string
+        output += tabulate(points, headers=self.labels, floatfmt="0.3f")
+        output += "\n%==================================%"
+        
+        return output
     
     def write_to_file(self):
         """
@@ -67,64 +114,25 @@ class Data(object):
                   ["calibration_file", self.calibration_file],
                   ["template_file", self.template_file]]
         
-        # Add column lables
-        label = [["time",
-                 "Vx",
-                 "Vy",
-                 "Vz",
-                 "Ix",
-                 "Iy",
-                 "Iz",
-                 "Bx",
-                 "By",
-                 "Bz",
-                 "x request",
-                 "y request", 
-                 "z request"]]
-        
-        # Add column units
+        # Add request units
         if self.req_type == "voltage":
-            req_unit = "Volts"
+            req_unit = "volts"
         elif self.req_type == "field":
-            req_unit = "Gauss"
-        units = [["secs",
-                  "Volts",
-                  "Volts",
-                  "Volts",
-                  "Amps",
-                  "Amps",
-                  "Amps",
-                  "Gauss",
-                  "Gauss",
-                  "Gauss",
-                  req_unit,
-                  req_unit,
-                  req_unit]]
+            req_unit = "gauss"
+        units = [self.units + [req_unit, req_unit, req_unit]]
         
         # Add each time point as row in csv
         data = []
-        for t in range(0, len(self.time)):
-            point = [self.time[t],
-                     self.Vx[t],
-                     self.Vy[t],
-                     self.Vz[t],
-                     self.Ix[t],
-                     self.Iy[t],
-                     self.Iz[t],
-                     self.Bx[t],
-                     self.By[t],
-                     self.Bz[t],
-                     self.x_req[t],
-                     self.y_req[t],
-                     self.z_req[t]]
+        for i in range(0, len(self.time)):
+            point = self.retrieve_data_point(i)
             data.append(point)
         
         # Create file name
-        start_t_str = self.start_time.strftime('%Y-%m-%d_%H-%M-%S')
+        start_t_str = self.start_time.strftime("%y%m%d_%H%M%S")
         session_file = "session_{}.csv".format(start_t_str)
         
         # Write data to file
-        content = header + label + units + data
+        content = header + [self.labels] + units + data
         write_to_csv(self.session_dir, session_file, content, 'w')
     
     def clear_data(self):
@@ -147,3 +155,51 @@ class Data(object):
         self.y_req = []
         self.z_req = []
         self.req_type = ""
+    
+    def retrieve_data_subset(self, indices):
+        """
+        Given a list of indices, strip them out of the data, and place
+        them into a new Data object.
+        """
+        
+        subset = Data("")
+        
+        # Retrieve all data from indices
+        for i in indices:
+            subset.time.append(self.time[i])
+            subset.Vx.append(self.Vx[i])
+            subset.Vy.append(self.Vy[i])
+            subset.Vz.append(self.Vz[i])
+            subset.Ix.append(self.Ix[i])
+            subset.Iy.append(self.Iy[i])
+            subset.Iz.append(self.Iz[i])
+            subset.Bx.append(self.Bx[i])
+            subset.By.append(self.By[i])
+            subset.Bz.append(self.Bz[i])
+            subset.x_req.append(self.x_req[i])
+            subset.y_req.append(self.y_req[i])
+            subset.z_req.append(self.z_req[i])
+            subset.req_type = self.req_type
+            
+        return subset
+    
+    def retrieve_data_point(self, i):
+        """
+        Retrieve a specific data point based on its index.
+        """
+        
+        point = [self.time[i],
+                 self.Vx[i],
+                 self.Vy[i],
+                 self.Vz[i],
+                 self.Ix[i],
+                 self.Iy[i],
+                 self.Iz[i],
+                 self.Bx[i],
+                 self.By[i],
+                 self.Bz[i],
+                 self.x_req[i],
+                 self.y_req[i],
+                 self.z_req[i]]
+        
+        return point
