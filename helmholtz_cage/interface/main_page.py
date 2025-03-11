@@ -672,10 +672,10 @@ class MainPage(tk.Frame):
             max_y_plot_two = 1.2*max(B_max, req_max)
             min_y_plot_two = 1.2*min(B_min, req_min)
         else:
-            max_y_plot_one = 1.0
-            min_y_plot_one = 0.0
-            max_y_plot_two = 1.0
-            min_y_plot_two = 0.0
+            max_y_plot_one = 1.2*V_max
+            min_y_plot_one = 1.2*V_min
+            max_y_plot_two = 1.2*B_max
+            min_y_plot_two = 1.2*B_min
         
         # Set bare minimum plot range if required
         if max_y_plot_one < 1.0:
