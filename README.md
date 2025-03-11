@@ -9,9 +9,9 @@ This project is currently a WIP. The most recent version (0.2) has basic functio
 
  - ~~Get control software "up-and-running" on Linux (currently targeting Ubuntu)~~ (Complete!)
  - Design new magnetometer housing
- - Implement calibration functions
+ - ~~Implement calibration functions~~ (Complete!)
  - Add support for relay switches to reverse coil polarity
- - Add ability to run "dynamic" tests
+ - ~~Add ability to run "dynamic" tests~~ (Working, but waiting on relays for full functionality)
  - Upload hardware CAD files and design documents
  - Add instructions and help documentations
 
@@ -48,9 +48,23 @@ To launch the control software, open a terminal and go to the main directory of 
 ./launch_gui.sh
 ```
 
-Once the GUI has launched, connect the device to all instruments using the ```Check Connections``` button. Select ```Static Test```, and then the ```Enter Voltage``` command option (```Enter Field``` command option is not yet implemented). Finally, select whether to log the test run's data or not (using the ```Log Data``` checkbox).
+Once the GUI has launched, connect the device to all instruments using the ```Check Connections``` button.
+
+### Calibration
+
+A calibration file is required for both static and dynamic runs. If a previous calibration is being used, select it using the provided file dialog.
+
+To recalibrate the cage, first select ```Dynamic Test```, select a calibration function (```calibration_template.csv``` is provided as an example), then select the ```Calibrate from Template``` option. The calibration function will run until completion at which point a popup menu will display the results of the calibration run, the user then has an oportunity to accept or reject the results. If accepted, the calibration function is loaded as the current calibration for the cage.
+
+### Static Test
+
+To command static values, first select ```Static Test```, and then the ```Enter Voltage``` command option (```Enter Field``` command option is not yet implemented). Finally, select whether to log the test run's data or not (using the ```Log Data``` checkbox).
 
 If all devices are connected, click the ```Start Cage``` data to begin a test run. While the cage is running you can enter desired voltage values into the voltage commmand entries for each axis and click ```Command Values``` to change the voltage for each axis. When you are finished with the current test run, click ```Stop Cage``` to end the run and log the data (if that option was selected).
+
+### Dynamic Test
+
+TODO
 
 ## Notes
  - When creating a calibration file from a template file, everything works but the buttons do not reset, allowing the user to continue using the GUI (This should not happen).
