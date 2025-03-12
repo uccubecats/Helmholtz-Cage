@@ -578,7 +578,7 @@ class MainPage(tk.Frame):
         # Draw plots on subframe
         self.canvas.draw()
     
-    def update_connection_entries(self, ps_status, mag_status):
+    def update_connection_entries(self, status):
         """
         Update the connection frame status entries for each connected 
         device
@@ -590,29 +590,40 @@ class MainPage(tk.Frame):
         main_page.y_ps_status_entry.configure(state=tk.NORMAL)
         main_page.z_ps_status_entry.configure(state=tk.NORMAL)
         main_page.mag_status_entry.configure(state=tk.NORMAL)
+        main_page.relay_status_entry.configure(state=tk.NORMAL)
         
         # For applicable connections, delete the entry and update it
-        if not (ps_status[0] == False):
+        if not (status[0] == False):
             main_page.x_ps_status_entry.delete(0, tk.END)
             main_page.x_ps_status_entry.insert(tk.END, "Connected")
         
-        if not (ps_status[1] == False):
+        if not (status[1] == False):
             main_page.y_ps_status_entry.delete(0, tk.END)
             main_page.y_ps_status_entry.insert(tk.END, "Connected")
         
-        if not (ps_status[2] == False):
+        if not (status[2] == False):
             main_page.z_ps_status_entry.delete(0, tk.END)
             main_page.z_ps_status_entry.insert(tk.END, "Connected")
         
-        if not (mag_status == False):
+        if not (status[3] == False):
             main_page.mag_status_entry.delete(0, tk.END)
             main_page.mag_status_entry.insert(tk.END, "Connected")
+        
+        # Special Case: Handle relay array
+        if self.controller.cage.sep_relays:
+            if not (status[4] == False):
+                main_page.relay_status_entry.delete(0, tk.END)
+                main_page.relay_status_entry.insert(tk.END, "Connected")
+        else:
+            main_page.relay_status_entry.delete(0, tk.END)
+            main_page.relay_status_entry.insert(tk.END, "Unused")
         
         # FIXME: Set the entry fields back to read only
         main_page.x_ps_status_entry.configure(state="readonly")
         main_page.y_ps_status_entry.configure(state="readonly")
         main_page.z_ps_status_entry.configure(state="readonly")
         main_page.mag_status_entry.configure(state="readonly")
+        main_page.relay_status_entry.configure(state="readonly")
     
     def update_plot_info(self, data):
         """

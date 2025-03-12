@@ -315,7 +315,7 @@ class RelayArrayManager(object):
             type(self).__name__)
         raise NotImplementedError(msg)
     
-    def connect_to_device(self, interface):
+    def connect_to_device(self):
         """
         Attempt to connect to the magnetometer.
         """

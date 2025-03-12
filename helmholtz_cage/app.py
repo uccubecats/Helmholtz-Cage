@@ -52,6 +52,7 @@ class CageApp(tk.Tk):
         configs = retrieve_configuration_info(self.config_path)
         ps_config = configs["power_supplies"]
         mag_config = configs["magnetometer"]
+        relay_config = configs["relay_array"]
         
         # Initialize frame
         tk.Tk.__init__(self, *args, **kwargs)
@@ -70,7 +71,8 @@ class CageApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         
         # Initialize Helmholtz Cage interface
-        self.cage = HelmholtzCage(self.main_path, ps_config, mag_config)
+        self.cage = HelmholtzCage(self.main_path, ps_config, mag_config,
+                                  relay_config)
         
         # Set parameters
         self.log_data = False
@@ -96,15 +98,15 @@ class CageApp(tk.Tk):
         
         # Attempt connection to intstrumentation
         # NOTE: Must be done in try/except to set text back to readonly
-        try:
-            ps_status, mag_status = self.cage.connect_to_instruments()
-        except Exception as err: #TODO: Improve error handling here
-            print("ERROR: {}".format(err))
-            ps_status = [False, False, False]
-            mag_status = False
+        #try:
+        status = self.cage.connect_to_instruments()
+            
+        #except Exception as err: #TODO: Improve error handling here
+            #print("ERROR: {}".format(err))
+            #status = [False, False, False, False, False]
         
         # Update the GUI connection fields
-        self.frames[MainPage].update_connection_entries(ps_status, mag_status)
+        self.frames[MainPage].update_connection_entries(status)
         
     def set_logging_option(self):
         """

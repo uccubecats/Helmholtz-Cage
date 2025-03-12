@@ -11,13 +11,13 @@
 """
 
 
-from hardware.fake_relay_array import FakeRelayArrayManager
+from hardware.fake_relay_array import FakeRelayArray
 from hardware.instruments import RelayArrayManager
 
 
 class FakeRelayArrayManager(RelayArrayManager):
     """
-    
+    A manager object to simulate interfacing with relay magnetometer.
     """
     
     def __init__(self, config):
@@ -26,4 +26,4 @@ class FakeRelayArrayManager(RelayArrayManager):
         super().__init__(config)
         
         # Initialize fake relay interface
-        self.interface = FakeRelayArrayInterface()
+        self.interface = FakeRelayArray()

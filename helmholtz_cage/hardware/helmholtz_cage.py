@@ -24,6 +24,9 @@ from hardware.power_supplies import (
 from hardware.magnetometer import (
     SerialMagnetometerManager, FakeMagnetometerManager
 )
+from hardware.relay_array import (
+    FakeRelayArrayManager
+)
 
 
 class HelmholtzCage(object):
@@ -32,7 +35,7 @@ class HelmholtzCage(object):
     Helmholtz Cage, including it's power supplies and magnetometer
     """
     
-    def __init__(self, main_dir, ps_config, mag_config):
+    def __init__(self, main_dir, ps_config, mag_config, relay_config):
         
         # Store main directory location
         self.main_dir = main_dir
@@ -40,6 +43,7 @@ class HelmholtzCage(object):
         # Store hardware configuration information
         self.ps_config = ps_config
         self.mag_config = mag_config
+        self.relay_config = relay_config
         
         # Intialize data storage/logging class
         self.data = Data(main_dir)
@@ -50,6 +54,7 @@ class HelmholtzCage(object):
         self.is_calibrating = False
         self.has_calibration = False
         self.has_template = False
+        self.sep_relays = False
         self.run_type = None
         self.ctrl_type = None
         self.template = None
@@ -63,6 +68,7 @@ class HelmholtzCage(object):
         # NOTE: replace 'elif' options with managers for your hardware
         ps_manager = self.ps_config["manager"]
         mag_manager = self.mag_config["manager"]
+        relay_manager = self.relay_config["manager"]
         
         if ps_manager == "fake":
             self.power_supplies = FakePowerSupplyManager(ps_config)
@@ -85,16 +91,33 @@ class HelmholtzCage(object):
             msg = "Magnetometer manager of type '{}' not implemented".format(
                 mag_manager)
             raise NotImplementedError(msg)
+        
+        if relay_manager == "NA":
+            self.sep_relays = False
+        else:
+            self.sep_relays = True
+            if relay_manager == "fake":
+                self.relay_array = FakeRelayArrayManager(relay_config)
+            #elif mag_manager == ... #ADD YOUR MANAGER HERE
+            #   ...
+            else:
+                msg = "Relay array manager of type '{}' not implemented".format(
+                relay_manager)
+                raise NotImplementedError(msg)
     
     def connect_to_instruments(self):
         """ 
         Refresh the connections to the connected instruments (power 
         supplies, magnetometer, etc.)
         """
-
+        
         # Check each connection
         ps_connected = self.power_supplies.connect_to_device()
         mag_connected = self.magnetometer.connect_to_device()
+        if self.sep_relays:
+            relay_connected = self.relay_array.connect_to_device()
+        else:
+            relay_connected = True
         
         # Update flag variable
         if all(ps_connected) and mag_connected:
@@ -102,7 +125,7 @@ class HelmholtzCage(object):
         else:
             self.all_connected = False
         
-        return ps_connected, mag_connected
+        return ps_connected + [mag_connected] + [relay_connected]
     
     def start_cage(self, run_type, ctrl_type, is_calibration):
         """
