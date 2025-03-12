@@ -220,7 +220,7 @@ class MagnetometerManager(object):
         # Store config information
         self.config = config
         
-        # Intialize interface object
+        # Intialize interface object storage
         self.interface = None
         
         # Initialize variables
@@ -257,10 +257,7 @@ class MagnetometerManager(object):
         Read the current magnetic field values from the magnetometer.
         """
         
-        #try:
         data = self.interface.read_sensor()
-        #except Exception as err:
-        #    print("Could not read field values | {}". format(err))
         
         return data
     
@@ -283,3 +280,78 @@ class MagnetometerManager(object):
               needed.
         """
         pass
+
+
+class RelayArrayManager(object):
+    """
+    A base object for managing a relay array for the Helmholtz Cage.
+    
+    NOTE: Currently assumes a single relay controller device; may not be
+    needed if the selected power supplies are able to reverse current 
+    direction on their own.
+    """
+    
+    def __init__(self, config):
+        
+        # Store configuration
+        self.config = config
+        
+        # Intialize interface object storage
+        self.interface = None
+        
+        # Initialize variables
+        self.is_connected = False
+        
+    def configure_device(self, interface):
+        """
+        Placeholder method for inherited class device interface
+        configuration.
+        
+        NOTE: Inherited class must specify this method and call it 
+              properly after initilization.
+        """
+        
+        msg = "No 'configure_device' method override specified for {}".format(
+            type(self).__name__)
+        raise NotImplementedError(msg)
+    
+    def connect_to_device(self, interface):
+        """
+        Attempt to connect to the magnetometer.
+        """
+        
+        # Attempt to connect to relay controller
+        try:
+            self.is_connected = self.interface.test_connection()
+        except Exception as err:
+            self.handle_error(err)
+        
+        return self.is_connected
+    
+    def set_relay_states(self, relay_states):
+        """
+        Command the relays to the desired state.
+        """
+        
+        self.interface.set_states(relay_states)
+        success = True
+    
+    def handle_error(self, error_obj):
+        """
+        
+        
+        NOTE: Inherited class should implement this function on an as
+              needed basis.
+        """
+        
+        print("ERROR: {}".format(err))
+        
+    def close(self):
+        """
+        
+        
+        Note: Inherited class should implement this function only if
+              needed.
+        """
+        pass
+
