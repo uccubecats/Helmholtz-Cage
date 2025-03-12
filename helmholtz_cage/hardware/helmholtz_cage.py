@@ -120,7 +120,7 @@ class HelmholtzCage(object):
             relay_connected = True
         
         # Update flag variable
-        if all(ps_connected) and mag_connected:
+        if all(ps_connected) and mag_connected and relay_connected:
             self.all_connected = True
         else:
             self.all_connected = False
@@ -237,6 +237,19 @@ class HelmholtzCage(object):
         self.data.Bz.append(mag_data[2])
         
         return self.data
+        
+    def determine_relay_state(self, V):
+        """
+        Simple function to determine if axis relay is active (1) or
+        inactive (0).
+        """
+        
+        if V >= 0.0:
+            relay_state = 0
+        elif V < 0.0:
+            relay_state = 1
+            
+        return relay_state
     
     def set_coil_voltages(self, Vx, Vy, Vz):
         """
@@ -248,9 +261,22 @@ class HelmholtzCage(object):
             print("ERROR: Cage is not currently running")
             success = False
         
-        # Send voltages to the cages
         else:
-            success = self.power_supplies.send_voltages([Vx, Vy, Vz])
+            # Set relay states if required
+            if self.sep_relays:
+                V_cur = [self.data.Vx[-1], self.data.Vy[-1], self.data.Vz[-1]]
+                X = self.determine_relay_state(Vx)
+                Y = self.determine_relay_state(Vy)
+                Z = self.determine_relay_state(Vz)
+                relay_success = self.relay_array.set_relay_states([X,Y,Z], V_cur)
+            else:
+                relay_success = True
+        
+            # Send voltages to the cages
+            if relay_success:
+                success = self.power_supplies.send_voltages([Vx, Vy, Vz])
+            else:
+                success = False
         
         return success
     

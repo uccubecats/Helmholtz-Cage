@@ -328,13 +328,15 @@ class RelayArrayManager(object):
         
         return self.is_connected
     
-    def set_relay_states(self, relay_states):
+    def set_relay_states(self, relay_states, cur_voltage):
         """
         Command the relays to the desired state.
         """
         
         self.interface.set_states(relay_states)
         success = True
+        
+        return success
     
     def handle_error(self, error_obj):
         """
