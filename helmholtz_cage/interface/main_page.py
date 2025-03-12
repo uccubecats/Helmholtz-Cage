@@ -135,6 +135,7 @@ class MainPage(tk.Frame):
         self.y_ps_status = tk.StringVar()
         self.z_ps_status = tk.StringVar()
         self.mag_status = tk.StringVar()
+        self.relay_status = tk.StringVar()
         
         # Create labels
         self.cxn_title = tk.Label(self.connect_frame,
@@ -143,7 +144,7 @@ class MainPage(tk.Frame):
                                   bg="lightgray")
                                     
         self.unit_label = tk.Label(self.connect_frame,
-                                   text="Unit",
+                                   text="Device",
                                    font=MEDIUM_FONT, 
                                    bg="lightgray")
         
@@ -172,6 +173,11 @@ class MainPage(tk.Frame):
                                   bg="lightgray",
                                   width=14)
         
+        self.relay_label = tk.Label(self.connect_frame,
+                                    text="Relay Array",
+                                    bg="lightgray",
+                                    width=14)
+        
         # Create and configure connection status entries
         self.x_ps_status_entry = tk.Entry(self.connect_frame,
                                           textvariable=self.x_ps_status,
@@ -197,6 +203,12 @@ class MainPage(tk.Frame):
         self.mag_status_entry.insert(0, "Disconnected")
         self.mag_status_entry.configure(state="readonly")
         
+        self.relay_status_entry = tk.Entry(self.connect_frame,
+                                         textvariable=self.relay_status,
+                                         width=22)
+        self.relay_status_entry.insert(0, "Disconnected")
+        self.relay_status_entry.configure(state="readonly")
+        
         # Create check connection button
         self.refresh_cxns_button = tk.Button(
             self.connect_frame,
@@ -216,7 +228,9 @@ class MainPage(tk.Frame):
         self.z_ps_status_entry.grid(row=4, column=1)
         self.mag_label.grid(row=5, column=0)
         self.mag_status_entry.grid(row=5, column=1)
-        self.refresh_cxns_button.grid(row=6, column=0, columnspan=2)
+        self.relay_label.grid(row=6, column=0)
+        self.relay_status_entry.grid(row=6, column=1)
+        self.refresh_cxns_button.grid(row=7, column=0, columnspan=2)
     
     def fill_calibrate_frame(self):
         """
