@@ -328,19 +328,24 @@ class RelayArrayManager(object):
         
         return self.is_connected
     
-    def set_relay_states(self, relay_states, cur_voltage):
+    def set_relay_states(self, relay_cmd, current):
         """
-        Command the relays to the desired state.
+        Check the incoming command and set the relays to the desired
+        state.
         """
         
-        self.interface.set_states(relay_states)
-        success = True
+        try:
+            self.interface.set_states(relay_cmd, current)
+            success = True
+        except ValueError as err:
+            print("WARN: Voltage too high on axis {} to switch".format(err)
+            success = False
         
         return success
     
     def handle_error(self, error_obj):
         """
-        
+        Indicate that error has occured and handle it if necessary.
         
         NOTE: Inherited class should implement this function on an as
               needed basis.
@@ -350,7 +355,8 @@ class RelayArrayManager(object):
         
     def close(self):
         """
-        
+        Close the manager and perform any cleanup activities required by
+        the interface(s).
         
         Note: Inherited class should implement this function only if
               needed.

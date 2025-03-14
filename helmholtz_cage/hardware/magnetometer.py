@@ -20,7 +20,6 @@ from hardware.mlx90393 import MLX90393Interface
 from hardware.fake_magnetometer import FakeMagnetometer
 
 
-
 class SerialMagnetometerManager(MagnetometerManager):
     """
     An object for interfacing with magnetometers which use a serial 
