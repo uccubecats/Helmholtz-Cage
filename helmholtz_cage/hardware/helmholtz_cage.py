@@ -264,11 +264,10 @@ class HelmholtzCage(object):
         else:
             # Set relay states if required
             if self.sep_relays:
-                I_cur = [self.data.Ix[-1], self.data.Iy[-1], self.data.Iz[-1]]
                 X = self.determine_relay_state(Vx)
                 Y = self.determine_relay_state(Vy)
                 Z = self.determine_relay_state(Vz)
-                relay_success = self.relay_array.set_relay_states([X,Y,Z], I_cur)
+                relay_success = self.relay_array.set_relay_states([X,Y,Z])
             else:
                 relay_success = True
         

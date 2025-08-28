@@ -328,17 +328,17 @@ class RelayArrayManager(object):
         
         return self.is_connected
     
-    def set_relay_states(self, relay_cmd, current):
+    def set_relay_states(self, relay_cmd):
         """
         Check the incoming command and set the relays to the desired
         state.
         """
         
         try:
-            self.interface.set_states(relay_cmd, current)
+            self.interface.set_states(relay_cmd)
             success = True
         except ValueError as err:
-            print("WARN: Voltage too high on axis {} to switch".format(err)
+            print("WARN: Voltage too high on axis {} to switch".format(err))
             success = False
         
         return success
